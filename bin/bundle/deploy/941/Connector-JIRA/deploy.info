@@ -1,0 +1,11 @@
+# -----------------------------------------------------------------------------
+# HPE PPM Integration Connector JIRA v1.0
+# -----------------------------------------------------------------------------
+
+DESCRIPTION="HPE PPM Integration Connector JIRA v1.0"
+
+PHASES="DPL_FILESYSTEM"
+
+REQUIRES_SERVER_STOPPED=1
+
+DEPENDS_ON_VERSION=9,4,1,000
