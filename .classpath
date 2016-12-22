@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="lib" path="bin/bundle/deploy/941/Connector-SAMPLE2/fs_war.jar"/>
 	<classpathentry kind="lib" path="bin/fs_war.jar"/>
 	<classpathentry kind="lib" path="bin/fs_war/WEB-INF/lib/connector-sample-impl2.jar"/>
