@@ -13,9 +13,9 @@ import com.hp.ppm.integration.ui.PlainText;
  * 
  * @author baijuy
  * 
- *         The connector provides the integration for ppm with Jira. The BaseUrl
- *         is required and ...
- * 
+ *         The connector provides the integration for ppm with Jira. The field InstnaceName and BaseUrl
+ *         are required and field Proxy is optional.Once the connector is saved,it can be used to integrate 
+ *         with workplan or timesheet. 
  */
 public class JIRAIntegrationConnector implements IntegrationConnector {
 
