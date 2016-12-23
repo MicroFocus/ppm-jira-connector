@@ -16,11 +16,13 @@ public class JIRAIssue {
 	private String predecessors;
 	private String role;
 	private String resources;
+	private String createdDate;
+	private String updatedDate;
 	private List<JIRAIssue> children;
 
 	public JIRAIssue(String name, String type, String status, String scheduledStart, String scheduledFinish,
 			String scheduledDuration, String scheduledEffort, String actualStart, String percentComplete,
-			String actualFinish, String predecessors, String role, String resources, List<JIRAIssue> children) {
+			String actualFinish, String predecessors, String role, String resources,List<JIRAIssue> children) {
 		this.name = name;
 		this.type = type;
 		this.status = status;
@@ -139,6 +141,22 @@ public class JIRAIssue {
 
 	public void setResources(String resources) {
 		this.resources = resources;
+	}
+
+	public String getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(String createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public String getUpdatedDate() {
+		return updatedDate;
+	}
+
+	public void setUpdatedDate(String updatedDate) {
+		this.updatedDate = updatedDate;
 	}
 
 	public List<JIRAIssue> getChildren() {

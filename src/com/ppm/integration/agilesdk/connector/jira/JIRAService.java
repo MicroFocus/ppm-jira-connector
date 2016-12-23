@@ -2,6 +2,7 @@ package com.ppm.integration.agilesdk.connector.jira;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -92,12 +93,14 @@ public class JIRAService {
 			JSONObject jsonObj = new JSONObject(jsonStr);
 
 			JSONArray jsonIssues = jsonObj.getJSONArray("issues");
+			JSONObject schemas = jsonObj.getJSONObject("schema");
+			String sprintCustomId = findSprintCustomId(schemas);
 
 			for (int i = 0; i < jsonIssues.length(); i++) {
 				JSONObject fields = jsonIssues.getJSONObject(i).getJSONObject("fields");
 				boolean isSubTask = fields.getJSONObject("issuetype").getBoolean("subtask");
 				if (!isSubTask) {
-					JIRAIssue jiraIssue = resolveIssue(fields, false, null, null, null);
+					JIRAIssue jiraIssue = resolveIssue(fields, false, null, null, null, sprintCustomId);
 					list.add(jiraIssue);
 				}
 
@@ -206,8 +209,6 @@ public class JIRAService {
 					String id = obj.getString("id");
 					String isuSelf = issue.getString("self");
 					String isuId = issue.getString("id");
-
-					// String isuProId = issue.getString("projectId");
 					String isuKey = issue.getString("key");
 					String isuSummary = fields.getString("summary");
 					JIRATempoIssue jti = new JIRATempoIssue(isuSelf, isuId, "", isuKey, 0L, "", isuSummary);
@@ -227,30 +228,30 @@ public class JIRAService {
 	}
 
 	private JIRAIssue resolveIssue(JSONObject fields, boolean isSubtask, String scheduledStart, String scheduledFinish,
-			String actualFinish) throws JSONException {
+			String actualFinish, String sprintCustomId) throws JSONException {
 		String name = fields.getString("summary");
 		String status = fields.getJSONObject("status").getString("name");
 		String type = fields.getJSONObject("issuetype").getString("name");
 
 		String total = null;
 		String percentComplete = null;
-		// String timespent = fields.getString("timespent");
 		List<JIRAIssue> children = null;
 		if (!isSubtask) {
 
-			Map<String, String> customfield_10118 = null;
+			Map<String, String> sprintCustomfield = null;
 			if (!"null".equals(fields.get("customfield_10118").toString())) {
-				customfield_10118 = resolveCustomfield_10118(fields.getJSONArray("customfield_10118").getString(0));
-				scheduledStart = customfield_10118.get("startDate");
-				scheduledFinish = customfield_10118.get("endDate");
-				actualFinish = customfield_10118.get("completeDate");
+				sprintCustomfield = resolveSprintCustomfield(fields.getJSONArray(sprintCustomId).getString(0));
+				scheduledStart = sprintCustomfield.get("startDate");
+				scheduledFinish = sprintCustomfield.get("endDate");
+				actualFinish = sprintCustomfield.get("completeDate");
 			}
 
 			children = new ArrayList<>();
 			JSONArray childrenJson = fields.getJSONArray("subtasks");
 			for (int i = 0; i < childrenJson.length(); i++) {
 				JSONObject subfields = childrenJson.getJSONObject(i).getJSONObject("fields");
-				JIRAIssue subIssue = resolveIssue(subfields, true, scheduledStart, scheduledFinish, actualFinish);
+				JIRAIssue subIssue = resolveIssue(subfields, true, scheduledStart, scheduledFinish, actualFinish,
+						sprintCustomId);
 				children.add(subIssue);
 			}
 			JSONObject progressObj = fields.getJSONObject("progress");
@@ -263,11 +264,15 @@ public class JIRAService {
 				actualFinish, null, null, null, children);
 	}
 
-	private Map<String, String> resolveCustomfield_10118(String customfield_10118) {
+	// Convert SprintCustomfield from String to Map.The example of origin format
+	// of sprintCustomfield is
+	// "com.atlassian.greenhopper.service.sprint.Sprint@1f39706[id=1,rapidViewId=1,state=ACTIVE,name=SampleSprint
+	// 2,goal=<null>,startDate=2016-12-07T06:18:24.224+08:00,endDate=2016-12-21T06:38:24.224+08:00,completeDate=<null>,sequence=1]"
+	private Map<String, String> resolveSprintCustomfield(String sprintCustomfield) {
 		Map<String, String> map = new HashMap<>();
 		String reg = ".+@.+\\[(.+=.*),(.+=.*),(.+=.*),(.+=.*),(.+=.*),(.+=.*),(.+=.*),(.+=.*),(.+=.*)\\]";
 		Pattern pattern = Pattern.compile(reg);
-		Matcher matcher = pattern.matcher(customfield_10118);
+		Matcher matcher = pattern.matcher(sprintCustomfield);
 		if (matcher.find()) {
 			for (int i = 1; i <= matcher.groupCount(); i++) {
 				String exp = matcher.group(i);
@@ -295,6 +300,10 @@ public class JIRAService {
 		return query.replaceAll(" ", "%20");
 	}
 
+	// Convert JIRATempoWorklog from list to map, for the map, the key is issue
+	// key concating issue summary, the value is also a map whose key is date
+	// and
+	// value is time spent seconds
 	private Map<String, Map<String, Long>> resolveJIRATempoWorklogs(List<JIRATempoWorklog> list) {
 		Map<String, Map<String, Long>> map = new HashMap<>();
 		for (JIRATempoWorklog jtw : list) {
@@ -323,4 +332,23 @@ public class JIRAService {
 		return url.replaceAll(" ", "%20").replaceAll(">", "%3E").replaceAll("<", "%3C");
 	}
 
+	// Different Jira Instance has different customfield Id including sprint
+	// customfield, so the sprint id needs to be found.
+	private String findSprintCustomId(JSONObject schemas) {
+		Iterator<String> i = schemas.keys();
+		String sprintCutomId = "";
+		while (i.hasNext()) {
+			String key = i.next();
+			try {
+				String custom = schemas.getJSONObject(key).getString("custom");
+				if (JIRAConstants.JIRA_SPRINT_CUSTOM.equals(custom)) {
+					sprintCutomId = key;
+				}
+			} catch (JSONException e) {
+
+			}
+
+		}
+		return sprintCutomId;
+	}
 }

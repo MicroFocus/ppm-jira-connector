@@ -111,7 +111,6 @@ public class JIRAEntity implements IExternalTask {
 			}
 			return d;
 		} else {
-			//
 			return new Date();
 		}
 	}

@@ -29,7 +29,7 @@ public class JIRAConstants {
 	private static final String TEMPO_API_VERSION_API_ROOT = "/rest/tempo-timesheets/3/";
 
 	public static final String PROJECT_SUFFIX = API_VERSION_API_ROOT + "project";
-	public static final String ISSUES_SUFFIX = API_VERSION_API_ROOT + "search?jql=project=";
+	public static final String ISSUES_SUFFIX = API_VERSION_API_ROOT + "search?expand=schema&jql=project=";
 	public static final String ISSUETYPES_SUFFIX = API_VERSION_API_ROOT + "issuetype";
 	public static final String TEMPO_WORKLOGS_SUFFIX = TEMPO_API_VERSION_API_ROOT + "worklogs";
 
@@ -39,5 +39,7 @@ public class JIRAConstants {
 	public static final String JIRA_ISSUE_EPIC = "EPIC";
 	public static final String JIRA_ISSUE_BUG = "BUG";
 	public static final String JIRA_ISSUE_TASK = "TASK";
+
+	public static final String JIRA_SPRINT_CUSTOM = "com.pyxis.greenhopper.jira:gh-sprint";
 
 }

@@ -13,9 +13,10 @@ import com.hp.ppm.integration.ui.PlainText;
  * 
  * @author baijuy
  * 
- *         The connector provides the integration for ppm with Jira. The field InstnaceName and BaseUrl
- *         are required and field Proxy is optional.Once the connector is saved,it can be used to integrate 
- *         with workplan or timesheet. 
+ *         The connector provides the integration for ppm with Jira. The field
+ *         InstanceName and BaseUrl are required and field Proxy is optional.
+ *         Once the connector is saved, it can be used to integrate with
+ *         workplan or timesheet.
  */
 public class JIRAIntegrationConnector implements IntegrationConnector {
 
@@ -40,9 +41,6 @@ public class JIRAIntegrationConnector implements IntegrationConnector {
 				new PlainText(JIRAConstants.KEY_BASE_URL, "BASE_URL", "https://marchhead.atlassian.net", true),
 				new PlainText(JIRAConstants.KEY_PROXY_HOST, "PROXY_HOST", "", false),
 				new PlainText(JIRAConstants.KEY_PROXY_PORT, "PROXY_PORT", "", false),
-				// The function if using GLOBAL_PROXY is not implemented now
-				// new CheckBox(JIRAConstants.KEY_USE_GLOBAL_PROXY,
-				// "USE_GLOBAL_PROXY", "", false),
 
 		});
 	}
