@@ -16,6 +16,7 @@ import com.hp.ppm.integration.tm.IExternalWorkItem;
 import com.hp.ppm.integration.tm.TimeSheetIntegration;
 import com.hp.ppm.integration.tm.TimeSheetIntegrationContext;
 import com.hp.ppm.integration.ui.DynamicalDropdown;
+import com.hp.ppm.integration.ui.DynamicalDropdown.Option;
 import com.hp.ppm.integration.ui.Field;
 import com.hp.ppm.integration.ui.LineBreaker;
 import com.hp.ppm.integration.ui.PasswordText;

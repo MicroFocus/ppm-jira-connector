@@ -9,7 +9,7 @@ public class JIRAIssue {
 	private String scheduledStart;
 	private String scheduledFinish;
 	private String scheduledDuration;
-	private String scheduledEffort;
+	private Long scheduledEffort;
 	private String actualStart;
 	private String percentComplete;
 	private String actualFinish;
@@ -21,8 +21,9 @@ public class JIRAIssue {
 	private List<JIRAIssue> children;
 
 	public JIRAIssue(String name, String type, String status, String scheduledStart, String scheduledFinish,
-			String scheduledDuration, String scheduledEffort, String actualStart, String percentComplete,
-			String actualFinish, String predecessors, String role, String resources,List<JIRAIssue> children) {
+			String scheduledDuration, Long scheduledEffort, String actualStart, String percentComplete,
+			String actualFinish, String predecessors, String role, String resources, String createdDate,
+			String updatedDate, List<JIRAIssue> children) {
 		this.name = name;
 		this.type = type;
 		this.status = status;
@@ -36,6 +37,8 @@ public class JIRAIssue {
 		this.predecessors = predecessors;
 		this.role = role;
 		this.resources = resources;
+		this.createdDate = createdDate;
+		this.updatedDate = updatedDate;
 		this.children = children;
 	}
 
@@ -87,11 +90,11 @@ public class JIRAIssue {
 		this.scheduledDuration = scheduledDuration;
 	}
 
-	public String getScheduledEffort() {
+	public Long getScheduledEffort() {
 		return scheduledEffort;
 	}
 
-	public void setScheduledEffort(String scheduledEffort) {
+	public void setScheduledEffort(Long scheduledEffort) {
 		this.scheduledEffort = scheduledEffort;
 	}
 

@@ -232,6 +232,16 @@ public class JIRAService {
 		String name = fields.getString("summary");
 		String status = fields.getJSONObject("status").getString("name");
 		String type = fields.getJSONObject("issuetype").getString("name");
+		Object assignee = fields.get("assignee");
+		String resources = "null".equals(assignee.toString()) ? "" : ((JSONObject) assignee).getString("displayName");
+		String createdDate = fields.getString("created");
+		String updatedDate = fields.getString("updated");
+		if (fields.has("resolutionDate")) {
+			Object resolutionDate = fields.get("resolutionDate");
+			actualFinish = "null".equals(resolutionDate.toString()) ? null : (String) resolutionDate;
+		}
+		Object timeestimate = fields.get("timeestimate");
+		Long scheduledEffort = "null".equals(timeestimate.toString()) ? 0 : (Long) timeestimate;
 
 		String total = null;
 		String percentComplete = null;
@@ -239,11 +249,10 @@ public class JIRAService {
 		if (!isSubtask) {
 
 			Map<String, String> sprintCustomfield = null;
-			if (!"null".equals(fields.get("customfield_10118").toString())) {
+			if (!"null".equals(fields.get(sprintCustomId).toString())) {
 				sprintCustomfield = resolveSprintCustomfield(fields.getJSONArray(sprintCustomId).getString(0));
 				scheduledStart = sprintCustomfield.get("startDate");
 				scheduledFinish = sprintCustomfield.get("endDate");
-				actualFinish = sprintCustomfield.get("completeDate");
 			}
 
 			children = new ArrayList<>();
@@ -260,8 +269,9 @@ public class JIRAService {
 			percentComplete = "0".equals(total) ? "0"
 					: (Double.parseDouble(progress) / Integer.parseInt(total) * 100) + "";
 		}
-		return new JIRAIssue(name, type, status, scheduledStart, scheduledFinish, null, total, null, percentComplete,
-				actualFinish, null, null, null, children);
+		return new JIRAIssue(name, type, status, scheduledStart, scheduledFinish, null, scheduledEffort, null,
+				percentComplete, actualFinish, null, null, resources, createdDate, updatedDate, children);
+
 	}
 
 	// Convert SprintCustomfield from String to Map.The example of origin format

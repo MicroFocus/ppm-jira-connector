@@ -86,7 +86,8 @@ public class JIRAEntity implements IExternalTask {
 
 		return null;
 	}
-
+	
+	
 	private TaskStatus getTaskStatus(String status) {
 		switch (status) {
 		case "To Do":
