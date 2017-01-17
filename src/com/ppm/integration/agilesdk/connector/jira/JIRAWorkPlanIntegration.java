@@ -6,26 +6,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.hp.ppm.integration.ValueSet;
-import com.hp.ppm.integration.pm.IExternalTask;
-import com.hp.ppm.integration.pm.IExternalWorkPlan;
-import com.hp.ppm.integration.pm.WorkPlanIntegration;
-import com.hp.ppm.integration.pm.WorkPlanIntegrationContext;
-import com.hp.ppm.integration.ui.CheckBox;
-import com.hp.ppm.integration.ui.DynamicalDropdown;
-import com.hp.ppm.integration.ui.Field;
-import com.hp.ppm.integration.ui.LableText;
-import com.hp.ppm.integration.ui.LineBreaker;
-import com.hp.ppm.integration.ui.PasswordText;
-import com.hp.ppm.integration.ui.PlainText;
+import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAEntity;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.IRestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
+import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalWorkPlan;
+import com.ppm.integration.agilesdk.pm.WorkPlanIntegration;
+import com.ppm.integration.agilesdk.pm.WorkPlanIntegrationContext;
+import com.ppm.integration.agilesdk.ui.CheckBox;
+import com.ppm.integration.agilesdk.ui.DynamicDropdown;
+import com.ppm.integration.agilesdk.ui.Field;
+import com.ppm.integration.agilesdk.ui.LabelText;
+import com.ppm.integration.agilesdk.ui.LineBreaker;
+import com.ppm.integration.agilesdk.ui.PasswordText;
+import com.ppm.integration.agilesdk.ui.PlainText;
 
-public class JIRAWorkPlanIntegration implements WorkPlanIntegration {
+public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 	private JIRAService service;
 
 	public JIRAWorkPlanIntegration() {
@@ -49,7 +49,7 @@ public class JIRAWorkPlanIntegration implements WorkPlanIntegration {
 				.asList(new Field[] { new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "admin", true),
 
 						new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "hpe1990", true), new LineBreaker(),
-						new DynamicalDropdown(JIRAConstants.KEY_JIRA_PROJECT_NAME, "JIRA_PRPOJECT", true) {
+						new DynamicDropdown(JIRAConstants.KEY_JIRA_PROJECT_NAME, "JIRA_PRPOJECT", true) {
 
 							@Override
 							public List<String> getDependencies() {
@@ -76,7 +76,7 @@ public class JIRAWorkPlanIntegration implements WorkPlanIntegration {
 							}
 						}, new LineBreaker(),
 
-						new LableText(JIRAConstants.KEY_LEVEL_OF_DETAILS_TO_SYNCHRONIZE,
+						new LabelText(JIRAConstants.KEY_LEVEL_OF_DETAILS_TO_SYNCHRONIZE,
 								"LEVEL_OF_DETAILS_TO_SYNCHRONIZE", "Level of Details to Synchronize", true),
 						new CheckBox(JIRAConstants.JIRA_ISSUE_TASK, "INCLUDE_JIRA_ISSUE_TASK", true),
 						new CheckBox(JIRAConstants.JIRA_ISSUE_STORY, "INCLUDE_JIRA_ISSUE_STORY", true),
@@ -87,12 +87,7 @@ public class JIRAWorkPlanIntegration implements WorkPlanIntegration {
 	}
 
 	@Override
-	public boolean linkTaskWithExternal(WorkPlanIntegrationContext context, ValueSet values) {
-		return false;
-	}
-
-	@Override
-	public IExternalWorkPlan getExternalWorkPlan(WorkPlanIntegrationContext context, ValueSet values) {
+	public ExternalWorkPlan getExternalWorkPlan(WorkPlanIntegrationContext context, ValueSet values) {
 		String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT_NAME);
 		configureService(values.get(JIRAConstants.KEY_PROXY_HOST), values.get(JIRAConstants.KEY_PROXY_PORT),
 				values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
@@ -104,30 +99,21 @@ public class JIRAWorkPlanIntegration implements WorkPlanIntegration {
 		map.put(JIRAConstants.JIRA_ISSUE_BUG, values.getBoolean(JIRAConstants.JIRA_ISSUE_BUG, true));
 
 		final List<JIRAIssue> issues = service.getIssues(projectKey, map);
-		return new IExternalWorkPlan() {
+		return new ExternalWorkPlan() {
 
 			@Override
-			public List<IExternalTask> getRootTasks() {
-				List<IExternalTask> externalTasks = new ArrayList<>();
+			public List<ExternalTask> getRootTasks() {
+				List<ExternalTask> externalTasks = new ArrayList<>();
 				for (final JIRAIssue issue : issues) {
 					JIRAEntity entity = new JIRAEntity();
 					entity.setIssue(issue);
+					
 					externalTasks.add(entity);
 				}
 
 				return externalTasks;
 			}
 		};
-	}
-
-	@Override
-	public boolean unlinkTaskWithExternal(WorkPlanIntegrationContext context, ValueSet values) {
-		return false;
-	}
-
-	@Override
-	public String getCustomDetailPage() {
-		return null;
 	}
 
 	private void configureService(String proxyHost, String proxyPort, String username, String password,

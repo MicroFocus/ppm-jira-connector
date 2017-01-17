@@ -8,6 +8,7 @@
 
     <target name="all">
         <ant dir=".." antfile="build-connector.xml" target="all" inheritall="true" />
+        
          <echo>deploy for ppm install and upgrade inner PPM940</echo>
         <ant dir=".." antfile="build-connector.xml" target="deploy-for-ppm-install-and-upgrade" inheritall="true" />
     </target>

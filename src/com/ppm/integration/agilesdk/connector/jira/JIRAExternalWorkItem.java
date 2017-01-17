@@ -1,30 +1,26 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import com.hp.ppm.integration.tm.ExternalWorkItemActualEfforts;
-import com.hp.ppm.integration.tm.IExternalWorkItem;
+import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
+import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
 
-import net.sf.json.JSONObject;
+public class JIRAExternalWorkItem extends ExternalWorkItem {
 
-public class JIRAExternalWorkItem implements IExternalWorkItem {
-	private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private String name = "";
-	private long totalEffort = 0;
+	private Double totalEffort = 0.0;
 	private String errorMessage = null;
 
-	private Map<String, Long> timeSpentSeconds = new HashMap<>();
+	private Map<String, Double> timeSpentSeconds = new HashMap<>();
 	private XMLGregorianCalendar dateFrom;
 	private XMLGregorianCalendar dateTo;
 
-	public JIRAExternalWorkItem(String name, long totalEffort, String errorMessage, XMLGregorianCalendar dateFrom,
-			XMLGregorianCalendar dateTo, Map<String, Long> timeSpentSeconds) {
+	public JIRAExternalWorkItem(String name, Double totalEffort, String errorMessage, XMLGregorianCalendar dateFrom,
+			XMLGregorianCalendar dateTo, Map<String, Double> timeSpentSeconds) {
 		this.name = name;
 		this.totalEffort = totalEffort;
 		this.errorMessage = errorMessage;
@@ -38,33 +34,47 @@ public class JIRAExternalWorkItem implements IExternalWorkItem {
 		return this.name;
 	}
 
-	@Override
-	public double getEffort() {
+	public Double getTotalEffort() {
 		return totalEffort;
 	}
 
-	@Override
-	public String getExternalData() {
+	// The code is replaced by the method getEffortBreakDown,it will be removed once the new method works well
+	// once the function passed the test and i am
+	// @Override
+	// public String getExternalData() {
+	//
+	// JSONObject json = new JSONObject();
+	//
+	// ExternalWorkItemActualEfforts actual = new
+	// ExternalWorkItemActualEfforts();
+	//
+	// Calendar cursor = dateFrom.toGregorianCalendar();
+	//
+	// while (cursor.before(dateTo.toGregorianCalendar())) {
+	// String cursorDate = dateFormat.format(cursor.getTime());
+	// if (timeSpentSeconds.containsKey(cursorDate)) {
+	// long actualEffort = timeSpentSeconds.get(cursorDate) / 3600;
+	// actual.getEffortList().put(cursorDate, (double) actualEffort);
+	// } else {
+	// actual.getEffortList().put(cursorDate, 0.0);
+	// }
+	// cursor.add(Calendar.DAY_OF_MONTH, 1);
+	// }
+	//
+	// json.put(ExternalWorkItemActualEfforts.JSON_KEY_FOR_ACTUAL_EFFORT,
+	// actual.toJson());
+	//
+	// return json.toString();
+	// }
 
-		JSONObject json = new JSONObject();
+	public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
+		ExternalWorkItemEffortBreakdown eb = new ExternalWorkItemEffortBreakdown();
 
-		ExternalWorkItemActualEfforts actual = new ExternalWorkItemActualEfforts();
-
-		Calendar cursor = dateFrom.toGregorianCalendar();
-
-		while (cursor.before(dateTo.toGregorianCalendar())) {
-			String cursorDate = dateFormat.format(cursor.getTime());
-			if (timeSpentSeconds.containsKey(cursorDate)) {
-				actual.getEffortList().put(cursorDate, (double) (timeSpentSeconds.get(cursorDate) / 3600));
-			} else {
-				actual.getEffortList().put(cursorDate, 0.0);
-			}
-			cursor.add(Calendar.DAY_OF_MONTH, 1);
+		Set<String> dateKeys = timeSpentSeconds.keySet();
+		for (String date : dateKeys) {
+			eb.addEffort(date, timeSpentSeconds.get(date));
 		}
-
-		json.put(ExternalWorkItemActualEfforts.JSON_KEY_FOR_ACTUAL_EFFORT, actual.toJson());
-
-		return json.toString();
+		return eb;
 	}
 
 	@Override

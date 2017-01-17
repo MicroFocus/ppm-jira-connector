@@ -6,10 +6,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.hp.ppm.integration.pm.IExternalTask;
-import com.hp.ppm.integration.pm.ITaskActual;
+import com.ppm.integration.agilesdk.pm.ExternalTask;
 
-public class JIRAEntity implements IExternalTask {
+public class JIRAEntity extends ExternalTask {
 	private JIRAIssue issue;
 
 	public void setIssue(JIRAIssue issue) {
@@ -29,15 +28,15 @@ public class JIRAEntity implements IExternalTask {
 	}
 
 	@Override
-	public Date getScheduleStart() {
+	public Date getScheduledStart() {
 
-		return getDate(issue.getScheduledStart());
+		return checkDate(issue.getScheduledStart());
 	}
 
 	@Override
-	public Date getScheduleFinish() {
+	public Date getScheduledFinish() {
 
-		return getDate(issue.getScheduledFinish());
+		return checkDate(issue.getScheduledFinish());
 	}
 
 	@Override
@@ -65,10 +64,10 @@ public class JIRAEntity implements IExternalTask {
 	}
 
 	@Override
-	public List<IExternalTask> getChildren() {
+	public List<ExternalTask> getChildren() {
 
 		List<JIRAIssue> list = issue.getChildren();
-		List<IExternalTask> entityList = new ArrayList<>();
+		List<ExternalTask> entityList = new ArrayList<>();
 		if (list != null) {
 			for (JIRAIssue issue : list) {
 				JIRAEntity entity = new JIRAEntity();
@@ -81,13 +80,6 @@ public class JIRAEntity implements IExternalTask {
 
 	}
 
-	@Override
-	public List<ITaskActual> getActuals() {
-
-		return null;
-	}
-	
-	
 	private TaskStatus getTaskStatus(String status) {
 		switch (status) {
 		case "To Do":
@@ -101,7 +93,7 @@ public class JIRAEntity implements IExternalTask {
 		}
 	}
 
-	private Date getDate(String dateStr) {
+	private Date checkDate(String dateStr) {
 		if (dateStr != null) {
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
 			Date d = null;
