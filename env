@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+####################################################
+#         PPM Agile SDK Connector 
+#        Build & Bundle packaging
+####################################################
+
+####################################################
+#     Edit following values before setting env
+####################################################
+PPM_SERVER_ROOT=C:/PPM_HOME/server/kintana
+JDK_LIB_DIR=C:/Java/jdk7/jre/lib
+
+####################################################
+#   ANT Related Environment.
+####################################################
+ANT_ARGS="-lib $PPM_SERVER_ROOT/deploy/itg.war/WEB-INF/lib"
+ANT_OPTS="-Xmx520m -Dfile.encoding=UTF-8"
+JDK_LIB=$JDK_LIB_DIR/rt.jar:$JDK_LIB_DIR/tools.jar
+SOURCE=1.7
+TARGET=1.7
+
+export PPM_SERVER_ROOT ANT_ARGS ANT_OPTS JDK_LIB

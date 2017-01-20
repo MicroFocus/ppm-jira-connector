@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<project name="build-connector" basedir="." default="all">
+    <property environment="env" />
+    <property file="build.properties" />
+    <property name="debug" value="true"/>
+    <property name="PPM_MAJOR_VERSION" value="${ppm.major.version},${ppm.minor.version},${ppm.subminor.version}" />
+	<property name="PPM_AGGREGATED_MAJOR_VERSION" value="${ppm.major.version}${ppm.minor.version}${ppm.subminor.version}" />
+	<property name="PPM_PATCH_VERSION" value="${ppm.patch.version}"/>
+	<property name="BUNDLE_NAME" value="${connector.bundle.name}"/>
+    <property name="CONNECTOR_DIR" value="."/>
+    <property name="CONNECTOR_DESC" value="${connector.description}"/>
+
+    <path id="ic.compile.libs">
+        <fileset dir="${ppm.lib.dir}">
+            <include name="**/*.jar" />
+        </fileset>
+    </path>
+	
+	<condition property="webcontent.exists">
+		<available file="${CONNECTOR_DIR}/webcontent" type="dir"/>
+    </condition>
+
+    <target name="all" depends="clean, compile, jar-cls, jar-web, bundle"/>
+
+    <target name="clean">
+        <echo>${CONNECTOR_DIR}</echo>
+        <delete dir="${CONNECTOR_DIR}/bin" />
+    </target>
+
+    <target name="compile" depends="clean">
+        <mkdir dir="${CONNECTOR_DIR}/bin/classes" />
+        <echo>${CONNECTOR_DIR} - Compile Java Classes</echo>
+        <javac bootclasspath="${env.JDK_LIB}" source="${env.SOURCE}" target="${env.TARGET}" destdir="${CONNECTOR_DIR}/bin/classes" debug="${debug}">
+            <src>
+                <path location="${CONNECTOR_DIR}/src" />
+            </src>
+            <classpath>
+                <path refid="ic.compile.libs"/>
+            </classpath>
+        </javac>
+
+        <!-- copy service configuration -->
+        <echo>${CONNECTOR_DIR} - Copy ServiceLoader properties</echo>
+        <mkdir dir="${CONNECTOR_DIR}/bin/classes/META-INF" />
+        <copy todir="${CONNECTOR_DIR}/bin/classes/META-INF" flatten="false">
+            <fileset dir="${CONNECTOR_DIR}/META-INF" includes="**/*"/>
+        </copy>
+
+        <!-- copy language files -->
+        <echo>${CONNECTOR_DIR} - Copy language files</echo>
+        <copy todir="${CONNECTOR_DIR}/bin/classes" flatten="false">
+            <fileset dir="${CONNECTOR_DIR}/src" includes="**/*.properties"/>
+        </copy>
+    </target>
+
+    <target name="jar-cls" depends="compile">
+        <jar jarfile="${CONNECTOR_DIR}/bin/connector-${BUNDLE_NAME}.jar" compress="true">
+            <fileset dir="${CONNECTOR_DIR}/bin/classes" />
+        </jar>
+    </target>
+
+    <target name="quick-deploy" depends="jar-cls">
+        <echo>Only for Connector Developers - Now copying connector Jar to PPM Server.</echo>
+        <copy todir="${ppm.server.root}/deploy/itg.war/WEB-INF/lib" flatten="false">
+            <fileset dir="${CONNECTOR_DIR}/bin" includes="connector-${BUNDLE_NAME}.jar" />
+        </copy>
+
+		<antcall target="copy-webcontent">
+			<param name="copy.webcontent.to.dir" value="${ppm.server.root}/deploy/itg.war/"/>
+		</antcall>
+        
+		<echo>Please restart PPM server.</echo>
+    </target>
+
+    <target name="jar-web" depends="jar-cls">
+        <mkdir dir="${CONNECTOR_DIR}/bin/fs_war" />
+		
+		<antcall target="copy-webcontent">
+			<param name="copy.webcontent.to.dir" value="${CONNECTOR_DIR}/bin/fs_war"/>
+		</antcall>
+
+        <mkdir dir="${CONNECTOR_DIR}/bin/fs_war/WEB-INF/lib" />
+        <copy file="${CONNECTOR_DIR}/bin/connector-${BUNDLE_NAME}.jar" tofile="${CONNECTOR_DIR}/bin/fs_war/WEB-INF/lib/connector-${BUNDLE_NAME}.jar" overwrite="true" />
+
+        <zip zipfile="${CONNECTOR_DIR}/bin/fs_war.jar" compress="true">
+            <fileset dir="${CONNECTOR_DIR}/bin/fs_war" />
+        </zip>
+    </target>
+	
+	<target name="copy-webcontent" if="webcontent.exists">
+		<copy todir="${copy.webcontent.to.dir}" flatten="false">
+			<fileset dir="${CONNECTOR_DIR}/webcontent" includes="**/*"/>
+		</copy>
+	</target>
+
+    <target name="bundle" depends="jar-web">
+        <!-- BUNDLE_NAME -->
+
+        <echo message="${PPM_MAJOR_VERSION}" file="${CONNECTOR_DIR}/bin/xxxxx" />
+        <loadfile property="PPM_MAJOR_VERSION_I" srcFile="${CONNECTOR_DIR}/bin/xxxxx">
+            <filterchain>
+                <tokenfilter>
+                    <replaceregex pattern="," replace="" flags="g"/>
+                </tokenfilter>
+            </filterchain>
+        </loadfile>
+
+    
+        <mkdir dir="${CONNECTOR_DIR}/bin/bundle/deploy/${PPM_AGGREGATED_MAJOR_VERSION}/${BUNDLE_NAME}/phases" />
+
+        <copy file="${CONNECTOR_DIR}/bin/fs_war.jar" tofile="${CONNECTOR_DIR}/bin/bundle/deploy/${PPM_AGGREGATED_MAJOR_VERSION}/${BUNDLE_NAME}/fs_war.jar" overwrite="true" />
+
+        <loadfile property="DEPLOY_INFO" srcFile="deploy.info.tpl">
+            <filterchain>
+                <tokenfilter>
+                    <replaceregex pattern="\{CONNECTOR_DIR\}" replace="${CONNECTOR_DIR}" flags="g"/>
+                    <replaceregex pattern="\{CONNECTOR_DESC\}" replace="${CONNECTOR_DESC}" flags="g"/>
+                    <replaceregex pattern="\{PPM_MAJOR_VERSION\}" replace="${PPM_MAJOR_VERSION}" flags="g"/>
+                    <replaceregex pattern="\{PPM_PATCH_VERSION\}" replace="${PPM_PATCH_VERSION}" flags="g"/>
+                </tokenfilter>
+            </filterchain>
+        </loadfile>
+        <echo message="${DEPLOY_INFO}" file="${CONNECTOR_DIR}/bin/bundle/deploy/${PPM_AGGREGATED_MAJOR_VERSION}/${BUNDLE_NAME}/deploy.info" />
+
+        <zip zipfile="${CONNECTOR_DIR}/bin/ppm-${PPM_AGGREGATED_MAJOR_VERSION}-${BUNDLE_NAME}.jar" compress="true">
+            <fileset dir="${CONNECTOR_DIR}/bin/bundle" />
+        </zip>
+    </target>
+</project>
