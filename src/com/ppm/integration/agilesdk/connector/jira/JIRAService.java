@@ -341,7 +341,10 @@ public class JIRAService {
     // Different Jira Instance has different customfield Id including sprint
     // customfield, so the sprint id needs to be found.
     private String findSprintCustomId(JSONObject schemas) {
+
+        @SuppressWarnings("unchecked")
         Iterator<String> i = schemas.keys();
+
         String sprintCutomId = "";
         while (i.hasNext()) {
             String key = i.next();
