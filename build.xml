@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="build-jira-connector" basedir="." default="all">
-
-    <property name="BUNDLE_NAME" value="Connector-JIRA"/>
-    <property name="CONNECTOR_DIR" value="jira-impl"/>
-    <property name="CONNECTOR_DESC" value="JIRA v1.0"/>
-    <property name="PPM_PATCH_VERSION" value="000"/>
+<project name="build-sample-connector" basedir="." default="all">
 
     <target name="all">
-        <ant dir=".." antfile="build-connector.xml" target="all" inheritall="true" />
-         <echo>deploy for ppm install and upgrade inner PPM940</echo>
-        <ant dir=".." antfile="build-connector.xml" target="deploy-for-ppm-install-and-upgrade" inheritall="true" />
+        <ant dir="." antfile="build-connector.xml" target="all" inheritall="true" />
     </target>
 
     <target name="quick-deploy">
-        <ant dir=".." antfile="build-connector.xml" target="quick-deploy" inheritall="true" />
+        <ant dir="." antfile="build-connector.xml" target="quick-deploy" inheritall="true" />
     </target>
 </project>
