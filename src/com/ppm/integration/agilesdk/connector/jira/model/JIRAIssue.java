@@ -3,171 +3,187 @@ package com.ppm.integration.agilesdk.connector.jira.model;
 import java.util.List;
 
 public class JIRAIssue {
-	private String name;
-	private String type;
-	private String status;
-	private String scheduledStart;
-	private String scheduledFinish;
-	private String scheduledDuration;
-	private Long scheduledEffort;
-	private String actualStart;
-	private String percentComplete;
-	private String actualFinish;
-	private String predecessors;
-	private String role;
-	private String resources;
-	private String createdDate;
-	private String updatedDate;
-	private List<JIRAIssue> children;
+    private String name;
 
-	public JIRAIssue(String name, String type, String status, String scheduledStart, String scheduledFinish,
-			String scheduledDuration, Long scheduledEffort, String actualStart, String percentComplete,
-			String actualFinish, String predecessors, String role, String resources, String createdDate,
-			String updatedDate, List<JIRAIssue> children) {
-		this.name = name;
-		this.type = type;
-		this.status = status;
-		this.scheduledStart = scheduledStart;
-		this.scheduledFinish = scheduledFinish;
-		this.scheduledDuration = scheduledDuration;
-		this.scheduledEffort = scheduledEffort;
-		this.actualStart = actualStart;
-		this.percentComplete = percentComplete;
-		this.actualFinish = actualFinish;
-		this.predecessors = predecessors;
-		this.role = role;
-		this.resources = resources;
-		this.createdDate = createdDate;
-		this.updatedDate = updatedDate;
-		this.children = children;
-	}
+    private String type;
 
-	public String getName() {
-		return name;
-	}
+    private String status;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    private String scheduledStart;
 
-	public String getType() {
-		return type;
-	}
+    private String scheduledFinish;
 
-	public void setType(String type) {
-		this.type = type;
-	}
+    private String scheduledDuration;
 
-	public String getStatus() {
-		return status;
-	}
+    private Long scheduledEffort;
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    private String actualStart;
 
-	public String getScheduledStart() {
-		return scheduledStart;
-	}
+    private String percentComplete;
 
-	public void setScheduledStart(String scheduledStart) {
-		this.scheduledStart = scheduledStart;
-	}
+    private String actualFinish;
 
-	public String getScheduledFinish() {
-		return scheduledFinish;
-	}
+    private String predecessors;
 
-	public void setScheduledFinish(String scheduledFinish) {
-		this.scheduledFinish = scheduledFinish;
-	}
+    private String role;
 
-	public String getScheduledDuration() {
-		return scheduledDuration;
-	}
+    private String resources;
 
-	public void setScheduledDuration(String scheduledDuration) {
-		this.scheduledDuration = scheduledDuration;
-	}
+    private String createdDate;
 
-	public Long getScheduledEffort() {
-		return scheduledEffort;
-	}
+    private String updatedDate;
 
-	public void setScheduledEffort(Long scheduledEffort) {
-		this.scheduledEffort = scheduledEffort;
-	}
+    private List<JIRAIssue> children;
 
-	public String getActualStart() {
-		return actualStart;
-	}
+    public JIRAIssue(String name, String type, String status, String scheduledStart, String scheduledFinish,
+            String scheduledDuration, Long scheduledEffort, String actualStart, String percentComplete,
+            String actualFinish, String predecessors, String role, String resources, String createdDate,
+            String updatedDate, List<JIRAIssue> children)
+    {
+        this.name = name;
+        this.type = type;
+        this.status = status;
+        this.scheduledStart = scheduledStart;
+        this.scheduledFinish = scheduledFinish;
+        this.scheduledDuration = scheduledDuration;
+        this.scheduledEffort = scheduledEffort;
+        this.actualStart = actualStart;
+        this.percentComplete = percentComplete;
+        this.actualFinish = actualFinish;
+        this.predecessors = predecessors;
+        this.role = role;
+        this.resources = resources;
+        this.createdDate = createdDate;
+        this.updatedDate = updatedDate;
+        this.children = children;
+    }
 
-	public void setActualStart(String actualStart) {
-		this.actualStart = actualStart;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getPercentComplete() {
-		return percentComplete;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setPercentComplete(String percentComplete) {
-		this.percentComplete = percentComplete;
-	}
+    public String getType() {
+        return type;
+    }
 
-	public String getActualFinish() {
-		return actualFinish;
-	}
+    public void setType(String type) {
+        this.type = type;
+    }
 
-	public void setActualFinish(String actualFinish) {
-		this.actualFinish = actualFinish;
-	}
+    public String getStatus() {
+        return status;
+    }
 
-	public String getPredecessors() {
-		return predecessors;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	public void setPredecessors(String predecessors) {
-		this.predecessors = predecessors;
-	}
+    public String getScheduledStart() {
+        return scheduledStart;
+    }
 
-	public String getRole() {
-		return role;
-	}
+    public void setScheduledStart(String scheduledStart) {
+        this.scheduledStart = scheduledStart;
+    }
 
-	public void setRole(String role) {
-		this.role = role;
-	}
+    public String getScheduledFinish() {
+        return scheduledFinish;
+    }
 
-	public String getResources() {
-		return resources;
-	}
+    public void setScheduledFinish(String scheduledFinish) {
+        this.scheduledFinish = scheduledFinish;
+    }
 
-	public void setResources(String resources) {
-		this.resources = resources;
-	}
+    public String getScheduledDuration() {
+        return scheduledDuration;
+    }
 
-	public String getCreatedDate() {
-		return createdDate;
-	}
+    public void setScheduledDuration(String scheduledDuration) {
+        this.scheduledDuration = scheduledDuration;
+    }
 
-	public void setCreatedDate(String createdDate) {
-		this.createdDate = createdDate;
-	}
+    public Long getScheduledEffort() {
+        return scheduledEffort;
+    }
 
-	public String getUpdatedDate() {
-		return updatedDate;
-	}
+    public void setScheduledEffort(Long scheduledEffort) {
+        this.scheduledEffort = scheduledEffort;
+    }
 
-	public void setUpdatedDate(String updatedDate) {
-		this.updatedDate = updatedDate;
-	}
+    public String getActualStart() {
+        return actualStart;
+    }
 
-	public List<JIRAIssue> getChildren() {
-		return children;
-	}
+    public void setActualStart(String actualStart) {
+        this.actualStart = actualStart;
+    }
 
-	public void setChildren(List<JIRAIssue> children) {
-		this.children = children;
-	}
+    public String getPercentComplete() {
+        return percentComplete;
+    }
+
+    public void setPercentComplete(String percentComplete) {
+        this.percentComplete = percentComplete;
+    }
+
+    public String getActualFinish() {
+        return actualFinish;
+    }
+
+    public void setActualFinish(String actualFinish) {
+        this.actualFinish = actualFinish;
+    }
+
+    public String getPredecessors() {
+        return predecessors;
+    }
+
+    public void setPredecessors(String predecessors) {
+        this.predecessors = predecessors;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getResources() {
+        return resources;
+    }
+
+    public void setResources(String resources) {
+        this.resources = resources;
+    }
+
+    public String getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(String updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public List<JIRAIssue> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<JIRAIssue> children) {
+        this.children = children;
+    }
 
 }
