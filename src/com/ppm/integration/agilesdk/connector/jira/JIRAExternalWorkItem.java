@@ -1,75 +1,71 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
+import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
+import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
+import net.sf.json.JSONObject;
+
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.datatype.XMLGregorianCalendar;
+public class JIRAExternalWorkItem extends ExternalWorkItem {
+    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-import com.hp.ppm.integration.tm.ExternalWorkItemActualEfforts;
-import com.hp.ppm.integration.tm.IExternalWorkItem;
+    private String name = "";
 
-import net.sf.json.JSONObject;
+    private long totalEffort = 0;
 
-public class JIRAExternalWorkItem implements IExternalWorkItem {
-	private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-	private String name = "";
-	private long totalEffort = 0;
-	private String errorMessage = null;
+    private String errorMessage = null;
 
-	private Map<String, Long> timeSpentSeconds = new HashMap<>();
-	private XMLGregorianCalendar dateFrom;
-	private XMLGregorianCalendar dateTo;
+    private Map<String, Long> timeSpentSeconds = new HashMap<>();
 
-	public JIRAExternalWorkItem(String name, long totalEffort, String errorMessage, XMLGregorianCalendar dateFrom,
-			XMLGregorianCalendar dateTo, Map<String, Long> timeSpentSeconds) {
-		this.name = name;
-		this.totalEffort = totalEffort;
-		this.errorMessage = errorMessage;
-		this.dateFrom = dateFrom;
-		this.dateTo = dateTo;
-		this.timeSpentSeconds = timeSpentSeconds;
-	}
+    private XMLGregorianCalendar dateFrom;
 
-	@Override
-	public String getName() {
-		return this.name;
-	}
+    private XMLGregorianCalendar dateTo;
 
-	@Override
-	public double getEffort() {
-		return totalEffort;
-	}
+    public JIRAExternalWorkItem(String name, long totalEffort, String errorMessage, XMLGregorianCalendar dateFrom,
+            XMLGregorianCalendar dateTo, Map<String, Long> timeSpentSeconds)
+    {
+        this.name = name;
+        this.totalEffort = totalEffort;
+        this.errorMessage = errorMessage;
+        this.dateFrom = dateFrom;
+        this.dateTo = dateTo;
+        this.timeSpentSeconds = timeSpentSeconds;
+    }
 
-	@Override
-	public String getExternalData() {
+    @Override public String getName() {
+        return this.name;
+    }
 
-		JSONObject json = new JSONObject();
+    @Override public Double getTotalEffort() {
+        return (double)totalEffort;
+    }
 
-		ExternalWorkItemActualEfforts actual = new ExternalWorkItemActualEfforts();
+    public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
 
-		Calendar cursor = dateFrom.toGregorianCalendar();
+        ExternalWorkItemEffortBreakdown effortBreakdown = new ExternalWorkItemEffortBreakdown();
 
-		while (cursor.before(dateTo.toGregorianCalendar())) {
-			String cursorDate = dateFormat.format(cursor.getTime());
-			if (timeSpentSeconds.containsKey(cursorDate)) {
-				actual.getEffortList().put(cursorDate, (double) (timeSpentSeconds.get(cursorDate) / 3600));
-			} else {
-				actual.getEffortList().put(cursorDate, 0.0);
-			}
-			cursor.add(Calendar.DAY_OF_MONTH, 1);
-		}
+        Calendar cursor = dateFrom.toGregorianCalendar();
 
-		json.put(ExternalWorkItemActualEfforts.JSON_KEY_FOR_ACTUAL_EFFORT, actual.toJson());
+        while (cursor.before(dateTo.toGregorianCalendar())) {
+            String cursorDate = dateFormat.format(cursor.getTime());
+            if (timeSpentSeconds.containsKey(cursorDate)) {
+                effortBreakdown.addEffort(cursor.getTime(), (double)(timeSpentSeconds.get(cursorDate) / 3600));
+            } else {
+                effortBreakdown.addEffort(cursor.getTime(), 0.0);
+            }
+            cursor.add(Calendar.DAY_OF_MONTH, 1);
+        }
 
-		return json.toString();
-	}
+        return effortBreakdown;
+    }
 
-	@Override
-	public String getErrorMessage() {
-		return errorMessage;
-	}
+    @Override public String getErrorMessage() {
+        return errorMessage;
+    }
 
 }
