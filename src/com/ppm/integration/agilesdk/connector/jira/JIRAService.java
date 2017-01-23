@@ -237,7 +237,7 @@ public class JIRAService {
             actualFinish = "null".equals(resolutionDate.toString()) ? null : (String)resolutionDate;
         }
         Object timeestimate = fields.get("timeestimate");
-        Long scheduledEffort = "null".equals(timeestimate.toString()) ? 0 : (Long)timeestimate;
+        Long scheduledEffort = (timeestimate == null || "null".equals(timeestimate.toString())) ? 0 : Long.valueOf(timeestimate.toString());
 
         String total = null;
         String percentComplete = null;
