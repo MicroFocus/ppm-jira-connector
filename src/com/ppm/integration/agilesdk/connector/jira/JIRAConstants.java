@@ -2,6 +2,8 @@ package com.ppm.integration.agilesdk.connector.jira;
 
 public class JIRAConstants {
 
+    public static final String NULL_VALUE = "<null>";
+
     public static final String KEY_BASE_URL = "baseURL";
 
     public static final String KEY_PROXY_HOST = "proxyHost";

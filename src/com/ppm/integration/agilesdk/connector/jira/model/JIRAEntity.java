@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.NULL_VALUE;
+
 public class JIRAEntity extends ExternalTask {
     private JIRAIssue issue;
 
@@ -66,11 +68,14 @@ public class JIRAEntity extends ExternalTask {
     }
 
     private Date getDate(String dateStr) {
-        if (dateStr != null) {
+        if (dateStr != null && !NULL_VALUE.equalsIgnoreCase(dateStr)) {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
             Date d = null;
             try {
-                d = format.parse(dateStr.substring(0, 10));
+                if (dateStr.length() > 10) {
+                    dateStr = dateStr.substring(0, 10);
+                }
+                d = format.parse(dateStr);
             } catch (ParseException e) {
                 return new Date();
             }
