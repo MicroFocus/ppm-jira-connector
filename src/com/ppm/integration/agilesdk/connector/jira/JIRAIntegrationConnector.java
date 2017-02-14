@@ -20,15 +20,18 @@ import com.ppm.integration.agilesdk.ui.PlainText;
 public class JIRAIntegrationConnector extends IntegrationConnector {
 
 	@Override
-	public String getConnectorVersion() {
-
-		return "7.2.6";
+	public String getExternalApplicationName() {
+		return "Atlassian JIRA";
 	}
 
 	@Override
-	public String getExternalApplicationName() {
+	public String getExternalApplicationVersionIndication() {
+		return "7.2.6+";
+	}
 
-		return "JIRA";
+	@Override
+	public String getConnectorVersion() {
+		return "1.0";
 	}
 
 	@Override
@@ -40,7 +43,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 	public List<Field> getDriverConfigurationFields() {
 		return Arrays
 				.asList(new Field[] {
-						new PlainText(JIRAConstants.KEY_BASE_URL, "BASE_URL", "https://marchhead331.atlassian.net",
+						new PlainText(JIRAConstants.KEY_BASE_URL, "BASE_URL", "https://marchhead9031.atlassian.net",
 								true),
 						new PlainText(JIRAConstants.KEY_PROXY_HOST, "PROXY_HOST", "", false),
 						new PlainText(JIRAConstants.KEY_PROXY_PORT, "PROXY_PORT", "", false),

@@ -38,36 +38,6 @@ public class JIRAExternalWorkItem extends ExternalWorkItem {
 		return totalEffort;
 	}
 
-	// The code is replaced by the method getEffortBreakDown,it will be removed
-	// once the new method works well
-	// once the function passed the test and i am
-	// @Override
-	// public String getExternalData() {
-	//
-	// JSONObject json = new JSONObject();
-	//
-	// ExternalWorkItemActualEfforts actual = new
-	// ExternalWorkItemActualEfforts();
-	//
-	// Calendar cursor = dateFrom.toGregorianCalendar();
-	//
-	// while (cursor.before(dateTo.toGregorianCalendar())) {
-	// String cursorDate = dateFormat.format(cursor.getTime());
-	// if (timeSpentSeconds.containsKey(cursorDate)) {
-	// long actualEffort = timeSpentSeconds.get(cursorDate) / 3600;
-	// actual.getEffortList().put(cursorDate, (double) actualEffort);
-	// } else {
-	// actual.getEffortList().put(cursorDate, 0.0);
-	// }
-	// cursor.add(Calendar.DAY_OF_MONTH, 1);
-	// }
-	//
-	// json.put(ExternalWorkItemActualEfforts.JSON_KEY_FOR_ACTUAL_EFFORT,
-	// actual.toJson());
-	//
-	// return json.toString();
-	// }
-
 	public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
 		ExternalWorkItemEffortBreakdown eb = new ExternalWorkItemEffortBreakdown();
 

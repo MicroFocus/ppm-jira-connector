@@ -1,79 +1,81 @@
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
-import javax.ws.rs.core.MediaType;
-
+import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
 
-import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
+import javax.ws.rs.core.MediaType;
 
 public class RestWrapper {
-	private RestClient restClient;
-	private IRestConfig config;
+    private RestClient restClient;
 
-	public IRestConfig getConfig() {
-		return config;
-	}
+    private IRestConfig config;
 
-	public void setConfig(IRestConfig config) {
-		this.config = config;
-	}
+    public RestWrapper() {
+        restClient = new RestClient();
+    }
 
-	public RestClient getRestClient() {
-		return restClient;
-	}
+    public RestWrapper(IRestConfig config) {
+        this.config = config;
+        restClient = createRestClient(config);
+    }
 
-	public void setRestClient(RestClient restClient) {
-		this.restClient = restClient;
-	}
+    public IRestConfig getConfig() {
+        return config;
+    }
 
-	public RestWrapper() {
-		restClient = new RestClient();
-	}
+    public void setConfig(IRestConfig config) {
+        this.config = config;
+    }
 
-	public RestWrapper(IRestConfig config) {
-		this.config = config;
-		restClient = createRestClient(config);
-	}
+    public RestClient getRestClient() {
+        return restClient;
+    }
 
-	public RestClient createRestClient(IRestConfig config) {
-		restClient = new RestClient(config.getClientConfig());
-		return restClient;
-	}
+    public void setRestClient(RestClient restClient) {
+        this.restClient = restClient;
+    }
 
-	public Resource getResource(String uri) {
-		return restClient.resource(uri);
-	}
+    public RestClient createRestClient(IRestConfig config) {
+        restClient = new RestClient(config.getClientConfig());
+        return restClient;
+    }
 
-	public Resource getResource(IRestConfig config, String uri) {
-		restClient = createRestClient(config);
-		return restClient.resource(uri);
-	}
+    public Resource getResource(String uri) {
+        return restClient.resource(uri);
+    }
 
-	public Resource getJIRAResource(IRestConfig config, String uri) {
-		restClient = createRestClient(config);
-		Resource resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
-		return resource;
-	}
+    public Resource getResource(IRestConfig config, String uri) {
+        restClient = createRestClient(config);
+        return restClient.resource(uri);
+    }
 
-	public Resource getJIRAResource(String uri) {
-		Resource resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
-		return resource;
-	}
+    public Resource getJIRAResource(IRestConfig config, String uri) {
+        restClient = createRestClient(config);
+        Resource resource =
+                restClient.resource(uri).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
+                        .header("Authorization", config.getBasicAuthorizaton());
+        return resource;
+    }
 
-	public ClientResponse sendGet(String uri) {
-		Resource resource = this.getJIRAResource(uri);
-		ClientResponse response = resource.get();
+    public Resource getJIRAResource(String uri) {
+        Resource resource =
+                restClient.resource(uri).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
+                        .header("Authorization", config.getBasicAuthorizaton());
+        return resource;
+    }
 
-		int statusCode = response.getStatusCode();
+    public ClientResponse sendGet(String uri) {
+        Resource resource = this.getJIRAResource(uri);
+        ClientResponse response = resource.get();
 
-		if (statusCode != 200) {
-			throw new RestRequestException(statusCode, response.getMessage());
-		}
+        int statusCode = response.getStatusCode();
 
-		return response;
-	}
+        if (statusCode != 200) {
+            throw new RestRequestException(statusCode, response.getMessage());
+        }
+
+        return response;
+    }
 }

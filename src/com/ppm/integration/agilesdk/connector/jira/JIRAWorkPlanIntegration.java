@@ -1,11 +1,6 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAExternalWorkPlan;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
@@ -18,13 +13,7 @@ import com.ppm.integration.agilesdk.pm.ExternalTask;
 import com.ppm.integration.agilesdk.pm.ExternalWorkPlan;
 import com.ppm.integration.agilesdk.pm.WorkPlanIntegration;
 import com.ppm.integration.agilesdk.pm.WorkPlanIntegrationContext;
-import com.ppm.integration.agilesdk.ui.CheckBox;
-import com.ppm.integration.agilesdk.ui.DynamicDropdown;
-import com.ppm.integration.agilesdk.ui.Field;
-import com.ppm.integration.agilesdk.ui.LabelText;
-import com.ppm.integration.agilesdk.ui.LineBreaker;
-import com.ppm.integration.agilesdk.ui.PasswordText;
-import com.ppm.integration.agilesdk.ui.PlainText;
+import com.ppm.integration.agilesdk.ui.*;
 
 public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 	private JIRAService service;
