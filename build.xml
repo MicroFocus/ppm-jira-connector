@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="build-sample-connector" basedir="." default="all">
+
+    <target name="all">
+        <ant dir="." antfile="build-connector.xml" target="all" inheritall="true" />
+    </target>
+
+    <target name="quick-deploy">
+        <ant dir="." antfile="build-connector.xml" target="quick-deploy" inheritall="true" />
+    </target>
+</project>
