@@ -2,7 +2,7 @@ package com.ppm.integration.agilesdk.connector.jira.model;
 
 import java.util.HashMap;
 
-public class JIRAProject{
+public class JIRAProject {
 	private String expand;
 	private String self;
 	private String id;

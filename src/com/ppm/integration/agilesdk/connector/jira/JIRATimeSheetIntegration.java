@@ -43,21 +43,20 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 				values.get(JIRAConstants.KEY_BASE_URL));
 		String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT_NAME);
 		Map<String, Map<String, Long>> map = service.getJIRATempoWorklogs(start, end, projectKey);
-	
+
 		Set<Entry<String, Map<String, Long>>> entrySet = map.entrySet();
 
 		for (Entry<String, Map<String, Long>> entry : entrySet) {
 			double actualEffort = 0;
-			Map<String,Double> actualEffortsFormatted = new HashMap<>();
-			
+			Map<String, Double> actualEffortsFormatted = new HashMap<>();
+
 			Map<String, Long> actualEfforts = entry.getValue();
 			Set<String> keys = actualEfforts.keySet();
 			for (String key : keys) {
-				actualEffort += actualEfforts.get(key)/3600.0;
-				actualEffortsFormatted.put(key, actualEfforts.get(key)/3600.0);
+				actualEffort += actualEfforts.get(key) / 3600.0;
+				actualEffortsFormatted.put(key, actualEfforts.get(key) / 3600.0);
 			}
-			
-			
+
 			items.add(new JIRAExternalWorkItem(entry.getKey(), actualEffort, entry.getKey() + " error", start, end,
 					actualEffortsFormatted));
 		}

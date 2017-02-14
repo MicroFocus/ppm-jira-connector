@@ -19,7 +19,7 @@ public class JIRARestConfig implements IRestConfig {
 
 	@Override
 	public ClientConfig setProxy(String proxyHost, String proxyPort) {
-		
+
 		if (proxyHost != null && !proxyHost.isEmpty() && proxyPort != null && !proxyPort.isEmpty()) {
 			clientConfig.proxyHost(proxyHost);
 			clientConfig.proxyPort(Integer.parseInt(proxyPort));
@@ -27,7 +27,8 @@ public class JIRARestConfig implements IRestConfig {
 		return clientConfig;
 	}
 
-	// some responses not expected when setting the authentication with this method
+	// some responses not expected when setting the authentication with this
+	// method
 	@Override
 	public ClientConfig setBasicAuthorizatonWithBasicAuthHandler(String username, String password) {
 
@@ -41,7 +42,6 @@ public class JIRARestConfig implements IRestConfig {
 	// recommend this method to set the authentication for now
 	@Override
 	public String getBasicAuthorizaton() {
-		
 
 		return basicAuthentication;
 	}

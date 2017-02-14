@@ -1,13 +1,19 @@
 package com.ppm.integration.agilesdk.connector.jira.model;
 
+import java.util.Date;
 import java.util.List;
 
-public class JIRAIssue {
-	private String name;
+import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
+
+public class JIRAIssue extends JIRAEntity {
+	private String issueName;
 	private String type;
-	private String status;
-	private String scheduledStart;
-	private String scheduledFinish;
+	private String key;
+	private String statusName;
+	private String scheduledStartDate;
+	private String scheduledFinishDate;
 	private String scheduledDuration;
 	private Long scheduledEffort;
 	private String actualStart;
@@ -18,17 +24,20 @@ public class JIRAIssue {
 	private String resources;
 	private String createdDate;
 	private String updatedDate;
-	private List<JIRAIssue> children;
+	private List<JIRAIssue> subTasks;
+	private String epicLink;
 
-	public JIRAIssue(String name, String type, String status, String scheduledStart, String scheduledFinish,
-			String scheduledDuration, Long scheduledEffort, String actualStart, String percentComplete,
-			String actualFinish, String predecessors, String role, String resources, String createdDate,
-			String updatedDate, List<JIRAIssue> children) {
-		this.name = name;
+	public JIRAIssue(String issueName, String type, String key, String statusName, String scheduledStartDate,
+			String scheduledFinishDate, String scheduledDuration, Long scheduledEffort, String actualStart,
+			String percentComplete, String actualFinish, String predecessors, String role, String resources,
+			String createdDate, String updatedDate, List<JIRAIssue> subTasks, String epicLink) {
+
+		this.issueName = issueName;
 		this.type = type;
-		this.status = status;
-		this.scheduledStart = scheduledStart;
-		this.scheduledFinish = scheduledFinish;
+		this.key = key;
+		this.statusName = statusName;
+		this.scheduledStartDate = scheduledStartDate;
+		this.scheduledFinishDate = scheduledFinishDate;
 		this.scheduledDuration = scheduledDuration;
 		this.scheduledEffort = scheduledEffort;
 		this.actualStart = actualStart;
@@ -39,15 +48,16 @@ public class JIRAIssue {
 		this.resources = resources;
 		this.createdDate = createdDate;
 		this.updatedDate = updatedDate;
-		this.children = children;
+		this.subTasks = subTasks;
+		this.epicLink = epicLink;
 	}
 
-	public String getName() {
-		return name;
+	public String getIssueName() {
+		return issueName;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setIssueName(String issueName) {
+		this.issueName = issueName;
 	}
 
 	public String getType() {
@@ -58,28 +68,36 @@ public class JIRAIssue {
 		this.type = type;
 	}
 
-	public String getStatus() {
-		return status;
+	public String getKey() {
+		return key;
 	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public void setKey(String key) {
+		this.key = key;
 	}
 
-	public String getScheduledStart() {
-		return scheduledStart;
+	public String getStatusName() {
+		return statusName;
 	}
 
-	public void setScheduledStart(String scheduledStart) {
-		this.scheduledStart = scheduledStart;
+	public void setStatusName(String statusName) {
+		this.statusName = statusName;
 	}
 
-	public String getScheduledFinish() {
-		return scheduledFinish;
+	public String getScheduledStartDate() {
+		return scheduledStartDate;
 	}
 
-	public void setScheduledFinish(String scheduledFinish) {
-		this.scheduledFinish = scheduledFinish;
+	public void setScheduledStartDate(String scheduledStartDate) {
+		this.scheduledStartDate = scheduledStartDate;
+	}
+
+	public String getScheduledFinishDate() {
+		return scheduledFinishDate;
+	}
+
+	public void setScheduledFinishDate(String scheduledFinishDate) {
+		this.scheduledFinishDate = scheduledFinishDate;
 	}
 
 	public String getScheduledDuration() {
@@ -162,12 +180,101 @@ public class JIRAIssue {
 		this.updatedDate = updatedDate;
 	}
 
-	public List<JIRAIssue> getChildren() {
-		return children;
+	public List<JIRAIssue> getSubTasks() {
+		return subTasks;
 	}
 
-	public void setChildren(List<JIRAIssue> children) {
-		this.children = children;
+	public void setSubTasks(List<JIRAIssue> subTasks) {
+		this.subTasks = subTasks;
+	}
+
+	public String getEpicLink() {
+		return epicLink;
+	}
+
+	public void setEpicLink(String epicLink) {
+		this.epicLink = epicLink;
+	}
+
+	@Override
+	public TaskStatus getStatus() {
+		return getTaskStatus(this.statusName);
+	}
+
+	@Override
+	public Date getScheduledStart() {
+		return checkDate(this.createdDate);
+	}
+
+	@Override
+	public Date getScheduledFinish() {
+		return checkDate(this.scheduledFinishDate);
+	}
+
+	@Override
+	public String getName() {
+		return "[" + this.type + "] " + this.issueName;
+	}
+
+	@Override
+	public String getId() {
+
+		return null;
+	}
+
+	@Override
+	public Double getPercentCompleteOverrideValue() {
+		return Double.parseDouble(this.percentComplete);
+	}
+
+	@Override
+	public List<ExternalTaskActuals> getActuals() {
+		ExternalTaskActuals etl = new ExternalTaskActuals() {
+			@Override
+			public double getScheduledEffort() {
+				return scheduledEffort / 3600;
+			}
+
+			@Override
+			public Date getActualFinish() {
+				return super.getActualFinish();
+			}
+
+			@Override
+			public Date getActualStart() {
+				return super.getActualStart();
+			}
+
+			@Override
+			public Date getEstimatedFinishDate() {
+				return super.getEstimatedFinishDate();
+			}
+
+			@Override
+			public Double getEstimatedRemainingEffort() {
+				return super.getEstimatedRemainingEffort();
+			}
+
+			@Override
+			public double getPercentComplete() {
+				return Double.parseDouble(percentComplete);
+			}
+
+		};
+		return Arrays.asList(new ExternalTaskActuals[] { etl });
+	}
+
+	private TaskStatus getTaskStatus(String status) {
+		switch (status) {
+		case "To Do":
+			return TaskStatus.IN_PLANNING;
+		case "In Progress":
+			return TaskStatus.IN_PROGRESS;
+		case "Done":
+			return TaskStatus.READY;
+		default:
+			return TaskStatus.UNKNOWN;
+		}
 	}
 
 }

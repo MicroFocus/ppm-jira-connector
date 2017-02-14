@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.ppm.integration.agilesdk.ValueSet;
-import com.ppm.integration.agilesdk.connector.jira.model.JIRAEntity;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRAExternalWorkPlan;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRAVersion;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.IRestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
@@ -49,6 +50,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 				.asList(new Field[] { new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "admin", true),
 
 						new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "hpe1990", true), new LineBreaker(),
+
 						new DynamicDropdown(JIRAConstants.KEY_JIRA_PROJECT_NAME, "JIRA_PRPOJECT", true) {
 
 							@Override
@@ -69,19 +71,95 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 								List<Option> optionList = new ArrayList<>();
 								for (JIRAProject project : list) {
 									Option option = new Option(project.getKey(), project.getName());
-
 									optionList.add(option);
 								}
 								return optionList;
 							}
-						}, new LineBreaker(),
 
-						new LabelText(JIRAConstants.KEY_LEVEL_OF_DETAILS_TO_SYNCHRONIZE,
-								"LEVEL_OF_DETAILS_TO_SYNCHRONIZE", "Level of Details to Synchronize", true),
-						new CheckBox(JIRAConstants.JIRA_ISSUE_TASK, "INCLUDE_JIRA_ISSUE_TASK", true),
-						new CheckBox(JIRAConstants.JIRA_ISSUE_STORY, "INCLUDE_JIRA_ISSUE_STORY", true),
-						new CheckBox(JIRAConstants.JIRA_ISSUE_EPIC, "INCLUDE_JIRA_ISSUE_EPIC", true),
-						new CheckBox(JIRAConstants.JIRA_ISSUE_BUG, "INCLUDE_JIRA_ISSUE_BUG", true) });
+						}, new LineBreaker(), new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION,
+								"IMPORT_SELECTION", "All project planned issues", "", true) {
+
+							@Override
+							public List<String> getDependencies() {
+								return new ArrayList<String>();
+							}
+
+							@Override
+							public List<Option> getDynamicalOptions(ValueSet values) {
+
+								List<Option> optionList = new ArrayList<>();
+
+								Option option1 = new Option(JIRAConstants.KEY_ALL_PROJECT_PLANNED_ISSUES,
+										"All project planned issues");
+								Option option2 = new Option(JIRAConstants.KEY_EPIC, "Epic");
+								Option option3 = new Option(JIRAConstants.KEY_ALL_EPICS, "All Epics");
+								Option option4 = new Option(JIRAConstants.KEY_VERSION, "Version");
+
+								optionList.add(option1);
+								optionList.add(option2);
+								optionList.add(option3);
+								optionList.add(option4);
+
+								return optionList;
+							}
+
+						}, new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS",
+								false) {
+
+							@Override
+							public List<String> getDependencies() {
+
+								return Arrays.asList(new String[] { JIRAConstants.KEY_JIRA_PROJECT_NAME,
+										JIRAConstants.KEY_IMPORT_SELECTION });
+							}
+
+							@Override
+							public List<Option> getDynamicalOptions(ValueSet values) {
+								String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
+								String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT_NAME);
+								List<Option> options = new ArrayList<>();
+								switch (importSelection) {
+								case JIRAConstants.KEY_ALL_PROJECT_PLANNED_ISSUES:
+									break;
+								case JIRAConstants.KEY_EPIC:
+									configureService(values.get(JIRAConstants.KEY_PROXY_HOST),
+											values.get(JIRAConstants.KEY_PROXY_PORT),
+											values.get(JIRAConstants.KEY_USERNAME),
+											values.get(JIRAConstants.KEY_PASSWORD),
+											values.get(JIRAConstants.KEY_BASE_URL));
+									List<JIRAIssue> list = service.getIssues(projectKey, "EPIC");
+									for (JIRAIssue issue : list) {
+										Option option = new Option(issue.getKey(), issue.getName());
+										options.add(option);
+
+									}
+									break;
+								case JIRAConstants.KEY_ALL_EPICS:
+									break;
+								case JIRAConstants.KEY_VERSION:
+									configureService(values.get(JIRAConstants.KEY_PROXY_HOST),
+											values.get(JIRAConstants.KEY_PROXY_PORT),
+											values.get(JIRAConstants.KEY_USERNAME),
+											values.get(JIRAConstants.KEY_PASSWORD),
+											values.get(JIRAConstants.KEY_BASE_URL));
+									List<JIRAVersion> list1 = service.getVersions(projectKey);
+									for (JIRAVersion version : list1) {
+										Option option = new Option(version.getId(), version.getName());
+										options.add(option);
+
+									}
+									break;
+								}
+								return options;
+							}
+
+						}, new CheckBox(JIRAConstants.KEY_INCLUDE_ISSUES_BREAKDOWN, "INCLUDE_ISSUES_BREAKDOWN", false),
+						new LineBreaker(),
+						new LabelText(JIRAConstants.KEY_JIRA_ISSUES_TO_IMPORT, "SELECT_ISSUES_TO_IMPORT",
+								"Select Issues to Import", true),
+						new CheckBox(JIRAConstants.JIRA_ISSUE_TASK, "JIRA_ISSUE_TASK", true),
+						new CheckBox(JIRAConstants.JIRA_ISSUE_STORY, "JIRA_ISSUE_STORY", true),
+						new CheckBox(JIRAConstants.JIRA_ISSUE_BUG, "JIRA_ISSUE_BUG", false) });
 
 		return fields;
 	}
@@ -89,31 +167,21 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 	@Override
 	public ExternalWorkPlan getExternalWorkPlan(WorkPlanIntegrationContext context, ValueSet values) {
 		String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT_NAME);
+		String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
+		String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
+		boolean isBreakdown = values.getBoolean(JIRAConstants.KEY_INCLUDE_ISSUES_BREAKDOWN, true);
 		configureService(values.get(JIRAConstants.KEY_PROXY_HOST), values.get(JIRAConstants.KEY_PROXY_PORT),
 				values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
 				values.get(JIRAConstants.KEY_BASE_URL));
 		Map<String, Boolean> map = new HashMap<>();
 		map.put(JIRAConstants.JIRA_ISSUE_TASK, values.getBoolean(JIRAConstants.JIRA_ISSUE_TASK, true));
 		map.put(JIRAConstants.JIRA_ISSUE_STORY, values.getBoolean(JIRAConstants.JIRA_ISSUE_STORY, true));
-		map.put(JIRAConstants.JIRA_ISSUE_EPIC, values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true));
 		map.put(JIRAConstants.JIRA_ISSUE_BUG, values.getBoolean(JIRAConstants.JIRA_ISSUE_BUG, true));
 
-		final List<JIRAIssue> issues = service.getIssues(projectKey, map);
-		return new ExternalWorkPlan() {
+		List<ExternalTask> ets = service.getExternalTasks(projectKey, map, importSelection, importSelectionDetails,
+				isBreakdown);
 
-			@Override
-			public List<ExternalTask> getRootTasks() {
-				List<ExternalTask> externalTasks = new ArrayList<>();
-				for (final JIRAIssue issue : issues) {
-					JIRAEntity entity = new JIRAEntity();
-					entity.setIssue(issue);
-					
-					externalTasks.add(entity);
-				}
-
-				return externalTasks;
-			}
-		};
+		return new JIRAExternalWorkPlan(ets);
 	}
 
 	private void configureService(String proxyHost, String proxyPort, String username, String password,

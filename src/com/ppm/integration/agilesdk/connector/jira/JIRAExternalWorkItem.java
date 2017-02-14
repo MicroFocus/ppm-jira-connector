@@ -38,7 +38,8 @@ public class JIRAExternalWorkItem extends ExternalWorkItem {
 		return totalEffort;
 	}
 
-	// The code is replaced by the method getEffortBreakDown,it will be removed once the new method works well
+	// The code is replaced by the method getEffortBreakDown,it will be removed
+	// once the new method works well
 	// once the function passed the test and i am
 	// @Override
 	// public String getExternalData() {
