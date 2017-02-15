@@ -163,22 +163,41 @@ public class JIRAService {
 			String attachedArg, boolean isBreakdown) {
 		List<ExternalTask> ets = null;
 		String query = baseUri + JIRAConstants.ISSUES_IN_SPRINT_SUFFIX + projectKey + getIssueQueryString(map);
-		String epicLinkCustomId = "10005";
 		switch (queryCase) {
 		case JIRAConstants.KEY_EPIC:
+			String epicLinkCustomId = "";
+			ClientResponse response = wrapper.sendGet(encodeUrl(query));
 
-			query += " and cf[" + epicLinkCustomId + "]=" + attachedArg;
+			String jsonStr = response.getEntity(String.class);
+
+			try {
+
+				JSONObject jsonObj = new JSONObject(jsonStr);
+				JSONObject schemas = jsonObj.getJSONObject("schema");
+				epicLinkCustomId = JIRACustomIdFinder.findId(schemas, JIRAConstants.JIRA_EPIC_LINK_CUSTOM);
+				epicLinkCustomId = epicLinkCustomId.substring(epicLinkCustomId.indexOf("_") + 1);
+			} catch (JSONException e) {
+
+			}
+
+			if (!"".equals(attachedArg)) {
+				query += " and cf[" + epicLinkCustomId + "]=" + attachedArg;
+			} else {
+				query += " and cf[" + epicLinkCustomId + "]!=null";
+			}
 			ets = toExternalTasks(query, isBreakdown);
 			break;
 		case JIRAConstants.KEY_ALL_EPICS:
-			// query = baseUri + JIRAConstants.ISSUES_SUFFIX + projectKey +
-			// getIssueQueryString(map) + " and cf["
-			// + epicLinkCustomId + "]!=null";
 			List<JIRAEpic> list = getEpicsWithIssues(projectKey, map, isBreakdown);
 			ets = toExternalTasks(list);
 			break;
 		case JIRAConstants.KEY_VERSION:
-			query += " and fixVersion=" + attachedArg;
+
+			if (!"".equals(attachedArg)) {
+				query += " and fixVersion=" + attachedArg;
+			} else {
+				query += " and fixVersion!=null";
+			}
 			ets = toExternalTasks(query, isBreakdown);
 			break;
 		case JIRAConstants.KEY_ALL_PROJECT_PLANNED_ISSUES:

@@ -26,8 +26,15 @@ public class JIRAEpic extends JIRAIssue {
 		this.isBreakdown = isBreakdown;
 	}
 
+	// the two methods for the inner class ExternalTaskActuals to get the data
+	// because of the same
+	// method name
 	private String getPercent() {
 		return this.getPercentComplete();
+	}
+
+	private long getEffort() {
+		return this.getScheduledEffort();
 	}
 
 	@Override
@@ -77,7 +84,7 @@ public class JIRAEpic extends JIRAIssue {
 					return actualEffort / 3600;
 				}
 
-				return super.getScheduledEffort();
+				return getEffort() / 3600;
 			}
 		};
 		return Arrays.asList(new ExternalTaskActuals[] { eta });
