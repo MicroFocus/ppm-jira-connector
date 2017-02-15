@@ -3,86 +3,79 @@ package com.ppm.integration.agilesdk.connector.jira.model;
 import java.util.HashMap;
 
 public class JIRAProject {
-    private String expand;
+	private String expand;
+	private String self;
+	private String id;
+	private String key;
+	private String name;
+	private HashMap<String, String> avatarUrls;
+	private String projectKey;
 
-    private String self;
+	public JIRAProject(String expand, String self, String id, String key, String name,
+			HashMap<String, String> avatarUrls, String projectKey) {
+		this.expand = expand;
+		this.self = self;
+		this.id = id;
+		this.key = key;
+		this.name = name;
+		this.avatarUrls = avatarUrls;
+		this.projectKey = projectKey;
+	}
 
-    private String id;
+	public String getExpand() {
+		return expand;
+	}
 
-    private String key;
+	public void setExpand(String expand) {
+		this.expand = expand;
+	}
 
-    private String name;
+	public String getSelf() {
+		return self;
+	}
 
-    private HashMap<String, String> avatarUrls;
+	public void setSelf(String self) {
+		this.self = self;
+	}
 
-    private String projectKey;
+	public String getId() {
+		return id;
+	}
 
-    public JIRAProject(String expand, String self, String id, String key, String name,
-            HashMap<String, String> avatarUrls, String projectKey)
-    {
-        this.expand = expand;
-        this.self = self;
-        this.id = id;
-        this.key = key;
-        this.name = name;
-        this.avatarUrls = avatarUrls;
-        this.projectKey = projectKey;
-    }
+	public void setId(String id) {
+		this.id = id;
+	}
 
-    public String getExpand() {
-        return expand;
-    }
+	public String getKey() {
+		return key;
+	}
 
-    public void setExpand(String expand) {
-        this.expand = expand;
-    }
+	public void setKey(String key) {
+		this.key = key;
+	}
 
-    public String getSelf() {
-        return self;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setSelf(String self) {
-        this.self = self;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public String getId() {
-        return id;
-    }
+	public HashMap<String, String> getAvatarUrls() {
+		return avatarUrls;
+	}
 
-    public void setId(String id) {
-        this.id = id;
-    }
+	public void setAvatarUrls(HashMap<String, String> avatarUrls) {
+		this.avatarUrls = avatarUrls;
+	}
 
-    public String getKey() {
-        return key;
-    }
+	public String getProjectKey() {
+		return projectKey;
+	}
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public HashMap<String, String> getAvatarUrls() {
-        return avatarUrls;
-    }
-
-    public void setAvatarUrls(HashMap<String, String> avatarUrls) {
-        this.avatarUrls = avatarUrls;
-    }
-
-    public String getProjectKey() {
-        return projectKey;
-    }
-
-    public void setProjectKey(String projectKey) {
-        this.projectKey = projectKey;
-    }
+	public void setProjectKey(String projectKey) {
+		this.projectKey = projectKey;
+	}
 
 }
