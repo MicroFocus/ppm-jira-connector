@@ -1,8 +1,9 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -35,15 +36,22 @@ public class JIRAExternalWorkItem extends ExternalWorkItem {
 	}
 
 	public Double getTotalEffort() {
-		return totalEffort;
+		return null;
 	}
 
 	public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
 		ExternalWorkItemEffortBreakdown eb = new ExternalWorkItemEffortBreakdown();
+		Calendar cursor = dateFrom.toGregorianCalendar();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		while (cursor.before(dateTo.toGregorianCalendar())) {
+			String cursorDate = dateFormat.format(cursor.getTime());
+			if (timeSpentSeconds.containsKey(cursorDate)) {
+				eb.addEffort(cursorDate, timeSpentSeconds.get(cursorDate));
+			} else {
+				eb.addEffort(cursorDate, 0);
+			}
+			cursor.add(Calendar.DAY_OF_MONTH, 1);
 
-		Set<String> dateKeys = timeSpentSeconds.keySet();
-		for (String date : dateKeys) {
-			eb.addEffort(date, timeSpentSeconds.get(date));
 		}
 		return eb;
 	}
