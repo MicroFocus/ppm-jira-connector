@@ -1,8 +1,17 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
 import javax.xml.datatype.XMLGregorianCalendar;
+
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.IRestConfig;
@@ -11,7 +20,11 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
 import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegration;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegrationContext;
-import com.ppm.integration.agilesdk.ui.*;
+import com.ppm.integration.agilesdk.ui.DynamicDropdown;
+import com.ppm.integration.agilesdk.ui.Field;
+import com.ppm.integration.agilesdk.ui.LineBreaker;
+import com.ppm.integration.agilesdk.ui.PasswordText;
+import com.ppm.integration.agilesdk.ui.PlainText;
 
 public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
@@ -29,7 +42,8 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 				values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
 				values.get(JIRAConstants.KEY_BASE_URL));
 		String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT_NAME);
-		Map<String, Map<String, Long>> map = service.getJIRATempoWorklogs(start, end, projectKey);
+		String author = values.get(JIRAConstants.KEY_USERNAME);
+		Map<String, Map<String, Long>> map = service.getJIRATempoWorklogs(start, end, projectKey, author);
 
 		Set<Entry<String, Map<String, Long>>> entrySet = map.entrySet();
 
