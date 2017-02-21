@@ -359,19 +359,22 @@ public class JIRAService {
 				JSONArray worklogs = fields.getJSONObject("worklog").getJSONArray("worklogs");
 				for (int j = 0; j < worklogs.length(); j++) {
 					JSONObject obj = worklogs.getJSONObject(j);
-					Long timeSpentSeconds = obj.getLong("timeSpentSeconds");
-					String started = obj.getString("started");
-					String comment = obj.getString("comment");
-					String self = obj.getString("self");
-					String id = obj.getString("id");
-					String isuSelf = issue.getString("self");
-					String isuId = issue.getString("id");
-					String isuKey = issue.getString("key");
-					String isuSummary = fields.getString("summary");
-					JIRATempoIssue jti = new JIRATempoIssue(isuSelf, isuId, "", isuKey, 0L, "", isuSummary);
+					String authorKey = obj.getJSONObject("author").getString("key");
+					if (authorKey.equals(author)) {
+						Long timeSpentSeconds = obj.getLong("timeSpentSeconds");
+						String started = obj.getString("started");
+						String comment = obj.getString("comment");
+						String self = obj.getString("self");
+						String id = obj.getString("id");
+						String isuSelf = issue.getString("self");
+						String isuId = issue.getString("id");
+						String isuKey = issue.getString("key");
+						String isuSummary = fields.getString("summary");
+						JIRATempoIssue jti = new JIRATempoIssue(isuSelf, isuId, "", isuKey, 0L, "", isuSummary);
 
-					JIRATempoWorklog jtw = new JIRATempoWorklog(timeSpentSeconds, started, comment, self, id, jti);
-					jtls.add(jtw);
+						JIRATempoWorklog jtw = new JIRATempoWorklog(timeSpentSeconds, started, comment, self, id, jti);
+						jtls.add(jtw);
+					}
 
 				}
 
