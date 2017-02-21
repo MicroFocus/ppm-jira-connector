@@ -337,10 +337,10 @@ public class JIRAService {
 	}
 
 	public Map<String, Map<String, Long>> getJIRATempoWorklogs(XMLGregorianCalendar dateFrom,
-			XMLGregorianCalendar dateTo, String projectKey) {
+			XMLGregorianCalendar dateTo, String projectKey, String author) {
 
 		String requestParameter = "worklogDate>=" + dateFrom.toString().substring(0, 10) + " and worklogDate<="
-				+ dateTo.toString().substring(0, 10);
+				+ dateTo.toString().substring(0, 10) + " and worklogAuthor=" + author;
 
 		requestParameter += "".equals(projectKey) ? "" : " and project=" + projectKey;
 
