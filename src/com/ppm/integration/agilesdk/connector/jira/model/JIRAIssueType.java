@@ -1,3 +1,4 @@
+
 package com.ppm.integration.agilesdk.connector.jira.model;
 
 public class JIRAIssueType {
@@ -16,8 +17,7 @@ public class JIRAIssueType {
     private Integer avatarId;
 
     public JIRAIssueType(String self, String id, String description, String iconUrl, String name, boolean subtask,
-            Integer avatarId)
-    {
+            Integer avatarId) {
         this.self = self;
         this.id = id;
         this.description = description;

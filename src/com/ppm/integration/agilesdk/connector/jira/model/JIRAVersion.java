@@ -1,113 +1,125 @@
+
 package com.ppm.integration.agilesdk.connector.jira.model;
 
 public class JIRAVersion {
-	private String id;
-	private String self;
-	private String name;
-	private boolean archived;
-	private boolean released;
-	private String startDate;
-	private String releaseDate;
-	private boolean overdue;
-	private String userStartDate;
-	private String userReleaseDate;
-	private String projectId;
-	private String description;
+    private String id;
 
-	public String getId() {
-		return id;
-	}
+    private String self;
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    private String name;
 
-	public String getSelf() {
-		return self;
-	}
+    private boolean archived;
 
-	public void setSelf(String self) {
-		this.self = self;
-	}
+    private boolean released;
 
-	public String getName() {
-		return name;
-	}
+    private String startDate;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    private String releaseDate;
 
-	public boolean isArchived() {
-		return archived;
-	}
+    private boolean overdue;
 
-	public void setArchived(boolean archived) {
-		this.archived = archived;
-	}
+    private String userStartDate;
 
-	public boolean isReleased() {
-		return released;
-	}
+    private String userReleaseDate;
 
-	public void setReleased(boolean released) {
-		this.released = released;
-	}
+    private String projectId;
 
-	public String getStartDate() {
-		return startDate;
-	}
+    private String description;
 
-	public void setStartDate(String startDate) {
-		this.startDate = startDate;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public String getReleaseDate() {
-		return releaseDate;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public void setReleaseDate(String releaseDate) {
-		this.releaseDate = releaseDate;
-	}
+    public String getSelf() {
+        return self;
+    }
 
-	public boolean isOverdue() {
-		return overdue;
-	}
+    public void setSelf(String self) {
+        this.self = self;
+    }
 
-	public void setOverdue(boolean overdue) {
-		this.overdue = overdue;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getUserStartDate() {
-		return userStartDate;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setUserStartDate(String userStartDate) {
-		this.userStartDate = userStartDate;
-	}
+    public boolean isArchived() {
+        return archived;
+    }
 
-	public String getUserReleaseDate() {
-		return userReleaseDate;
-	}
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
 
-	public void setUserReleaseDate(String userReleaseDate) {
-		this.userReleaseDate = userReleaseDate;
-	}
+    public boolean isReleased() {
+        return released;
+    }
 
-	public String getProjectId() {
-		return projectId;
-	}
+    public void setReleased(boolean released) {
+        this.released = released;
+    }
 
-	public void setProjectId(String projectId) {
-		this.projectId = projectId;
-	}
+    public String getStartDate() {
+        return startDate;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public String getReleaseDate() {
+        return releaseDate;
+    }
+
+    public void setReleaseDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public boolean isOverdue() {
+        return overdue;
+    }
+
+    public void setOverdue(boolean overdue) {
+        this.overdue = overdue;
+    }
+
+    public String getUserStartDate() {
+        return userStartDate;
+    }
+
+    public void setUserStartDate(String userStartDate) {
+        this.userStartDate = userStartDate;
+    }
+
+    public String getUserReleaseDate() {
+        return userReleaseDate;
+    }
+
+    public void setUserReleaseDate(String userReleaseDate) {
+        this.userReleaseDate = userReleaseDate;
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
 }

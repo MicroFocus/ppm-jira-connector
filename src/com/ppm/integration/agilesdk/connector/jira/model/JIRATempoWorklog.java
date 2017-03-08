@@ -1,3 +1,4 @@
+
 package com.ppm.integration.agilesdk.connector.jira.model;
 
 public class JIRATempoWorklog {
@@ -14,8 +15,7 @@ public class JIRATempoWorklog {
     private JIRATempoIssue issue;
 
     public JIRATempoWorklog(Long timeSpentSeconds, String dateStarted, String comment, String self, String id,
-            JIRATempoIssue issue)
-    {
+            JIRATempoIssue issue) {
         this.timeSpentSeconds = timeSpentSeconds;
         this.dateStarted = dateStarted;
         this.comment = comment;

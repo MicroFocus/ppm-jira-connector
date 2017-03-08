@@ -1,25 +1,18 @@
+
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
-import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
+import javax.ws.rs.core.MediaType;
+
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
 
-import javax.ws.rs.core.MediaType;
+import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 
 public class RestWrapper {
     private RestClient restClient;
 
     private IRestConfig config;
-
-    public RestWrapper() {
-        restClient = new RestClient();
-    }
-
-    public RestWrapper(IRestConfig config) {
-        this.config = config;
-        restClient = createRestClient(config);
-    }
 
     public IRestConfig getConfig() {
         return config;
@@ -35,6 +28,15 @@ public class RestWrapper {
 
     public void setRestClient(RestClient restClient) {
         this.restClient = restClient;
+    }
+
+    public RestWrapper() {
+        restClient = new RestClient();
+    }
+
+    public RestWrapper(IRestConfig config) {
+        this.config = config;
+        restClient = createRestClient(config);
     }
 
     public RestClient createRestClient(IRestConfig config) {
@@ -53,16 +55,14 @@ public class RestWrapper {
 
     public Resource getJIRAResource(IRestConfig config, String uri) {
         restClient = createRestClient(config);
-        Resource resource =
-                restClient.resource(uri).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
-                        .header("Authorization", config.getBasicAuthorizaton());
+        Resource resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
         return resource;
     }
 
     public Resource getJIRAResource(String uri) {
-        Resource resource =
-                restClient.resource(uri).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
-                        .header("Authorization", config.getBasicAuthorizaton());
+        Resource resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
         return resource;
     }
 
@@ -73,7 +73,7 @@ public class RestWrapper {
         int statusCode = response.getStatusCode();
 
         if (statusCode != 200) {
-            throw new RestRequestException(statusCode, response.getMessage());
+            throw new RestRequestException(statusCode + "", response.getMessage());
         }
 
         return response;

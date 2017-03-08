@@ -1,3 +1,4 @@
+
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
 import org.apache.commons.codec.binary.Base64;
@@ -5,52 +6,54 @@ import org.apache.wink.client.ClientConfig;
 import org.apache.wink.client.handlers.BasicAuthSecurityHandler;
 
 public class JIRARestConfig implements IRestConfig {
-	private ClientConfig clientConfig;
-	private BasicAuthSecurityHandler basicAuthHandler;
-	private String basicAuthentication;
+    private ClientConfig clientConfig;
 
-	public ClientConfig getClientConfig() {
-		return clientConfig;
-	}
+    private BasicAuthSecurityHandler basicAuthHandler;
 
-	public JIRARestConfig() {
-		clientConfig = new ClientConfig();
-	}
+    private String basicAuthentication;
 
-	@Override
-	public ClientConfig setProxy(String proxyHost, String proxyPort) {
+    public ClientConfig getClientConfig() {
+        return clientConfig;
+    }
 
-		if (proxyHost != null && !proxyHost.isEmpty() && proxyPort != null && !proxyPort.isEmpty()) {
-			clientConfig.proxyHost(proxyHost);
-			clientConfig.proxyPort(Integer.parseInt(proxyPort));
-		}
-		return clientConfig;
-	}
+    public JIRARestConfig() {
+        clientConfig = new ClientConfig();
+    }
 
-	// some responses not expected when setting the authentication with this
-	// method
-	@Override
-	public ClientConfig setBasicAuthorizatonWithBasicAuthHandler(String username, String password) {
+    @Override
+    public ClientConfig setProxy(String proxyHost, String proxyPort) {
 
-		basicAuthHandler = basicAuthHandler == null ? new BasicAuthSecurityHandler() : basicAuthHandler;
-		basicAuthHandler.setUserName(username);
-		basicAuthHandler.setPassword(password);
-		clientConfig.handlers(basicAuthHandler);
-		return clientConfig;
-	}
+        if (proxyHost != null && !proxyHost.isEmpty() && proxyPort != null && !proxyPort.isEmpty()) {
+            clientConfig.proxyHost(proxyHost);
+            clientConfig.proxyPort(Integer.parseInt(proxyPort));
+        }
+        return clientConfig;
+    }
 
-	// recommend this method to set the authentication for now
-	@Override
-	public String getBasicAuthorizaton() {
+    // some responses not expected when setting the authentication with this
+    // method
+    @Override
+    public ClientConfig setBasicAuthorizatonWithBasicAuthHandler(String username, String password) {
 
-		return basicAuthentication;
-	}
+        basicAuthHandler = basicAuthHandler == null ? new BasicAuthSecurityHandler() : basicAuthHandler;
+        basicAuthHandler.setUserName(username);
+        basicAuthHandler.setPassword(password);
+        clientConfig.handlers(basicAuthHandler);
+        return clientConfig;
+    }
 
-	@Override
-	public void setBasicAuthorizaton(String username, String password) {
+    // recommend this method to set the authentication for now
+    @Override
+    public String getBasicAuthorizaton() {
 
-		String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
-		basicAuthentication = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
-	}
+        return basicAuthentication;
+    }
+
+    @Override
+    public void setBasicAuthorizaton(String username, String password) {
+
+        String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
+        basicAuthentication = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
+    }
 
 }

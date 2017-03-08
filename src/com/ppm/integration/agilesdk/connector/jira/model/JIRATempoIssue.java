@@ -1,3 +1,4 @@
+
 package com.ppm.integration.agilesdk.connector.jira.model;
 
 public class JIRATempoIssue {
@@ -16,8 +17,7 @@ public class JIRATempoIssue {
     private String summary;
 
     public JIRATempoIssue(String self, String id, String projectId, String key, Long remainingEstimateSeconds,
-            String issueType, String summary)
-    {
+            String issueType, String summary) {
         this.self = self;
         this.id = id;
         this.projectId = projectId;

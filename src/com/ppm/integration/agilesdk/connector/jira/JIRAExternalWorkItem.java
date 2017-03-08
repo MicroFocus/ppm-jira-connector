@@ -1,3 +1,4 @@
+
 package com.ppm.integration.agilesdk.connector.jira;
 
 import java.text.SimpleDateFormat;
@@ -12,53 +13,52 @@ import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
 
 public class JIRAExternalWorkItem extends ExternalWorkItem {
 
-	private String name = "";
-	private Double totalEffort = 0.0;
-	private String errorMessage = null;
+    private String name = "";
 
-	private Map<String, Double> timeSpentSeconds = new HashMap<>();
-	private XMLGregorianCalendar dateFrom;
-	private XMLGregorianCalendar dateTo;
+    private Double totalEffort = 0.0;
 
-	public JIRAExternalWorkItem(String name, Double totalEffort, String errorMessage, XMLGregorianCalendar dateFrom,
-			XMLGregorianCalendar dateTo, Map<String, Double> timeSpentSeconds) {
-		this.name = name;
-		this.totalEffort = totalEffort;
-		this.errorMessage = errorMessage;
-		this.dateFrom = dateFrom;
-		this.dateTo = dateTo;
-		this.timeSpentSeconds = timeSpentSeconds;
-	}
+    private String errorMessage = null;
 
-	@Override
-	public String getName() {
-		return this.name;
-	}
+    private Map<String, Double> timeSpentSeconds = new HashMap<>();
 
-	public Double getTotalEffort() {
-		return null;
-	}
+    private XMLGregorianCalendar dateFrom;
 
-	public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
-		ExternalWorkItemEffortBreakdown eb = new ExternalWorkItemEffortBreakdown();
-		Calendar cursor = dateFrom.toGregorianCalendar();
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		while (cursor.before(dateTo.toGregorianCalendar())) {
-			String cursorDate = dateFormat.format(cursor.getTime());
-			if (timeSpentSeconds.containsKey(cursorDate)) {
-				eb.addEffort(cursorDate, timeSpentSeconds.get(cursorDate));
-			} else {
-				eb.addEffort(cursorDate, 0);
-			}
-			cursor.add(Calendar.DAY_OF_MONTH, 1);
+    private XMLGregorianCalendar dateTo;
 
-		}
-		return eb;
-	}
+    public JIRAExternalWorkItem(String name, Double totalEffort, String errorMessage, XMLGregorianCalendar dateFrom,
+            XMLGregorianCalendar dateTo, Map<String, Double> timeSpentSeconds) {
+        this.name = name;
+        this.totalEffort = totalEffort;
+        this.errorMessage = errorMessage;
+        this.dateFrom = dateFrom;
+        this.dateTo = dateTo;
+        this.timeSpentSeconds = timeSpentSeconds;
+    }
 
-	@Override
-	public String getErrorMessage() {
-		return errorMessage;
-	}
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    public Double getTotalEffort() {
+        return null;
+    }
+
+    public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
+        ExternalWorkItemEffortBreakdown eb = new ExternalWorkItemEffortBreakdown();
+        Calendar cursor = dateFrom.toGregorianCalendar();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        while (cursor.before(dateTo.toGregorianCalendar())) {
+            String cursorDate = dateFormat.format(cursor.getTime());
+            if (timeSpentSeconds.containsKey(cursorDate)) {
+                eb.addEffort(cursorDate, timeSpentSeconds.get(cursorDate));
+            } else {
+                eb.addEffort(cursorDate, 0);
+            }
+            cursor.add(Calendar.DAY_OF_MONTH, 1);
+
+        }
+        return eb;
+    }
 
 }
