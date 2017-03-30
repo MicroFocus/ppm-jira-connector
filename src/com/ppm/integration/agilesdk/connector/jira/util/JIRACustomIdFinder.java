@@ -20,9 +20,7 @@ public class JIRACustomIdFinder {
                     break;
                 }
             } catch (JSONException e) {
-
             }
-
         }
         return sprintCutomId;
     }
