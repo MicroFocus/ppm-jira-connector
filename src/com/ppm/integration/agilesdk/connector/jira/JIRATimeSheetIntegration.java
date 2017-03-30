@@ -119,6 +119,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
     private void configureService(String proxyHost, String proxyPort, String username, String password,
             String baseUri)
     {
+
         service = service == null ? new JIRAService() : service;
         IRestConfig config = new JIRARestConfig();
         config.setProxy(proxyHost, proxyPort);

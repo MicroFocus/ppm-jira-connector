@@ -9,7 +9,6 @@ import com.ppm.integration.IntegrationException;
 import com.ppm.integration.agilesdk.connector.jira.JIRAIntegrationConnector;
 
 public class JIRAConnectivityExceptionHandler implements UncaughtExceptionHandler {
-
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         uncaughtException(t, e, JIRAIntegrationConnector.class);
@@ -47,31 +46,57 @@ public class JIRAConnectivityExceptionHandler implements UncaughtExceptionHandle
 
     }
 
-    private void handleClientRuntimeException(ClientRuntimeException e, Class cls) {
-        java.net.UnknownHostException unknownHost = extractException(e, java.net.UnknownHostException.class);
-        if (unknownHost != null) {
-            throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
-                    .setMessage("ERROR_UNKNOWN_HOST_ERROR", unknownHost.getMessage());
+    private void handleClientRuntimeException(Exception e, Class cls) {
+        Throwable t = extractException(e);
+
+        if (t instanceof java.security.cert.CertificateException) {
+
+            IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
+                    .setMessage("ERROR_CERTIFICATE_EXCEPTION");
         }
 
-        java.net.ConnectException connectException = extractException(e, java.net.ConnectException.class);
-        if (connectException != null) {
+        if (t instanceof java.net.UnknownHostException) {
             throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
-                    .setMessage("ERROR_CONNECTIVITY_ERROR");
+                    .setMessage("ERROR_UNKNOWN_HOST_EXCEPTION");
         }
 
+        if (t instanceof java.net.ConnectException) {
+            throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
+                    .setMessage("ERROR_CONNECT_EXCEPTION");
+        }
+        if (t instanceof java.net.NoRouteToHostException) {
+            throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
+                    .setMessage("ERROR_NO_ROUTE_EXCEPTION");
+        }
+        if (t instanceof java.lang.IllegalArgumentException) {
+
+            throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
+                    .setMessage("ERROR_ILLEGAL_ARGUMENT__EXCEPTION");
+        }
         throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
-                .setMessage("ERROR_CONNECTIVITY_ERROR");
+                .setMessage("ERROR_CONNECTIVITY_ERROR", e.getMessage());
+
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends Throwable> T extractException(ClientRuntimeException e, Class<T> clazz) {
+    protected <T extends Throwable> T extractException(Exception e, Class<T> clazz) {
 
         Throwable t = e;
         while (!clazz.isInstance(t) && t != null) {
             t = t.getCause();
         }
 
+        return (T)t;
+    }
+
+    protected <T extends Throwable> T extractException(Exception e) {
+
+        Throwable t = e;
+
+        while (t.getCause() != null) {
+            t = t.getCause();
+
+        }
         return (T)t;
     }
 

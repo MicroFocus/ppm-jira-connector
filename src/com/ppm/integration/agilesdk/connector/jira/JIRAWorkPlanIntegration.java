@@ -108,7 +108,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         Option option1 =
                                 new Option(JIRAConstants.KEY_ALL_PROJECT_PLANNED_ISSUES, "All project planned issues");
                         Option option2 = new Option(JIRAConstants.KEY_EPIC, "Epic");
-                        Option option3 = new Option(JIRAConstants.KEY_ALL_EPICS, "All Epics");
+                        Option option3 = new Option(JIRAConstants.KEY_ALL_EPICS, "All epics");
                         Option option4 = new Option(JIRAConstants.KEY_VERSION, "Version");
 
                         optionList.add(option1);
