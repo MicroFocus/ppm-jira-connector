@@ -53,11 +53,15 @@ public class JIRAConstants {
 
     public static final String KEY_INCLUDE_ISSUES_BREAKDOWN = "include_issues_breakdown";
 
-    private static final String API_VERSION_API_ROOT = "/rest/api/2/";
+    public static final String  KEY_INCLUDE_ONLY_PLANNED_ITEMS = "include_only_planned_items";
 
-    private static final String TEMPO_API_VERSION_API_ROOT = "/rest/tempo-timesheets/3/";
+    public static final String API_VERSION_API_ROOT = "/rest/api/2/";
 
     public static final String PROJECT_SUFFIX = API_VERSION_API_ROOT + "project";
+
+    // Just add JQL string from JiraSearchUrlBuilder class
+    public static final String SEARCH_URL =
+            API_VERSION_API_ROOT + "search?expand=schema&jql=";
 
     public static final String ISSUES_IN_SPRINT_SUFFIX =
             API_VERSION_API_ROOT + "search?expand=schema&jql=sprint!=null and issueType!=sub-task and project=";
@@ -65,17 +69,8 @@ public class JIRAConstants {
     public static final String ISSUES_SUFFIX =
             API_VERSION_API_ROOT + "search?expand=schema&jql=issueType!=sub-task and project=";
 
-    public static final String EPICS_SUFFIX = API_VERSION_API_ROOT + "search?expand=schema&jql=project=";
-
-    public static final String ISSUETYPES_SUFFIX = API_VERSION_API_ROOT + "issuetype";
-
-    public static final String TEMPO_WORKLOGS_SUFFIX = TEMPO_API_VERSION_API_ROOT + "worklogs";
 
     public static final String VERSIONS_SUFFIX = API_VERSION_API_ROOT + "project/" + REPLACE_PROJECT_KEY + "/versions";
-
-    public static final String ISSUES_WORKLOGS_SUFFIX = API_VERSION_API_ROOT + "search?fields=worklog,summary&jql=";
-
-    public static final String ISSUES_ORDER_BY_SPRINT_CREATED = "+order+by+sprint,created+ASC";
 
     public static final String JIRA_ISSUE_STORY = "STORY";
 

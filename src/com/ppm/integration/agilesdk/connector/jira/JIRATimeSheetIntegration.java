@@ -22,7 +22,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.IRestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.JIRAConnectivityExceptionHandler;
-import com.ppm.integration.agilesdk.connector.versionone.rest.util.exception.RestRequestException;
+import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegration;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegrationContext;

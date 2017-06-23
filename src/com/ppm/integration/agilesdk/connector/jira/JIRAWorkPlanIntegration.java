@@ -19,7 +19,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.IRestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.JIRAConnectivityExceptionHandler;
-import com.ppm.integration.agilesdk.connector.versionone.rest.util.exception.RestRequestException;
+import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.pm.ExternalTask;
 import com.ppm.integration.agilesdk.pm.ExternalWorkPlan;
 import com.ppm.integration.agilesdk.pm.WorkPlanIntegration;
@@ -166,12 +166,15 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         return options;
                     }
 
-                }, new CheckBox(JIRAConstants.KEY_INCLUDE_ISSUES_BREAKDOWN, "INCLUDE_ISSUES_BREAKDOWN", false),
+                }, new LineBreaker(),
+                new CheckBox(JIRAConstants.KEY_INCLUDE_ISSUES_BREAKDOWN, "INCLUDE_ISSUES_BREAKDOWN", false),
+                new CheckBox(JIRAConstants.KEY_INCLUDE_ONLY_PLANNED_ITEMS, "INCLUDE_ONLY_PLANNED_ITEMS", true),
                 new LineBreaker(),
                 new LabelText(JIRAConstants.KEY_JIRA_ISSUES_TO_IMPORT, "SELECT_ISSUES_TO_IMPORT",
-                        "Select Issues to Import", true),
-                new CheckBox(JIRAConstants.JIRA_ISSUE_TASK, "JIRA_ISSUE_TASK", true),
+                        "Select Items to Import", true),
+                new CheckBox(JIRAConstants.JIRA_ISSUE_EPIC, "JIRA_ISSUE_EPIC", true),
                 new CheckBox(JIRAConstants.JIRA_ISSUE_STORY, "JIRA_ISSUE_STORY", true),
+                new CheckBox(JIRAConstants.JIRA_ISSUE_TASK, "JIRA_ISSUE_TASK", true),
                 new CheckBox(JIRAConstants.JIRA_ISSUE_BUG, "JIRA_ISSUE_BUG", false)});
 
         return fields;
@@ -183,16 +186,19 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
         String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
         boolean isBreakdown = values.getBoolean(JIRAConstants.KEY_INCLUDE_ISSUES_BREAKDOWN, true);
+        boolean isIncludeOnlyPlanned = values.getBoolean(JIRAConstants.KEY_INCLUDE_ONLY_PLANNED_ITEMS, true);
         configureService(values.get(JIRAConstants.KEY_PROXY_HOST), values.get(JIRAConstants.KEY_PROXY_PORT),
                 values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
                 values.get(JIRAConstants.KEY_BASE_URL));
+
         Map<String, Boolean> map = new HashMap<>();
         map.put(JIRAConstants.JIRA_ISSUE_TASK, values.getBoolean(JIRAConstants.JIRA_ISSUE_TASK, true));
         map.put(JIRAConstants.JIRA_ISSUE_STORY, values.getBoolean(JIRAConstants.JIRA_ISSUE_STORY, true));
         map.put(JIRAConstants.JIRA_ISSUE_BUG, values.getBoolean(JIRAConstants.JIRA_ISSUE_BUG, true));
+        map.put(JIRAConstants.JIRA_ISSUE_EPIC, values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true));
 
         List<ExternalTask> ets =
-                service.getExternalTasks(projectKey, map, importSelection, importSelectionDetails, isBreakdown);
+                service.getExternalTasks(projectKey, map, importSelection, importSelectionDetails, isBreakdown, isIncludeOnlyPlanned);
 
         return new JIRAExternalWorkPlan(ets);
     }

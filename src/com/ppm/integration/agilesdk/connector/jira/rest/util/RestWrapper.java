@@ -73,7 +73,10 @@ public class RestWrapper {
         int statusCode = response.getStatusCode();
 
         if (statusCode != 200) {
-            throw new RestRequestException(statusCode + "", response.getMessage());
+            // for easier troubleshooting, include the request URI in the exception message
+            throw new RestRequestException(
+                    String.format("Unexpected HTTP response status code %s for %s", statusCode, uri), 
+                    response.getMessage());
         }
 
         return response;
