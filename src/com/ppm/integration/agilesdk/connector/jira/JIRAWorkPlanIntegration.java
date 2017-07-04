@@ -35,21 +35,9 @@ import com.ppm.integration.agilesdk.ui.PlainText;
 public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private final Logger logger = Logger.getLogger(this.getClass());
 
-    private JIRAService service;
+    private JIRAServiceProvider service = new JIRAServiceProvider();
 
-    public JIRAWorkPlanIntegration() {
-
-    }
-
-    public JIRAWorkPlanIntegration(String username, String password, String baseUri) {
-        configureService(null, null, username, password, baseUri);
-    }
-
-    public JIRAWorkPlanIntegration(String proxyHost, String proxyPort, String username, String password,
-            String baseUri) {
-        configureService(proxyHost, proxyPort, username, password, baseUri);
-
-    }
+    public JIRAWorkPlanIntegration() {}
 
     @Override
     public List<Field> getMappingConfigurationFields(WorkPlanIntegrationContext context, ValueSet values) {
@@ -67,13 +55,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        configureService(values.get(JIRAConstants.KEY_PROXY_HOST),
-                                values.get(JIRAConstants.KEY_PROXY_PORT), values.get(JIRAConstants.KEY_USERNAME),
-                                values.get(JIRAConstants.KEY_PASSWORD), values.get(JIRAConstants.KEY_BASE_URL));
 
                         List<JIRAProject> list = new ArrayList<>();
                         try {
-                            list = service.getProjects();
+                            list = service.get(values).getProjects();
                         } catch (ClientRuntimeException | RestRequestException e) {
                             logger.error("", e);
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
@@ -137,11 +122,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                             case JIRAConstants.KEY_ALL_PROJECT_PLANNED_ISSUES:
                                 break;
                             case JIRAConstants.KEY_EPIC:
-                                configureService(values.get(JIRAConstants.KEY_PROXY_HOST),
-                                        values.get(JIRAConstants.KEY_PROXY_PORT),
-                                        values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
-                                        values.get(JIRAConstants.KEY_BASE_URL));
-                                List<JIRAIssue> list = service.getIssues(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
+                                List<JIRAIssue> list = service.get(values).getIssues(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
                                 for (JIRAIssue issue : list) {
                                     Option option = new Option(issue.getKey(), issue.getName());
                                     options.add(option);
@@ -151,11 +132,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                             case JIRAConstants.KEY_ALL_EPICS:
                                 break;
                             case JIRAConstants.KEY_VERSION:
-                                configureService(values.get(JIRAConstants.KEY_PROXY_HOST),
-                                        values.get(JIRAConstants.KEY_PROXY_PORT),
-                                        values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
-                                        values.get(JIRAConstants.KEY_BASE_URL));
-                                List<JIRAVersion> list1 = service.getVersions(projectKey);
+                                List<JIRAVersion> list1 = service.get(values).getVersions(projectKey);
                                 for (JIRAVersion version : list1) {
                                     Option option = new Option(version.getId(), version.getName());
                                     options.add(option);
@@ -187,9 +164,6 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
         boolean isBreakdown = values.getBoolean(JIRAConstants.KEY_INCLUDE_ISSUES_BREAKDOWN, true);
         boolean isIncludeOnlyPlanned = values.getBoolean(JIRAConstants.KEY_INCLUDE_ONLY_PLANNED_ITEMS, true);
-        configureService(values.get(JIRAConstants.KEY_PROXY_HOST), values.get(JIRAConstants.KEY_PROXY_PORT),
-                values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
-                values.get(JIRAConstants.KEY_BASE_URL));
 
         Map<String, Boolean> map = new HashMap<>();
         map.put(JIRAConstants.JIRA_ISSUE_TASK, values.getBoolean(JIRAConstants.JIRA_ISSUE_TASK, true));
@@ -198,7 +172,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         map.put(JIRAConstants.JIRA_ISSUE_EPIC, values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true));
 
         List<ExternalTask> ets =
-                service.getExternalTasks(projectKey, map, importSelection, importSelectionDetails, isBreakdown, isIncludeOnlyPlanned);
+                service.get(values).getExternalTasks(projectKey, map, importSelection, importSelectionDetails, isBreakdown, isIncludeOnlyPlanned);
 
         return new JIRAExternalWorkPlan(ets);
     }
@@ -207,17 +181,4 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     public String getCustomDetailPage() {
         return null;
     }
-
-    private void configureService(String proxyHost, String proxyPort, String username, String password,
-            String baseUri)
-    {
-        service = service == null ? new JIRAService() : service;
-        IRestConfig config = new JIRARestConfig();
-        config.setProxy(proxyHost, proxyPort);
-        config.setBasicAuthorizaton(username, password);
-        RestWrapper wrapper = new RestWrapper(config);
-        service.setBaseUri(baseUri);
-        service.setWrapper(wrapper);
-    }
-
 }

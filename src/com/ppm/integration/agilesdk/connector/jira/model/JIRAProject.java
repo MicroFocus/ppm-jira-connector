@@ -16,7 +16,7 @@ public class JIRAProject {
 
     private HashMap<String, String> avatarUrls;
 
-    private String projectKey;
+    private String projectTypeKey;
 
     public JIRAProject(String expand, String self, String id, String key, String name,
             HashMap<String, String> avatarUrls, String projectKey) {
@@ -26,7 +26,7 @@ public class JIRAProject {
         this.key = key;
         this.name = name;
         this.avatarUrls = avatarUrls;
-        this.projectKey = projectKey;
+        this.projectTypeKey = projectKey;
     }
 
     public String getExpand() {
@@ -77,12 +77,12 @@ public class JIRAProject {
         this.avatarUrls = avatarUrls;
     }
 
-    public String getProjectKey() {
-        return projectKey;
+    public String getProjectTypeKey() {
+        return projectTypeKey;
     }
 
-    public void setProjectKey(String projectKey) {
-        this.projectKey = projectKey;
+    public void setProjectTypeKey(String projectTypeKey) {
+        this.projectTypeKey = projectTypeKey;
     }
 
 }

@@ -13,6 +13,10 @@ public class JIRAConstants {
 
     public static final String KEY_PROXY_PORT = "proxyPort";
 
+    public static final String KEY_ADMIN_USERNAME = "adminUsername";
+
+    public static final String KEY_ADMIN_PASSWORD = "adminPassword";
+
     public static final String KEY_LEVEL_OF_DETAILS_TO_SYNCHRONIZE = "level_of_details_to_synchronize";
 
     public static final String KEY_USERNAME = "username";
@@ -84,4 +88,7 @@ public class JIRAConstants {
 
     public static final String JIRA_EPIC_LINK_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-link";
 
+    public static final String JIRA_CREATE_ISSUE_URL = API_VERSION_API_ROOT + "issue/";
+
+    public static final String JIRA_FIELDS_URL = API_VERSION_API_ROOT + "field/";
 }

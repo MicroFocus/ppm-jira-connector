@@ -6,8 +6,7 @@ import java.util.List;
 
 import com.ppm.integration.agilesdk.FunctionIntegration;
 import com.ppm.integration.agilesdk.IntegrationConnector;
-import com.ppm.integration.agilesdk.ui.Field;
-import com.ppm.integration.agilesdk.ui.PlainText;
+import com.ppm.integration.agilesdk.ui.*;
 
 /**
  * @author baijuy The connector provides the integration for ppm with Jira. The
@@ -42,13 +41,21 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
         return Arrays.asList(new Field[] {new PlainText(JIRAConstants.KEY_BASE_URL, "BASE_URL", "", true),
                 new PlainText(JIRAConstants.KEY_PROXY_HOST, "PROXY_HOST", "", false),
                 new PlainText(JIRAConstants.KEY_PROXY_PORT, "PROXY_PORT", "", false),
-
+                new LineBreaker(),
+                new LabelText("", "ADMIN_INFO_FOR_EPIC_AND_AGILE_DATA", "block", false),
+                new PlainText(JIRAConstants.KEY_ADMIN_USERNAME, "ADMIN_USERNAME", "", true),
+                new PasswordText(JIRAConstants.KEY_ADMIN_PASSWORD, "ADMIN_PASSWORD", "", true),
         });
     }
 
     @Override
     public List<FunctionIntegration> getIntegrations() {
         return Arrays.asList(new FunctionIntegration[] {new JIRAWorkPlanIntegration(), new JIRATimeSheetIntegration()});
+    }
+
+    @Override
+    public List<String> getIntegrationClasses() {
+        return Arrays.asList(new String[] {"com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration","com.ppm.integration.agilesdk.connector.jira.JIRATimeSheetIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAPortfolioEpicIntegration"});
     }
 
 }

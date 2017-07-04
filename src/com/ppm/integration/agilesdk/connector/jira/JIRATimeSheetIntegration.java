@@ -36,7 +36,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
     private final Logger logger = Logger.getLogger(this.getClass());
 
-    private JIRAService service;
+    private JIRAServiceProvider service = new JIRAServiceProvider();
 
     @Override
     public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext arg0, ValueSet values) {
@@ -46,12 +46,9 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
         XMLGregorianCalendar start = arg0.currentTimeSheet().getPeriodStartDate();
         XMLGregorianCalendar end = arg0.currentTimeSheet().getPeriodEndDate();
 
-        configureService(values.get(JIRAConstants.KEY_PROXY_HOST), values.get(JIRAConstants.KEY_PROXY_PORT),
-                values.get(JIRAConstants.KEY_USERNAME), values.get(JIRAConstants.KEY_PASSWORD),
-                values.get(JIRAConstants.KEY_BASE_URL));
         String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT_NAME);
         String author = values.get(JIRAConstants.KEY_USERNAME);
-        Map<String, Map<String, Long>> map = service.getJIRATempoWorklogs(start, end, projectKey, author);
+        Map<String, Map<String, Long>> map = service.get(values).getJIRATempoWorklogs(start, end, projectKey, author);
 
         Set<Entry<String, Map<String, Long>>> entrySet = map.entrySet();
 
@@ -86,13 +83,10 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        configureService(values.get(JIRAConstants.KEY_PROXY_HOST),
-                                values.get(JIRAConstants.KEY_PROXY_PORT), values.get(JIRAConstants.KEY_USERNAME),
-                                values.get(JIRAConstants.KEY_PASSWORD), values.get(JIRAConstants.KEY_BASE_URL));
 
                         List<JIRAProject> list = new ArrayList<>();
                         try {
-                            list = service.getProjects();
+                            list = service.get(values).getProjects();
                         } catch (ClientRuntimeException | RestRequestException e) {
                             logger.error("", e);
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
@@ -114,18 +108,5 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
                 }
 
         });
-    }
-
-    private void configureService(String proxyHost, String proxyPort, String username, String password,
-            String baseUri)
-    {
-
-        service = service == null ? new JIRAService() : service;
-        IRestConfig config = new JIRARestConfig();
-        config.setProxy(proxyHost, proxyPort);
-        config.setBasicAuthorizaton(username, password);
-        RestWrapper wrapper = new RestWrapper(config);
-        service.setBaseUri(baseUri);
-        service.setWrapper(wrapper);
     }
 }

@@ -75,7 +75,23 @@ public class RestWrapper {
         if (statusCode != 200) {
             // for easier troubleshooting, include the request URI in the exception message
             throw new RestRequestException(
-                    String.format("Unexpected HTTP response status code %s for %s", statusCode, uri), 
+                    String.format("Unexpected HTTP response status code %s for %s", statusCode, uri),
+                    response.getMessage());
+        }
+
+        return response;
+    }
+
+    public ClientResponse sendPost(String uri, String jsonPayload, int expectedHttpStatusCode) {
+        Resource resource = this.getJIRAResource(uri);
+        ClientResponse response = resource.post(jsonPayload);
+
+        int statusCode = response.getStatusCode();
+
+        if (statusCode != expectedHttpStatusCode) {
+            // for easier troubleshooting, include the request URI in the exception message
+            throw new RestRequestException(
+                    String.format("Unexpected HTTP response status code %s for %s, expected %s", statusCode, uri, expectedHttpStatusCode),
                     response.getMessage());
         }
 
