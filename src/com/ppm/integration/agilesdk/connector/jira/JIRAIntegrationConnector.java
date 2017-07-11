@@ -1,11 +1,15 @@
 
 package com.ppm.integration.agilesdk.connector.jira;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import com.ppm.integration.agilesdk.FunctionIntegration;
 import com.ppm.integration.agilesdk.IntegrationConnector;
+import com.ppm.integration.agilesdk.ValueSet;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
+import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.ui.*;
 
 /**
@@ -49,13 +53,28 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
     }
 
     @Override
+    public List<AgileProject> getAgileProjects(ValueSet instanceConfigurationParameters) {
+        List<JIRAProject> jiraProjects = new JIRAServiceProvider().useAdminAccount().get(instanceConfigurationParameters).getProjects();
+        List<AgileProject> agileProjects = new ArrayList<AgileProject>(jiraProjects.size());
+
+        for (JIRAProject jiraProject : jiraProjects) {
+            AgileProject agileProject = new AgileProject();
+            agileProject.setDisplayName(jiraProject.getName());
+            agileProject.setValue(jiraProject.getKey());
+            agileProjects.add(agileProject);
+        }
+
+        return agileProjects;
+    }
+
+    @Override
     public List<FunctionIntegration> getIntegrations() {
         return Arrays.asList(new FunctionIntegration[] {new JIRAWorkPlanIntegration(), new JIRATimeSheetIntegration()});
     }
 
     @Override
     public List<String> getIntegrationClasses() {
-        return Arrays.asList(new String[] {"com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration","com.ppm.integration.agilesdk.connector.jira.JIRATimeSheetIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAPortfolioEpicIntegration"});
+        return Arrays.asList(new String[] {"com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration","com.ppm.integration.agilesdk.connector.jira.JIRATimeSheetIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAPortfolioEpicIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAAgileDataIntegration"});
     }
 
 }

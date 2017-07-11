@@ -77,12 +77,20 @@ public class JIRASprint extends JIRAEntity {
         return startDate;
     }
 
+    public Date getStartDateAsDate() {
+        return convertToDate(startDate);
+    }
+
     public void setStartDate(String startDate) {
         this.startDate = startDate;
     }
 
     public String getEndDate() {
         return endDate;
+    }
+
+    public Date getEndDateAsDate() {
+        return convertToDate(endDate);
     }
 
     public void setEndDate(String endDate) {
@@ -181,12 +189,12 @@ public class JIRASprint extends JIRAEntity {
 
     @Override
     public Date getScheduledStart() {
-        return checkDate(this.startDate);
+        return convertToNonNullDate(this.startDate);
     }
 
     @Override
     public Date getScheduledFinish() {
-        return checkDate(this.endDate);
+        return convertToNonNullDate(this.endDate);
     }
 
     @Override

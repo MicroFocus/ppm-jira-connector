@@ -50,7 +50,7 @@ public class JiraSearchUrlBuilder {
     }
 
     public String toUrlString() {
-        StringBuilder searchUrl = new StringBuilder(baseUri + JIRAConstants.API_VERSION_API_ROOT + "search?");
+        StringBuilder searchUrl = new StringBuilder(baseUri + JIRAConstants.API_VERSION2_API_ROOT + "search?");
 
         List<String> urlParameters = new ArrayList<String>();
 

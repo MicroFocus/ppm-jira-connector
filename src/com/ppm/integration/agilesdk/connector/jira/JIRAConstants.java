@@ -59,22 +59,28 @@ public class JIRAConstants {
 
     public static final String  KEY_INCLUDE_ONLY_PLANNED_ITEMS = "include_only_planned_items";
 
-    public static final String API_VERSION_API_ROOT = "/rest/api/2/";
+    public static final String API_VERSION2_API_ROOT = "/rest/api/2/";
 
-    public static final String PROJECT_SUFFIX = API_VERSION_API_ROOT + "project";
+    public static final String API_VERSION1_API_ROOT = "/rest/agile/1.0/";
+
+    public static final String PROJECT_SUFFIX = API_VERSION2_API_ROOT + "project";
+
+    public static final String BOARD_SUFFIX = API_VERSION1_API_ROOT + "board";
+
+    public static final String SPRINT_SUFFIX = API_VERSION1_API_ROOT + "sprint";
 
     // Just add JQL string from JiraSearchUrlBuilder class
     public static final String SEARCH_URL =
-            API_VERSION_API_ROOT + "search?expand=schema&jql=";
+            API_VERSION2_API_ROOT + "search?expand=schema&jql=";
 
     public static final String ISSUES_IN_SPRINT_SUFFIX =
-            API_VERSION_API_ROOT + "search?expand=schema&jql=sprint!=null and issueType!=sub-task and project=";
+            API_VERSION2_API_ROOT + "search?expand=schema&jql=sprint!=null and issueType!=sub-task and project=";
 
     public static final String ISSUES_SUFFIX =
-            API_VERSION_API_ROOT + "search?expand=schema&jql=issueType!=sub-task and project=";
+            API_VERSION2_API_ROOT + "search?expand=schema&jql=issueType!=sub-task and project=";
 
 
-    public static final String VERSIONS_SUFFIX = API_VERSION_API_ROOT + "project/" + REPLACE_PROJECT_KEY + "/versions";
+    public static final String VERSIONS_SUFFIX = API_VERSION2_API_ROOT + "project/" + REPLACE_PROJECT_KEY + "/versions";
 
     public static final String JIRA_ISSUE_STORY = "STORY";
 
@@ -88,7 +94,9 @@ public class JIRAConstants {
 
     public static final String JIRA_EPIC_LINK_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-link";
 
-    public static final String JIRA_CREATE_ISSUE_URL = API_VERSION_API_ROOT + "issue/";
+    public static final String JIRA_EPIC_NAME_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-label";
 
-    public static final String JIRA_FIELDS_URL = API_VERSION_API_ROOT + "field/";
+    public static final String JIRA_CREATE_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
+
+    public static final String JIRA_FIELDS_URL = API_VERSION2_API_ROOT + "field/";
 }
