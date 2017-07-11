@@ -3,13 +3,10 @@ package com.ppm.integration.agilesdk.connector.jira;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
-import com.ppm.integration.agilesdk.epic.AgileProject;
+import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicIntegration;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicSyncInfo;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,20 +19,6 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
 
     // All operations for Portfolio Epics are using the admin account as users are not prompted for account info upon sync.
     private JIRAServiceProvider service = new JIRAServiceProvider().useAdminAccount();
-
-    @Override public List<AgileProject> getAgileProjects(ValueSet instanceConfigurationParameters) {
-        List<JIRAProject> jiraProjects = service.get(instanceConfigurationParameters).getProjects();
-        List<AgileProject> agileProjects = new ArrayList<AgileProject>(jiraProjects.size());
-
-        for (JIRAProject jiraProject : jiraProjects) {
-            AgileProject agileProject = new AgileProject();
-            agileProject.setDisplayName(jiraProject.getName());
-            agileProject.setValue(jiraProject.getKey());
-            agileProjects.add(agileProject);
-        }
-
-        return agileProjects;
-    }
 
     @Override public String createEpicInAgileProject(PortfolioEpicCreationInfo epicInfo, String agileProjectValue,
             ValueSet instanceConfigurationParameters)

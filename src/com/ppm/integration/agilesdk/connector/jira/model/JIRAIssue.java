@@ -43,12 +43,18 @@ public class JIRAIssue extends JIRAEntity {
 
     private List<JIRAIssue> subTasks;
 
-    private String epicLink;
+    private String epicKey;
+
+    private String sprintKey;
+
+    private String priorityName;
+
+    private List<String> fixVersionIds;
 
     public JIRAIssue(String issueName, String type, String key, String statusName, String scheduledStartDate,
             String scheduledFinishDate, String scheduledDuration, Long scheduledEffort, String actualStart,
             String percentComplete, String actualFinish, String predecessors, String role, String resources,
-            String createdDate, String updatedDate, List<JIRAIssue> subTasks, String epicLink) {
+            String createdDate, String updatedDate, List<JIRAIssue> subTasks, String epicKey, String sprintKey, String priorityName, List<String> fixVersionIds) {
 
         this.issueName = issueName;
         this.type = type;
@@ -67,8 +73,13 @@ public class JIRAIssue extends JIRAEntity {
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
         this.subTasks = subTasks;
-        this.epicLink = epicLink;
+        this.epicKey = epicKey;
+        this.sprintKey = sprintKey;
+        this.priorityName = priorityName;
+        this.fixVersionIds = fixVersionIds;
     }
+
+    public JIRAIssue() {}
 
     public String getIssueName() {
         return issueName;
@@ -206,12 +217,12 @@ public class JIRAIssue extends JIRAEntity {
         this.subTasks = subTasks;
     }
 
-    public String getEpicLink() {
-        return epicLink;
+    public String getEpicKey() {
+        return epicKey;
     }
 
-    public void setEpicLink(String epicLink) {
-        this.epicLink = epicLink;
+    public void setEpicKey(String epicKey) {
+        this.epicKey = epicKey;
     }
 
     @Override
@@ -221,12 +232,12 @@ public class JIRAIssue extends JIRAEntity {
 
     @Override
     public Date getScheduledStart() {
-        return checkDate(this.createdDate);
+        return convertToNonNullDate(this.createdDate);
     }
 
     @Override
     public Date getScheduledFinish() {
-        return checkDate(this.scheduledFinishDate);
+        return convertToNonNullDate(this.scheduledFinishDate);
     }
 
     @Override
@@ -255,12 +266,12 @@ public class JIRAIssue extends JIRAEntity {
 
             @Override
             public Date getActualFinish() {
-                return checkDate(actualFinish);
+                return convertToNonNullDate(actualFinish);
             }
 
             @Override
             public Date getActualStart() {
-                return Double.parseDouble(percentComplete) > 0 ? checkDate(scheduledStartDate) : null;
+                return Double.parseDouble(percentComplete) > 0 ? convertToNonNullDate(scheduledStartDate) : null;
             }
 
             @Override
@@ -295,4 +306,27 @@ public class JIRAIssue extends JIRAEntity {
         }
     }
 
+    public String getSprintKey() {
+        return sprintKey;
+    }
+
+    public void setSprintKey(String sprintKey) {
+        this.sprintKey = sprintKey;
+    }
+
+    public String getPriorityName() {
+        return priorityName;
+    }
+
+    public void setPriorityName(String priorityName) {
+        this.priorityName = priorityName;
+    }
+
+    public List<String> getFixVersionIds() {
+        return fixVersionIds;
+    }
+
+    public void setFixVersionIds(List<String> fixVersionIds) {
+        this.fixVersionIds = fixVersionIds;
+    }
 }

@@ -16,12 +16,14 @@ public class JIRAEpic extends JIRAIssue {
     public JIRAEpic(String issueName, String type, String key, String statusName, String scheduledStartDate,
             String scheduledFinishDate, String scheduledDuration, Long scheduledEffort, String actualStart,
             String percentComplete, String actualFinish, String predecessors, String role, String resources,
-            String createdDate, String updatedDate, List<JIRAIssue> subTasks, String epicLink) {
+            String createdDate, String updatedDate, List<JIRAIssue> subTasks, String epicLink, List<String> fixVersionIds) {
 
         super(issueName, type, key, statusName, scheduledStartDate, scheduledFinishDate, scheduledDuration,
                 scheduledEffort, actualStart, percentComplete, actualFinish, predecessors, role, resources, createdDate,
-                updatedDate, subTasks, epicLink);
+                updatedDate, subTasks, epicLink, null, null, fixVersionIds);
     }
+
+    public JIRAEpic() {};
 
     public void setBreakdown(boolean isBreakdown) {
         this.isBreakdown = isBreakdown;
@@ -41,12 +43,12 @@ public class JIRAEpic extends JIRAIssue {
     @Override
     public Date getScheduledStart() {
 
-        return checkDate(this.getCreatedDate());
+        return convertToNonNullDate(this.getCreatedDate());
     }
 
     @Override
     public Date getScheduledFinish() {
-        return checkDate(this.getUpdatedDate());
+        return convertToNonNullDate(this.getUpdatedDate());
     }
 
     @Override
