@@ -114,7 +114,11 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
     private void loadSprints(String projectKey) {
         List<JIRASprint> jiraSprints = service.getSprints(projectKey);
 
-        sprints = new ArrayList<AgileDataSprint>(jiraSprints.size());
+        sprints = new ArrayList<AgileDataSprint>(jiraSprints == null ? 0 : jiraSprints.size());
+
+        if (jiraSprints == null) {
+            return;
+        }
 
         for (JIRASprint jiraSprint : jiraSprints) {
             AgileDataSprint sprint = new AgileDataSprint();

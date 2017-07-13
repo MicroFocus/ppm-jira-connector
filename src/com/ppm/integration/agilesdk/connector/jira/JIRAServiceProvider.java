@@ -169,7 +169,7 @@ public class JIRAServiceProvider {
                     for (int i = 0 ; i < sprints.length() ; i++) {
                         JSONObject jsonSprint = sprints.getJSONObject(i);
 
-                        JIRASprint jiraSprint = new JIRASprint(jsonSprint.getString("id"), jsonSprint.getString("state"), jsonSprint.getString("name"), jsonSprint.getString("startDate"), jsonSprint.getString("endDate"));
+                        JIRASprint jiraSprint = new JIRASprint(jsonSprint.getString("id"), jsonSprint.getString("state"), jsonSprint.getString("name"), jsonSprint.has("startDate") ? jsonSprint.getString("startDate") : null, jsonSprint.has("endDate") ? jsonSprint.getString("endDate") : null );
                         jiraSprints.add(jiraSprint);
                     }
                 }
