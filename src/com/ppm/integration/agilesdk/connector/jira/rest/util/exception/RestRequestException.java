@@ -5,28 +5,14 @@ public class RestRequestException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private final String errorCode;
+    private final int statusCode;
 
-    private final String msgKey;
+    public RestRequestException(int statusCode, String message) {
+        super(message);
+        this.statusCode = statusCode;
+   }
 
-    private final String[] params;
-
-    public RestRequestException(String code, String msgKey, String... params) {
-        this.errorCode = code;
-        this.msgKey = msgKey;
-        this.params = params;
+    public int getStatusCode() {
+        return statusCode;
     }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public String getMsgKey() {
-        return msgKey;
-    }
-
-    public String[] getParams() {
-        return params;
-    }
-
 }

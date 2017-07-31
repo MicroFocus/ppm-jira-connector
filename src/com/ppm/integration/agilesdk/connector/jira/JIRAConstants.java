@@ -17,47 +17,51 @@ public class JIRAConstants {
 
     public static final String KEY_ADMIN_PASSWORD = "adminPassword";
 
-    public static final String KEY_LEVEL_OF_DETAILS_TO_SYNCHRONIZE = "level_of_details_to_synchronize";
-
     public static final String KEY_USERNAME = "username";
 
     public static final String KEY_PASSWORD = "password";
 
-    public static final String APP_CLIENT_ID = "clientId";
+    public static final String OPTION_INCLUDE_ISSUES_NO_GROUP = "option_include_issues_in_no_group";
 
-    public static final String APP_CLIENT_SECRET = "clientSecret";
+    public static final String OPTION_ADD_ROOT_TASK = "option_add_root_task";
 
-    public static final String KEY_SUBSCRIPTION = "SUBSCRIPTION";
+    public static final String LABEL_ISSUES_TO_IMPORT = "jira_issues_to_import";
 
-    public static final String KEY_WORKSPACE = "WORKSPACE";
-
-    public static final String KEY_PROJECT = "PROJECT";
-
-    public static final String KEY_USE_GLOBAL_PROXY = "use_global_proxy";
-
-    public static final String KEY_JIRA_ISSUES_TO_IMPORT = "jira_issues_to_import";
+    public static final String LABEL_TASKS_OPTIONS = "jira_tasks_options";
 
     public static final String KEY_IMPORT_SELECTION = "import_selection";
 
+    public static final String LABEL_USER_DATA_FIELDS = "jira_user_data_options";
+
+    public static final String SELECT_USER_DATA_STORY_POINTS = "jira_user_data_story_points";
+
+    public static final String SELECT_USER_DATA_AGGREGATED_STORY_POINTS = "jira_user_data_aggregated_story_points";
+
     public static final String KEY_IMPORT_SELECTION_DETAILS = "import_selection_details";
 
-    public static final String KEY_JIRA_PROJECT_NAME = "jira_project_name";
+    public static final String KEY_JIRA_PROJECT = "jira_project_name";
 
-    public static final String KEY_JIRA_PROJECT_KEY = "jira_project_key";
+    public static final String KEY_IMPORT_GROUPS = "import_groups";
 
-    public static final String KEY_JIRA_ISSUE_TYPES = "jira_issue_types";
+    public static final String KEY_PERCENT_COMPLETE = "percent_complete";
 
-    public static final String KEY_ALL_PROJECT_PLANNED_ISSUES = "all_project_planned_issues";
+    public static final String PERCENT_COMPLETE_WORK = "percent_complete_work";
 
-    public static final String KEY_EPIC = "epic";
+    public static final String PERCENT_COMPLETE_DONE_STORY_POINTS = "percent_complete_story_points_done";
 
-    public static final String KEY_ALL_EPICS = "all_epics";
+    public static final String GROUP_STATUS = "group_status";
 
-    public static final String KEY_VERSION = "version";
+    public static final String GROUP_SPRINT = "group_sprint";
 
-    public static final String KEY_INCLUDE_ISSUES_BREAKDOWN = "include_issues_breakdown";
+    public static final String GROUP_EPIC = "group_epic";
 
-    public static final String  KEY_INCLUDE_ONLY_PLANNED_ITEMS = "include_only_planned_items";
+    public static final String IMPORT_ALL_PROJECT_ISSUES = "all_project_planned_issues";
+
+    public static final String IMPORT_ONE_EPIC = "epic";
+
+    public static final String IMPORT_ONE_BOARD = "board";
+
+    public static final String IMPORT_ONE_VERSION = "version";
 
     public static final String API_VERSION2_API_ROOT = "/rest/api/2/";
 
@@ -69,7 +73,7 @@ public class JIRAConstants {
 
     public static final String SPRINT_SUFFIX = API_VERSION1_API_ROOT + "sprint";
 
-    // Just add JQL string from JiraSearchUrlBuilder class
+    // Just add JQL string from JiraIssuesRetrieverUrlBuilder class
     public static final String SEARCH_URL =
             API_VERSION2_API_ROOT + "search?expand=schema&jql=";
 
@@ -90,6 +94,12 @@ public class JIRAConstants {
 
     public static final String JIRA_ISSUE_TASK = "TASK";
 
+    public static final String JIRA_ISSUE_SUB_TASK = "SUB-TASK";
+
+    public static final String JIRA_ISSUE_FEATURE = "FEATURE";
+
+    public static final String JIRA_STORY_POINTS_CUSTOM_NAME = "Story Points";
+
     public static final String JIRA_SPRINT_CUSTOM = "com.pyxis.greenhopper.jira:gh-sprint";
 
     public static final String JIRA_EPIC_LINK_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-link";
@@ -97,6 +107,8 @@ public class JIRAConstants {
     public static final String JIRA_EPIC_NAME_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-label";
 
     public static final String JIRA_CREATE_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
+
+    public static final String JIRA_GET_ISSUE_WORKLOG = API_VERSION2_API_ROOT + "issue/%issue%/worklog";
 
     public static final String JIRA_FIELDS_URL = API_VERSION2_API_ROOT + "field/";
 }

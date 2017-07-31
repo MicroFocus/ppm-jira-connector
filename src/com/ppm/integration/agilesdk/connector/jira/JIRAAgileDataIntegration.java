@@ -4,10 +4,7 @@ import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.agiledata.*;
 import com.ppm.integration.agilesdk.connector.jira.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @see AgileDataIntegration
@@ -51,26 +48,23 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
     }
 
     private void loadBugsAndStories(String projectKey) {
-        Map<String, Boolean> types = new HashMap<String, Boolean>();
-        types.put(JIRAConstants.JIRA_ISSUE_STORY, Boolean.TRUE);
-        types.put(JIRAConstants.JIRA_ISSUE_BUG, Boolean.TRUE);
 
         // We retrieve all bug/stories, even if they are not scheduled in a sprint for now
-        List<JIRAIssue> issues = service.getIssues(projectKey, types, false);
+        List<JIRASubTaskableIssue> issues = service.getAllIssues(projectKey, JIRAConstants.JIRA_ISSUE_STORY, JIRAConstants.JIRA_ISSUE_BUG);
 
         bugsAndStories = new ArrayList<AgileDataBacklogItem>(issues.size());
 
-        for (JIRAIssue issue: issues) {
+        for (JIRASubTaskableIssue issue: issues) {
             AgileDataBacklogItem backlogItem = new AgileDataBacklogItem();
-            backlogItem.setAuthor(issue.getResources());
+            backlogItem.setAuthor(issue.getAuthorName());
             backlogItem.setBacklogItemId(issue.getKey());
-            backlogItem.setSprintId(issue.getSprintKey());
-            backlogItem.setBacklogType(issue.getType());
-            backlogItem.setAuthor(issue.getResources());
-            backlogItem.setStatus(issue.getStatusName());
+            backlogItem.setSprintId(issue.getSprintId());
+            backlogItem.setBacklogType(issue.getAgileDataBacklogItemType());
+            backlogItem.setStatus(issue.getStatus());
             backlogItem.setEpicId(issue.getEpicKey());
-            backlogItem.setName(issue.getIssueName());
+            backlogItem.setName(issue.getName());
             backlogItem.setPriority(issue.getPriorityName());
+            backlogItem.setStoryPoints(issue.getStoryPoints() == null ? 0 : issue.getStoryPoints().intValue());
             if (issue.getFixVersionIds() != null && !issue.getFixVersionIds().isEmpty()) {
                 // JIRA supports putting an item in multiple version (smart choice!), but PPM Agile Data tables don't.
                 backlogItem.setReleaseId(issue.getFixVersionIds().get(0));
@@ -87,16 +81,19 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
     }
 
     private void loadEpics(String projectKey) {
-        List<JIRAEpic> jiraEpics = service.getEpics(projectKey);
+
+        // We retrieve all bug/stories, even if they are not scheduled in a sprint for now
+        List<JIRASubTaskableIssue> jiraEpics = service.getAllIssues(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
 
         epics = new ArrayList<AgileDataEpic>(jiraEpics.size());
 
-        for (JIRAEpic jiraEpic : jiraEpics) {
+        for (JIRASubTaskableIssue jiraEpic : jiraEpics) {
             AgileDataEpic epic = new AgileDataEpic();
-            epic.setName(jiraEpic.getIssueName());
+            epic.setName(jiraEpic.getName());
             epic.setEpicId(jiraEpic.getKey());
-            epic.setAuthor(jiraEpic.getResources());
-            // story points info is not easily available in JIRA API.
+            epic.setAuthor(jiraEpic.getAuthorName());
+            epic.setPlannedStoryPoints(jiraEpic.getStoryPoints() == null ? 0 : jiraEpic.getStoryPoints().intValue());
+
             epics.add(epic);
         }
     }
@@ -112,7 +109,7 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
 
 
     private void loadSprints(String projectKey) {
-        List<JIRASprint> jiraSprints = service.getSprints(projectKey);
+        List<JIRASprint> jiraSprints = service.getAllSprints(projectKey);
 
         sprints = new ArrayList<AgileDataSprint>(jiraSprints == null ? 0 : jiraSprints.size());
 
@@ -125,7 +122,7 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
             // Sprints are not linked to a specific Release/Version in JIRA.
             sprint.setReleaseId(null);
             sprint.setName(jiraSprint.getName());
-            sprint.setSprintId(jiraSprint.getSprintId());
+            sprint.setSprintId(jiraSprint.getKey());
             sprint.setStartDate(jiraSprint.getStartDateAsDate());
             sprint.setFinishDate(jiraSprint.getEndDateAsDate());
             sprints.add(sprint);

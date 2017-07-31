@@ -1,53 +1,77 @@
 
 package com.ppm.integration.agilesdk.connector.jira.model;
 
-import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.NULL_VALUE;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import com.ppm.integration.agilesdk.pm.ExternalTask;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-public class JIRAEntity extends ExternalTask {
-    private final Logger logger = Logger.getLogger(this.getClass());
+import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.NULL_VALUE;
 
-    private SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+public abstract class JIRAEntity extends JIRABase {
 
-    Date convertToNonNullDate(String dateStr) {
+    private String name;
 
-        Date date = convertToDate(dateStr);
+    private String key;
 
-        if (date == null) {
-            Calendar c = Calendar.getInstance();
-            c.set(Calendar.HOUR_OF_DAY, 0);
-            c.set(Calendar.MINUTE, 0);
-            c.set(Calendar.SECOND, 0);
-            c.set(Calendar.MILLISECOND, 0);
-            date = c.getTime();
-        }
-
-        return date;
+    public String getName() {
+        return name;
     }
 
-    Date convertToDate(String dateStr) {
-        if (StringUtils.isEmpty(dateStr) || NULL_VALUE.equalsIgnoreCase(dateStr)) {
-            return null;
-        }
-            Date d = null;
-            try {
-                if (dateStr.length() > 10) {
-                    dateStr = dateStr.substring(0, 10);
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public static <T extends JIRAEntity> T generateFromJSonObject(JSONObject obj, Class<T> clazz) {
+
+        T entity = null;
+
+        try {
+            entity = (T)clazz.newInstance();
+            Map<String, Method> methods = new HashMap<>();
+            for (Method m : clazz.getDeclaredMethods()) {
+                String methodName = m.getName();
+                if (!methodName.startsWith("set") || methodName.length() < 4) {
+                    // We only need setters
+                    continue;
                 }
-                return format.parse(dateStr);
-            } catch (ParseException e) {
-                logger.error("Date Parse Error,the input dateStr is " + dateStr, e);
-                return null;
+                String key = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+
+                Object value = null;
+                String parameterTypeName = m.getParameterTypes()[0].getSimpleName();
+
+                if ("String".equals(parameterTypeName)) {
+                    value = (obj.has(key) && !obj.isNull(key)) ? obj.getString(key) : null;
+                }
+
+                if ("boolean".equalsIgnoreCase(parameterTypeName)) {
+                    value = (obj.has(key) && !obj.isNull(key)) ? obj.getBoolean(key) : null;
+                }
+
+                if (value != null) {
+                    m.invoke(entity, value);
+                }
             }
+        } catch (Exception e) {
+            throw new RuntimeException("Error when reading Version information", e);
+        }
+
+        return entity;
     }
 
 }

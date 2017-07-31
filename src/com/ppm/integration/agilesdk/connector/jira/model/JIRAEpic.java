@@ -10,87 +10,27 @@ import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
-public class JIRAEpic extends JIRAIssue {
-    private boolean isBreakdown;
+public class JIRAEpic extends JIRASubTaskableIssue {
 
-    public JIRAEpic(String issueName, String type, String key, String statusName, String scheduledStartDate,
-            String scheduledFinishDate, String scheduledDuration, Long scheduledEffort, String actualStart,
-            String percentComplete, String actualFinish, String predecessors, String role, String resources,
-            String createdDate, String updatedDate, List<JIRAIssue> subTasks, String epicLink, List<String> fixVersionIds) {
+    private List<JIRASubTaskableIssue> contents = new ArrayList<JIRASubTaskableIssue>();
 
-        super(issueName, type, key, statusName, scheduledStartDate, scheduledFinishDate, scheduledDuration,
-                scheduledEffort, actualStart, percentComplete, actualFinish, predecessors, role, resources, createdDate,
-                updatedDate, subTasks, epicLink, null, null, fixVersionIds);
+    public List<JIRASubTaskableIssue> getContents() {
+        return contents;
     }
 
-    public JIRAEpic() {};
-
-    public void setBreakdown(boolean isBreakdown) {
-        this.isBreakdown = isBreakdown;
+    public void addContent(JIRASubTaskableIssue issue) {
+        contents.add(issue);
     }
 
-    // the two methods for the inner class ExternalTaskActuals to get the data
-    // because of the same
-    // method name
-    private String getPercent() {
-        return this.getPercentComplete();
-    }
+    // Sums up the Story Points from all the Epic contents
+    public long getAggregatedStoryPoints() {
 
-    private long getEffort() {
-        return this.getScheduledEffort();
-    }
+        long aggSP = 0;
 
-    @Override
-    public Date getScheduledStart() {
-
-        return convertToNonNullDate(this.getCreatedDate());
-    }
-
-    @Override
-    public Date getScheduledFinish() {
-        return convertToNonNullDate(this.getUpdatedDate());
-    }
-
-    @Override
-    public List<ExternalTask> getChildren() {
-        if (isBreakdown) {
-            List<ExternalTask> ets = new ArrayList<>();
-
-            for (JIRAIssue issue : this.getSubTasks()) {
-                ets.add((ExternalTask)issue);
-            }
-            return ets;
+        for (JIRASubTaskableIssue content : contents) {
+            aggSP += content.getStoryPoints() == null ? 0 : content.getStoryPoints();
         }
-        return null;
-    }
 
-    @Override
-    public String getName() {
-        return "[" + this.getType() + "] " + this.getIssueName();
-    }
-
-    @Override
-    public List<ExternalTaskActuals> getActuals() {
-        ExternalTaskActuals eta = new ExternalTaskActuals() {
-            @Override
-            public double getPercentComplete() {
-                return Double.parseDouble(getPercent());
-            }
-
-            @Override
-            public double getScheduledEffort() {
-                // if (!isBreakdown) {
-                // double actualEffort = 0.0;
-                //
-                // for (JIRAIssue ji : getSubTasks()) {
-                // actualEffort += ji.getScheduledEffort();
-                // }
-                // return actualEffort / 3600;
-                // }
-
-                return getEffort() / 3600.0;
-            }
-        };
-        return Arrays.asList(new ExternalTaskActuals[] {eta});
+        return aggSP;
     }
 }

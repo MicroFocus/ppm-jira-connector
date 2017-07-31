@@ -26,18 +26,18 @@ public class JIRAConnectivityExceptionHandler implements UncaughtExceptionHandle
     }
 
     private void handleClientException(RestRequestException e, Class cls) {
-        switch (e.getErrorCode()) {
-            case "404":
-                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getErrorCode())
+        switch (e.getStatusCode()) {
+            case 404:
+                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getStatusCode())
                         .setMessage("ERROR_DOMAIN_NOT_FOUND");
-            case "502":
-                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getErrorCode())
+            case 502:
+                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getStatusCode())
                         .setMessage("ERROR_BAD_GETWAY");
-            case "400":
-                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getErrorCode())
+            case 400:
+                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getStatusCode())
                         .setMessage("ERROR_BAD_REQUEST");
-            case "401":
-                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getErrorCode())
+            case 401:
+                throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getStatusCode())
                         .setMessage("ERROR_AUTHENTICATION_FAILED");
             default:
                 throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
