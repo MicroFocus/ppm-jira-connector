@@ -3,9 +3,12 @@ package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
 import javax.ws.rs.core.MediaType;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
+import java.net.*;
 
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 
@@ -60,11 +63,22 @@ public class RestWrapper {
         return resource;
     }
 
-    public Resource getJIRAResource(String uri) {
-        Resource resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
-        return resource;
-    }
+	public Resource getJIRAResource(String urlAdd) {
+		Resource resource;
+		try {
+			URL url = new URL(urlAdd);
+			String nullFragment = null;
+			URI uri = new URI(url.getProtocol(), url.getHost(), url.getPath(), url.getQuery(), nullFragment);
+			resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
+					.accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
+		} catch (MalformedURLException e) {
+			throw new RestRequestException( // is a malformed URL
+					400, String.format("%s is a malformed URL", urlAdd));
+		} catch (URISyntaxException e) {
+			throw new RestRequestException(400, String.format("%s is a malformed URL", urlAdd));
+		}
+		return resource;
+	}
 
     public ClientResponse sendGet(String uri) {
         Resource resource = this.getJIRAResource(uri);
