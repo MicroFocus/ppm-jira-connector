@@ -14,10 +14,6 @@ public class JIRAVersion extends JIRAEntity {
 
     private boolean overdue;
 
-    private String userStartDate;
-
-    private String userReleaseDate;
-
     private String projectId;
 
     private String description;
@@ -68,22 +64,6 @@ public class JIRAVersion extends JIRAEntity {
 
     public void setOverdue(boolean overdue) {
         this.overdue = overdue;
-    }
-
-    public String getUserStartDate() {
-        return userStartDate;
-    }
-
-    public void setUserStartDate(String userStartDate) {
-        this.userStartDate = userStartDate;
-    }
-
-    public String getUserReleaseDate() {
-        return userReleaseDate;
-    }
-
-    public void setUserReleaseDate(String userReleaseDate) {
-        this.userReleaseDate = userReleaseDate;
     }
 
     public String getProjectId() {
