@@ -67,8 +67,12 @@ public class RestWrapper {
 		Resource resource;
 		try {
 			URL url = new URL(urlAdd);
-			String nullFragment = null;
-			URI uri = new URI(url.getProtocol(), url.getHost(), url.getPath(), url.getQuery(), nullFragment);
+			String urlPath = url.getHost();
+			if(url.getPort()>0)
+			{
+				urlPath = urlPath +":"+url.getPort();
+			}
+			URI uri = new URI(url.getProtocol(), urlPath, url.getPath(), url.getQuery(), null);
 			resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
 					.accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
 		} catch (MalformedURLException e) {
