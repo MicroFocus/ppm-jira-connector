@@ -75,7 +75,8 @@ public class JiraIssuesRetrieverUrlBuilder {
 
         switch(retrievalType) {
             case BOARD:
-                searchUrl.append(JIRAConstants.BOARD_SUFFIX + "/" + boardId + "/issue");
+                searchUrl.append(JIRAConstants.BOARD_SUFFIX + "/" + boardId + "/issue?");
+                break;
             default: // SEARCH
                 searchUrl.append(JIRAConstants.API_VERSION2_API_ROOT + "search?");
         }
