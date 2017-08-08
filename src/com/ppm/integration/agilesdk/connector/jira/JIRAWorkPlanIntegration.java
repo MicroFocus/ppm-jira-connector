@@ -202,42 +202,15 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 new LabelText(JIRAConstants.LABEL_TASKS_OPTIONS, "TASKS_OPTIONS",
                         "Tasks Options:", true),
                 new CheckBox(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, "OPTION_INCLUDE_ISSUE_NO_GROUP", true),
-                new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true),
+                new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true)
 
-                new LineBreaker(),
 
-                new LabelText(JIRAConstants.LABEL_USER_DATA_FIELDS, "USER_DATA_OPTIONS",
-                        "User Data Options:", true),
-                getUserDataDDL(JIRAConstants.SELECT_USER_DATA_STORY_POINTS, "USER_DATA_STORY_POINTS"),
-                getUserDataDDL(JIRAConstants.SELECT_USER_DATA_AGGREGATED_STORY_POINTS, "USER_DATA_AGGREGATED_STORY_POINTS")
         });
 
         return fields;
     }
 
-    private DynamicDropdown getUserDataDDL(String elementName,
-            String labelKey) {
 
-        DynamicDropdown udDDL = new DynamicDropdown(elementName, labelKey, "0", "", false) {
-
-            @Override public List<String> getDependencies() {
-                return new ArrayList<String>();
-            }
-
-            @Override public List<Option> getDynamicalOptions(ValueSet values) {
-                List<Option> options = new ArrayList<Option>();
-                options.add(new Option("0", "Do not sync"));
-
-                for (int i = 1 ; i <= 20 ; i++) {
-                    options.add(new Option(String.valueOf(i), "USER_DATA"+i));
-                }
-
-                return options;
-            }
-        };
-
-        return udDDL;
-    }
 
     @Override
     /**

@@ -49,6 +49,11 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new LabelText("", "ADMIN_INFO_FOR_EPIC_AND_AGILE_DATA", "block", false),
                 new PlainText(JIRAConstants.KEY_ADMIN_USERNAME, "ADMIN_USERNAME", "", true),
                 new PasswordText(JIRAConstants.KEY_ADMIN_PASSWORD, "ADMIN_PASSWORD", "", true),
+                new LineBreaker(),
+                new LabelText(JIRAConstants.LABEL_USER_DATA_FIELDS, "USER_DATA_OPTIONS",
+                        "User Data Options:", true),
+                getUserDataDDL(JIRAConstants.SELECT_USER_DATA_STORY_POINTS, "USER_DATA_STORY_POINTS"),
+                getUserDataDDL(JIRAConstants.SELECT_USER_DATA_AGGREGATED_STORY_POINTS, "USER_DATA_AGGREGATED_STORY_POINTS")
         });
     }
 
@@ -75,6 +80,30 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
     @Override
     public List<String> getIntegrationClasses() {
         return Arrays.asList(new String[] {"com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration","com.ppm.integration.agilesdk.connector.jira.JIRATimeSheetIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAPortfolioEpicIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAAgileDataIntegration"});
+    }
+
+    private DynamicDropdown getUserDataDDL(String elementName,
+                                           String labelKey) {
+
+        DynamicDropdown udDDL = new DynamicDropdown(elementName, labelKey, "0", "", false) {
+
+            @Override public List<String> getDependencies() {
+                return new ArrayList<String>();
+            }
+
+            @Override public List<Option> getDynamicalOptions(ValueSet values) {
+                List<Option> options = new ArrayList<Option>();
+                options.add(new Option("0", "Do not sync"));
+
+                for (int i = 1 ; i <= 20 ; i++) {
+                    options.add(new Option(String.valueOf(i), "USER_DATA"+i));
+                }
+
+                return options;
+            }
+        };
+
+        return udDDL;
     }
 
 }

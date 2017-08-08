@@ -109,7 +109,7 @@ public class JIRAServiceProvider {
 
             String jsonStr = response.getEntity(String.class);
 
-            List<JIRAProject> list = new ArrayList<>();
+            List<JIRAProject> list = new ArrayList<JIRAProject>();
             try {
                 JSONArray jsonArray = new JSONArray(jsonStr);
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -283,7 +283,7 @@ public class JIRAServiceProvider {
          * Convenience method to {@link #getAllIssues(String, Set)} that takes Strings parameter rather than a Set.
          */
         public List<JIRASubTaskableIssue> getAllIssues(String projectKey, String... issueTypes) {
-            Set<String> types = new HashSet<>();
+            Set<String> types = new HashSet<String>();
 
             for (String issueType : issueTypes) {
                 types.add(issueType);
@@ -294,7 +294,7 @@ public class JIRAServiceProvider {
 
 
         public List<JIRAVersion> getVersions(String projectKey) {
-            List<JIRAVersion> list = new ArrayList<>();
+            List<JIRAVersion> list = new ArrayList<JIRAVersion>();
             String query =
                     (baseUri + JIRAConstants.VERSIONS_SUFFIX).replace(JIRAConstants.REPLACE_PROJECT_KEY, projectKey);
             ClientResponse response = wrapper.sendGet(query);
@@ -308,7 +308,19 @@ public class JIRAServiceProvider {
 
             for (int i = 0; i < array.length(); i++) {
                 try {
-                    JIRAVersion version = JIRAVersion.generateFromJSonObject(array.getJSONObject(i), JIRAVersion.class);
+                    JSONObject versionObj = array.getJSONObject(i);
+
+                    JIRAVersion version = new JIRAVersion();
+                    version.setName(getStr(versionObj, "name"));
+                    version.setId(getStr(versionObj, "id"));
+                    version.setKey(getStr(versionObj, "id"));
+                    version.setArchived(versionObj.has("archived")? versionObj.getBoolean("archived"):false);
+                    version.setReleased(versionObj.has("released")? versionObj.getBoolean("released"):false);
+                    version.setOverdue(versionObj.has("overdue")? versionObj.getBoolean("overdue"):false);
+                    version.setDescription(getStr(versionObj, "description"));
+                    version.setStartDate(getStr(versionObj, "startDate"));
+                    version.setReleaseDate(getStr(versionObj, "releasedDate"));
+
                     list.add(version);
                 } catch (JSONException e) {
                     logger.error("", e);
@@ -378,7 +390,8 @@ public class JIRAServiceProvider {
         public JIRAIssue getSingleIssue(String projectKey, String issueKey) {
 
             JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
-                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey).setExpandLevel("schema").addAndConstraint("key="+issueKey);
+                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey).setExpandLevel("schema").addAndConstraint("key="+issueKey)
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField, storyPointsCustomField);
 
             IssueRetrievalResult result = runIssueRetrivalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
 
@@ -656,7 +669,7 @@ public class JIRAServiceProvider {
          *  2,goal=<null>,startDate=2016-12-07T06:18:24.224+08:00,endDate=2016-12-21T06:38:24.224+08:00,completeDate=<null>,sequence=1]"
          */
         private String getSprintIdFromSprintCustomfield(String sprintCustomfield) {
-            Map<String, String> map = new HashMap<>();
+            Map<String, String> map = new HashMap<String, String>();
             String reg = ".+@.+\\[(.+)]";
             Pattern pattern = Pattern.compile(reg);
             Matcher matcher = pattern.matcher(sprintCustomfield);

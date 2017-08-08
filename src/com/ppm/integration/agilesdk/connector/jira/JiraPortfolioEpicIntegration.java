@@ -1,15 +1,20 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
 import com.ppm.integration.agilesdk.ValueSet;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRAEpic;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRASubTaskableIssue;
 import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicIntegration;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicSyncInfo;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @see PortfolioEpicIntegration
@@ -29,7 +34,29 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
     @Override public PortfolioEpicSyncInfo getPortfolioEpicSyncInfo(String epicId, String agileProjectValue,
             ValueSet instanceConfigurationParameters)
     {
-        JIRAIssue jiraEpic = service.get(instanceConfigurationParameters).getSingleIssue(agileProjectValue, epicId);
+        if (StringUtils.isBlank(epicId)) {
+            return null;
+        }
+
+        // We want to retrieve the epic and all of its contents to be able to compute aggregated story points & percent SP complete
+
+        Set<String> issueTypes = new HashSet<String>();
+        issueTypes.add(JIRAConstants.JIRA_ISSUE_TASK);
+        issueTypes.add(JIRAConstants.JIRA_ISSUE_STORY);
+        issueTypes.add(JIRAConstants.JIRA_ISSUE_BUG);
+        issueTypes.add(JIRAConstants.JIRA_ISSUE_EPIC);
+        issueTypes.add(JIRAConstants.JIRA_ISSUE_FEATURE);
+
+        List<JIRASubTaskableIssue> issues = service.get(instanceConfigurationParameters).getEpicIssues(agileProjectValue, issueTypes, epicId);
+
+        JIRAEpic jiraEpic = null;
+
+        for (JIRAIssue issue: issues) {
+            if (epicId.equalsIgnoreCase(issue.getKey())) {
+                jiraEpic = (JIRAEpic) issue;
+                break;
+            }
+        }
 
         if (jiraEpic == null) {
             // The Epic must have been deleted in Jira, or there's some problem to get it
@@ -38,12 +65,10 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
 
         PortfolioEpicSyncInfo epicSyncInfo = new PortfolioEpicSyncInfo();
         epicSyncInfo.setEpicName(jiraEpic.getName());
+        epicSyncInfo.setDoneStoryPoints(jiraEpic.getDoneStoryPoints());
+        epicSyncInfo.setTotalStoryPoints(jiraEpic.getAggregatedStoryPoints());
 
-        // There's no easy standard way in Jira to get the total number of SP in an Epic.
-        epicSyncInfo.setDoneStoryPoints(0);
-        epicSyncInfo.setTotalStoryPoints(0);
-
-        return null;
+        return epicSyncInfo;
     }
 
     @Override public String getEpicURI(String epicId, String agileProjectValue) {

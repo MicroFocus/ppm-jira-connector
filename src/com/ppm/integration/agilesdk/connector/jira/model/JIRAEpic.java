@@ -23,14 +23,28 @@ public class JIRAEpic extends JIRASubTaskableIssue {
     }
 
     // Sums up the Story Points from all the Epic contents
-    public long getAggregatedStoryPoints() {
+    public int getAggregatedStoryPoints() {
 
-        long aggSP = 0;
+        int aggSP = 0;
 
         for (JIRASubTaskableIssue content : contents) {
             aggSP += content.getStoryPoints() == null ? 0 : content.getStoryPoints();
         }
 
         return aggSP;
+    }
+
+    public int getDoneStoryPoints() {
+
+        int doneSP = 0;
+
+        for (JIRASubTaskableIssue content : contents) {
+            if (content.isDone()) {
+                doneSP += content.getStoryPoints() == null ? 0 : content.getStoryPoints();
+            }
+        }
+
+        return doneSP;
+
     }
 }
