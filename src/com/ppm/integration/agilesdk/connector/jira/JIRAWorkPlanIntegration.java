@@ -91,7 +91,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     }
 
                 },
-                new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS", "All project issues", false) {
+                new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS", "", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -221,15 +221,37 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
         String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
         String grouping = values.get(JIRAConstants.KEY_IMPORT_GROUPS);
-        final String percentCompleteType = values.get(JIRAConstants.KEY_PERCENT_COMPLETE);
+        String percentCompleteType = values.get(JIRAConstants.KEY_PERCENT_COMPLETE);
         final boolean addRootTask = values.getBoolean(JIRAConstants.OPTION_ADD_ROOT_TASK, false);
         boolean includeIssuesWithNoGroup = values.getBoolean(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, false);
+
+        // Following code handles backward compatibility with PPM 9.41 connector.
+        if (JIRAConstants.KEY_ALL_EPICS.equals(values.get(JIRAConstants.KEY_IMPORT_SELECTION))) {
+            // This key only existed in PPM 9.41 connector. It would import all epics, grouped by Epics.
+            importSelection = JIRAConstants.IMPORT_ALL_PROJECT_ISSUES;
+            grouping = JIRAConstants.GROUP_EPIC;
+            includeIssuesWithNoGroup = false;
+            percentCompleteType = JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS;
+        }
+        if (StringUtils.isBlank(grouping)) {
+            grouping = JIRAConstants.GROUP_EPIC;
+        }
+        if (StringUtils.isBlank(percentCompleteType)) {
+            percentCompleteType = JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS;
+        }
+        if (StringUtils.isBlank(importSelectionDetails)) {
+            importSelection = JIRAConstants.IMPORT_ALL_PROJECT_ISSUES;
+        }
+        // End of backward compatibility code
+
 
         final TasksCreationContext taskContext = new TasksCreationContext();
         taskContext.workplanIntegrationContext = context;
         taskContext.percentCompleteType = percentCompleteType;
         taskContext.userProvider = service.getUserProvider();
         taskContext.configValues = values;
+
+
 
         // Let's get the sprints info for that project
         List<JIRASprint> sprints = service.get(values).getAllSprints(projectKey);
@@ -884,11 +906,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 info.setSprintId(values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS));
                 return info;
             case JIRAConstants.IMPORT_ONE_EPIC:
-                // Technically it is NOT the sprint id but the Board ID - warning.
                 info.setEpicId(values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS));
                 return info;
             case JIRAConstants.IMPORT_ONE_VERSION:
-                // Technically it is NOT the sprint id but the Board ID - warning.
                 info.setReleaseId(values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS));
                 return info;
             default:

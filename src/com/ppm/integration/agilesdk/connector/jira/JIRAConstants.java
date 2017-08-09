@@ -111,4 +111,10 @@ public class JIRAConstants {
     public static final String JIRA_GET_ISSUE_WORKLOG = API_VERSION2_API_ROOT + "issue/%issue%/worklog";
 
     public static final String JIRA_FIELDS_URL = API_VERSION2_API_ROOT + "field/";
+
+    // Backward compatibility
+    public static final String KEY_ALL_PROJECT_PLANNED_ISSUES = "all_project_planned_issues";
+    public static final String KEY_EPIC = "epic";
+    public static final String KEY_ALL_EPICS = "all_epics";
+    public static final String KEY_VERSION = "version";
 }
