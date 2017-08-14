@@ -614,15 +614,26 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private WorkDrivenPercentCompleteExternalTask convertJiraIssueToExternalTask(final JIRASubTaskableIssue issue, final TasksCreationContext context)
     {
         // First, let's compute the work of that task
-        Double doneWork = null;
-        Double remainingWork = null;
+        double doneWork = 0d;
+        double remainingWork = 0d;
 
         switch(context.percentCompleteType) {
             case JIRAConstants.PERCENT_COMPLETE_WORK:
                 if (issue.getWork() != null) {
-                    doneWork = issue.getWork().getTimeSpentHours();
-                    remainingWork = issue.getWork().getRemainingEstimateHours();
+                    doneWork += getNullSafeDouble(issue.getWork().getTimeSpentHours());
+                    remainingWork += getNullSafeDouble(issue.getWork().getRemainingEstimateHours());
                 }
+
+                // Sub Tasks can have work logged against them.
+                if (issue.getSubTasks() != null) {
+                    for (JIRASubTask subTask: issue.getSubTasks()) {
+                        if (subTask.getWork() != null) {
+                            doneWork += getNullSafeDouble(subTask.getWork().getTimeSpentHours());
+                            remainingWork += getNullSafeDouble(subTask.getWork().getRemainingEstimateHours());
+                        }
+                    }
+                }
+
                 break;
             case JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS:
                 // In story points mode, a task is either 0% or 100% complete.
@@ -633,8 +644,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     doneWork = 0d;
                     remainingWork = (issue.getStoryPoints() == null ? 0d : issue.getStoryPoints().doubleValue());
                 }
+                // Sub Tasks don't have Story Points
                 break;
         }
+
 
 
         ExternalTask task = new ExternalTask() {
@@ -704,7 +717,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         };
 
-        return WorkDrivenPercentCompleteExternalTask.forLeafTask(task, doneWork == null ? 0d : doneWork, remainingWork == null ? 0d : remainingWork);
+        return WorkDrivenPercentCompleteExternalTask.forLeafTask(task, doneWork, remainingWork);
+    }
+
+    private double getNullSafeDouble(Double d) {
+        return d == null ? 0d : d.doubleValue();
     }
 
     private Date getDefaultStartDate() {
