@@ -221,26 +221,31 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
         AgileDataBacklogSeverity severity = new AgileDataBacklogSeverity();
         severity.setBacklogType("Bug");
         severity.setSeverity("Highest");
+        severity.setSeverityIndex(1);
         list.add(severity);
 
         severity = new AgileDataBacklogSeverity();
         severity.setBacklogType("Bug");
         severity.setSeverity("High");
+        severity.setSeverityIndex(2);
         list.add(severity);
 
         severity = new AgileDataBacklogSeverity();
         severity.setBacklogType("Bug");
         severity.setSeverity("Medium");
+        severity.setSeverityIndex(3);
         list.add(severity);
 
         severity = new AgileDataBacklogSeverity();
         severity.setBacklogType("Bug");
         severity.setSeverity("Low");
+        severity.setSeverityIndex(4);
         list.add(severity);
 
         severity = new AgileDataBacklogSeverity();
         severity.setBacklogType("Bug");
         severity.setSeverity("Lowest");
+        severity.setSeverityIndex(5);
         list.add(severity);
 
 
