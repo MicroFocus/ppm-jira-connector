@@ -91,7 +91,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     }
 
                 },
-                new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS", "All project issues", false) {
+                new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS", "", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -221,15 +221,37 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
         String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
         String grouping = values.get(JIRAConstants.KEY_IMPORT_GROUPS);
-        final String percentCompleteType = values.get(JIRAConstants.KEY_PERCENT_COMPLETE);
+        String percentCompleteType = values.get(JIRAConstants.KEY_PERCENT_COMPLETE);
         final boolean addRootTask = values.getBoolean(JIRAConstants.OPTION_ADD_ROOT_TASK, false);
         boolean includeIssuesWithNoGroup = values.getBoolean(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, false);
+
+        // Following code handles backward compatibility with PPM 9.41 connector.
+        if (JIRAConstants.KEY_ALL_EPICS.equals(values.get(JIRAConstants.KEY_IMPORT_SELECTION))) {
+            // This key only existed in PPM 9.41 connector. It would import all epics, grouped by Epics.
+            importSelection = JIRAConstants.IMPORT_ALL_PROJECT_ISSUES;
+            grouping = JIRAConstants.GROUP_EPIC;
+            includeIssuesWithNoGroup = false;
+            percentCompleteType = JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS;
+        }
+        if (StringUtils.isBlank(grouping)) {
+            grouping = JIRAConstants.GROUP_EPIC;
+        }
+        if (StringUtils.isBlank(percentCompleteType)) {
+            percentCompleteType = JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS;
+        }
+        if (StringUtils.isBlank(importSelectionDetails)) {
+            importSelection = JIRAConstants.IMPORT_ALL_PROJECT_ISSUES;
+        }
+        // End of backward compatibility code
+
 
         final TasksCreationContext taskContext = new TasksCreationContext();
         taskContext.workplanIntegrationContext = context;
         taskContext.percentCompleteType = percentCompleteType;
         taskContext.userProvider = service.getUserProvider();
         taskContext.configValues = values;
+
+
 
         // Let's get the sprints info for that project
         List<JIRASprint> sprints = service.get(values).getAllSprints(projectKey);
@@ -592,15 +614,26 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private WorkDrivenPercentCompleteExternalTask convertJiraIssueToExternalTask(final JIRASubTaskableIssue issue, final TasksCreationContext context)
     {
         // First, let's compute the work of that task
-        Double doneWork = null;
-        Double remainingWork = null;
+        double doneWork = 0d;
+        double remainingWork = 0d;
 
         switch(context.percentCompleteType) {
             case JIRAConstants.PERCENT_COMPLETE_WORK:
                 if (issue.getWork() != null) {
-                    doneWork = issue.getWork().getTimeSpentHours();
-                    remainingWork = issue.getWork().getRemainingEstimateHours();
+                    doneWork += getNullSafeDouble(issue.getWork().getTimeSpentHours());
+                    remainingWork += getNullSafeDouble(issue.getWork().getRemainingEstimateHours());
                 }
+
+                // Sub Tasks can have work logged against them.
+                if (issue.getSubTasks() != null) {
+                    for (JIRASubTask subTask: issue.getSubTasks()) {
+                        if (subTask.getWork() != null) {
+                            doneWork += getNullSafeDouble(subTask.getWork().getTimeSpentHours());
+                            remainingWork += getNullSafeDouble(subTask.getWork().getRemainingEstimateHours());
+                        }
+                    }
+                }
+
                 break;
             case JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS:
                 // In story points mode, a task is either 0% or 100% complete.
@@ -611,8 +644,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     doneWork = 0d;
                     remainingWork = (issue.getStoryPoints() == null ? 0d : issue.getStoryPoints().doubleValue());
                 }
+                // Sub Tasks don't have Story Points
                 break;
         }
+
 
 
         ExternalTask task = new ExternalTask() {
@@ -682,7 +717,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         };
 
-        return WorkDrivenPercentCompleteExternalTask.forLeafTask(task, doneWork == null ? 0d : doneWork, remainingWork == null ? 0d : remainingWork);
+        return WorkDrivenPercentCompleteExternalTask.forLeafTask(task, doneWork, remainingWork);
+    }
+
+    private double getNullSafeDouble(Double d) {
+        return d == null ? 0d : d.doubleValue();
     }
 
     private Date getDefaultStartDate() {
@@ -884,11 +923,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 info.setSprintId(values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS));
                 return info;
             case JIRAConstants.IMPORT_ONE_EPIC:
-                // Technically it is NOT the sprint id but the Board ID - warning.
                 info.setEpicId(values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS));
                 return info;
             case JIRAConstants.IMPORT_ONE_VERSION:
-                // Technically it is NOT the sprint id but the Board ID - warning.
                 info.setReleaseId(values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS));
                 return info;
             default:
