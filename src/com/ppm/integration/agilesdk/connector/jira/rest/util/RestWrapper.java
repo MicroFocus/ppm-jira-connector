@@ -2,8 +2,6 @@
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
@@ -11,7 +9,6 @@ import java.net.*;
 
 import javax.ws.rs.core.MediaType;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
 
 public class RestWrapper {
     private RestClient restClient;
