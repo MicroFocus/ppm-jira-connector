@@ -5,10 +5,10 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestReque
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
-import java.net.*;
 
 import javax.ws.rs.core.MediaType;
 import java.io.UnsupportedEncodingException;
+import java.net.*;
 
 public class RestWrapper {
     private RestClient restClient;
