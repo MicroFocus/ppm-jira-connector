@@ -9,6 +9,7 @@ import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicIntegration;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicSyncInfo;
+import com.ppm.integration.agilesdk.provider.Providers;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -47,7 +48,19 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
         issueTypes.add(JIRAConstants.JIRA_ISSUE_EPIC);
         issueTypes.add(JIRAConstants.JIRA_ISSUE_FEATURE);
 
-        List<JIRASubTaskableIssue> issues = service.get(instanceConfigurationParameters).getEpicIssues(agileProjectValue, issueTypes, epicId);
+        List<JIRASubTaskableIssue> issues = null;
+
+        try {
+            issues = service.get(instanceConfigurationParameters).getEpicIssues(agileProjectValue, issueTypes, epicId);
+        } catch (Exception e) {
+            String errorEpicName = Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("ERROR_EPIC_CANNOT_BE_RETRIEVED");
+            // If there's an error when retrieving the Epic, it may mean that the Epic was deleted, that the JIRA server is down or that JIRA user doesn't have access to it anymore.
+            PortfolioEpicSyncInfo epicSyncInfoError = new PortfolioEpicSyncInfo();
+            epicSyncInfoError.setEpicName(errorEpicName);
+            epicSyncInfoError.setDoneStoryPoints(0);
+            epicSyncInfoError.setTotalStoryPoints(0);
+            return epicSyncInfoError;
+        }
 
         JIRAEpic jiraEpic = null;
 

@@ -195,16 +195,31 @@ public class JIRAServiceProvider {
             // Create Epic
             String createEpicUri = baseUri + JIRAConstants.JIRA_CREATE_ISSUE_URL;
 
-            String createEpicPayload = "{\n" + "    \"fields\": {\n"
-                    + "       \"project\": { \"key\": \"%projectKey%\" },\n" + "       \"summary\": \"%epicName%\",\n"
-                    + "       \"%epicNameCustomField%\": \"%epicName%\",\n"
-                    + "       \"description\": \"%epicDescription%\",\n" + "       \"issuetype\": {\n"
-                    + "          \"name\": \"Epic\"\n" + "       }\n" + "   }\n" + "}";
+            JSONObject createEpicPayload = new JSONObject();
 
-            createEpicPayload = createEpicPayload.replace("%projectKey%", projectKey).replace("%epicName%", epicInfo.getEpicName())
-                    .replace("%epicDescription%", epicInfo.getEpicDescription()).replace("%epicNameCustomField%", epicNameCustomField);
+            try {
 
-            ClientResponse response = wrapper.sendPost(createEpicUri, createEpicPayload, 201);
+                JSONObject fields = new JSONObject();
+
+                JSONObject project = new JSONObject();
+                project.put("key", projectKey);
+
+                JSONObject issueType = new JSONObject();
+                issueType.put("name", "Epic");
+
+                fields.put("summary", epicInfo.getEpicName());
+                fields.put(epicNameCustomField, epicInfo.getEpicName());
+                fields.put("description", epicInfo.getEpicDescription());
+                fields.put("project", project);
+                fields.put("issuetype", issueType);
+
+                createEpicPayload.put("fields", fields);
+
+            } catch (JSONException e) {
+                throw new RuntimeException("Error when generating create Epic JSON Payload", e);
+            }
+
+            ClientResponse response = wrapper.sendPost(createEpicUri, createEpicPayload.toString(), 201);
             String jsonStr = response.getEntity(String.class);
             try {
                 JSONObject jsonObj = new JSONObject(jsonStr);
