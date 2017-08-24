@@ -195,16 +195,31 @@ public class JIRAServiceProvider {
             // Create Epic
             String createEpicUri = baseUri + JIRAConstants.JIRA_CREATE_ISSUE_URL;
 
-            String createEpicPayload = "{\n" + "    \"fields\": {\n"
-                    + "       \"project\": { \"key\": \"%projectKey%\" },\n" + "       \"summary\": \"%epicName%\",\n"
-                    + "       \"%epicNameCustomField%\": \"%epicName%\",\n"
-                    + "       \"description\": \"%epicDescription%\",\n" + "       \"issuetype\": {\n"
-                    + "          \"name\": \"Epic\"\n" + "       }\n" + "   }\n" + "}";
+            JSONObject createEpicPayload = new JSONObject();
 
-            createEpicPayload = createEpicPayload.replace("%projectKey%", projectKey).replace("%epicName%", epicInfo.getEpicName())
-                    .replace("%epicDescription%", epicInfo.getEpicDescription()).replace("%epicNameCustomField%", epicNameCustomField);
+            try {
 
-            ClientResponse response = wrapper.sendPost(createEpicUri, createEpicPayload, 201);
+                JSONObject fields = new JSONObject();
+
+                JSONObject project = new JSONObject();
+                project.put("key", projectKey);
+
+                JSONObject issueType = new JSONObject();
+                issueType.put("name", "Epic");
+
+                fields.put("summary", epicInfo.getEpicName());
+                fields.put(epicNameCustomField, epicInfo.getEpicName());
+                fields.put("description", epicInfo.getEpicDescription());
+                fields.put("project", project);
+                fields.put("issuetype", issueType);
+
+                createEpicPayload.put("fields", fields);
+
+            } catch (JSONException e) {
+                throw new RuntimeException("Error when generating create Epic JSON Payload", e);
+            }
+
+            ClientResponse response = wrapper.sendPost(createEpicUri, createEpicPayload.toString(), 201);
             String jsonStr = response.getEntity(String.class);
             try {
                 JSONObject jsonObj = new JSONObject(jsonStr);
@@ -602,7 +617,7 @@ public class JIRAServiceProvider {
                     issue.setPriorityName(fields.getJSONObject("priority").getString("name"));
                 }
                 if (fields.has(sprintIdCustomField) && !fields.isNull(sprintIdCustomField)) {
-                    String sprintId = getSprintIdFromSprintCustomfield(fields.getJSONArray(sprintIdCustomField).getString(0));
+                    String sprintId = getSprintIdFromSprintCustomfield(fields.getJSONArray(sprintIdCustomField));
                     issue.setSprintId(sprintId);
                 }
 
@@ -667,25 +682,50 @@ public class JIRAServiceProvider {
          * The example of origin format of sprintCustomfield is
          * "com.atlassian.greenhopper.service.sprint.Sprint@1f39706[id=1,rapidViewId=1,state=ACTIVE,name=SampleSprint
          *  2,goal=<null>,startDate=2016-12-07T06:18:24.224+08:00,endDate=2016-12-21T06:38:24.224+08:00,completeDate=<null>,sequence=1]"
+         * @param sprintCustomfields
          */
-        private String getSprintIdFromSprintCustomfield(String sprintCustomfield) {
-            Map<String, String> map = new HashMap<String, String>();
-            String reg = ".+@.+\\[(.+)]";
-            Pattern pattern = Pattern.compile(reg);
-            Matcher matcher = pattern.matcher(sprintCustomfield);
-            if (matcher.find()) {
-                String exp = matcher.group(1);
-                String[] kvs = exp.split(",");
-                for (String kv : kvs) {
-                    String[] splited = kv.split("=");
-                    if ("id".equalsIgnoreCase(splited[0])) {
-                        if (splited.length == 2) {
-                            return splited[1];
+        private String getSprintIdFromSprintCustomfield(JSONArray sprintCustomfields) throws JSONException {
+
+            if (sprintCustomfields == null || sprintCustomfields.length() == 0) {
+                return null;
+            }
+
+            String sprintId = null;
+
+            for (int i = 0; i < sprintCustomfields.length(); i++) {
+                String id = null;
+                boolean isActiveOrFutureSprint = false;
+
+                Map<String, String> map = new HashMap<String, String>();
+                String reg = ".+@.+\\[(.+)]";
+                Pattern pattern = Pattern.compile(reg);
+                Matcher matcher = pattern.matcher(sprintCustomfields.getString(i));
+                if (matcher.find()) {
+                    String exp = matcher.group(1);
+                    String[] kvs = exp.split(",");
+                    for (String kv : kvs) {
+                        String[] splited = kv.split("=");
+                        if ("id".equalsIgnoreCase(splited[0])) {
+                            if (splited.length == 2) {
+                                id = splited[1];
+                            }
+                        }
+
+                        if ("state".equalsIgnoreCase(splited[0])) {
+                            if (splited.length == 2) {
+                                isActiveOrFutureSprint = "ACTIVE".equalsIgnoreCase(splited[1]) || "FUTURE".equalsIgnoreCase(splited[1]);
+                            }
                         }
                     }
                 }
+
+                // We only consider this the sprint ID if either it's an active or future sprint or it's the only (possibly completed) sprint.
+                if (sprintId == null || isActiveOrFutureSprint) {
+                    sprintId = id;
+                }
             }
-            return null;
+
+            return sprintId;
         }
 
         private JSONArray getWorklogsJSONArrayForIssue(String issueKey) {

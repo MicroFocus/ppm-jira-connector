@@ -8,6 +8,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.JIRAConne
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.connector.jira.util.WorkDrivenPercentCompleteExternalTask;
 import com.ppm.integration.agilesdk.pm.*;
+import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import com.ppm.integration.agilesdk.ui.*;
 import org.apache.commons.lang.StringUtils;
@@ -383,11 +384,19 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 if (includeIssuesWithNoGroup && !noEpicIssues.isEmpty()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                         @Override public String getName() {
-                            return "No Epic Defined";
+                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_EPIC_DEFINED_TASK_NAME");
                         }
 
                         @Override public List<ExternalTask> getChildren() {
                             return issuesToLeafTasks(noEpicIssues, taskContext);
+                        }
+
+                        @Override public Date getScheduledStart() {
+                            return getEarliestScheduledStart(getChildren());
+                        }
+
+                        @Override public Date getScheduledFinish() {
+                            return getLastestScheduledFinish(getChildren());
                         }
                     }));
                 }
@@ -437,7 +446,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 if (includeIssuesWithNoGroup && !noStatusIssues.isEmpty()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                         @Override public String getName() {
-                            return "No Status Defined";
+                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_STATUS_DEFINED_TASK_NAME");
                         }
 
                         @Override public List<ExternalTask> getChildren() {
@@ -487,7 +496,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     final JIRASprint sprint = sprintsById.get(sprintId);
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                         @Override public String getName() {
-                            return sprint == null ? "Sprint "+sprintId : sprint.getName();
+                            return sprint == null ? Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_SPRINT_PREFIX_TASK_NAME") + " " + sprintId : sprint.getName();
                         }
 
                         @Override public List<ExternalTask> getChildren() {
@@ -507,7 +516,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 if (includeIssuesWithNoGroup && !backlogIssues.isEmpty()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                         @Override public String getName() {
-                            return "Backlog";
+                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_BACKLOG_TASK_NAME");
                         }
 
                         @Override public List<ExternalTask> getChildren() {
@@ -542,7 +551,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public String getName() {
-                            return "Root Task"; // We'll need something fancier...
+                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_ROOT_TASK_TASK_NAME"); // We'll need something fancier...
                         }
 
                         @Override public Date getScheduledStart() {
