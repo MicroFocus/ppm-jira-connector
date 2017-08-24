@@ -617,7 +617,7 @@ public class JIRAServiceProvider {
                     issue.setPriorityName(fields.getJSONObject("priority").getString("name"));
                 }
                 if (fields.has(sprintIdCustomField) && !fields.isNull(sprintIdCustomField)) {
-                    String sprintId = getSprintIdFromSprintCustomfield(fields.getJSONArray(sprintIdCustomField).getString(0));
+                    String sprintId = getSprintIdFromSprintCustomfield(fields.getJSONArray(sprintIdCustomField));
                     issue.setSprintId(sprintId);
                 }
 
@@ -682,25 +682,50 @@ public class JIRAServiceProvider {
          * The example of origin format of sprintCustomfield is
          * "com.atlassian.greenhopper.service.sprint.Sprint@1f39706[id=1,rapidViewId=1,state=ACTIVE,name=SampleSprint
          *  2,goal=<null>,startDate=2016-12-07T06:18:24.224+08:00,endDate=2016-12-21T06:38:24.224+08:00,completeDate=<null>,sequence=1]"
+         * @param sprintCustomfields
          */
-        private String getSprintIdFromSprintCustomfield(String sprintCustomfield) {
-            Map<String, String> map = new HashMap<String, String>();
-            String reg = ".+@.+\\[(.+)]";
-            Pattern pattern = Pattern.compile(reg);
-            Matcher matcher = pattern.matcher(sprintCustomfield);
-            if (matcher.find()) {
-                String exp = matcher.group(1);
-                String[] kvs = exp.split(",");
-                for (String kv : kvs) {
-                    String[] splited = kv.split("=");
-                    if ("id".equalsIgnoreCase(splited[0])) {
-                        if (splited.length == 2) {
-                            return splited[1];
+        private String getSprintIdFromSprintCustomfield(JSONArray sprintCustomfields) throws JSONException {
+
+            if (sprintCustomfields == null || sprintCustomfields.length() == 0) {
+                return null;
+            }
+
+            String sprintId = null;
+
+            for (int i = 0; i < sprintCustomfields.length(); i++) {
+                String id = null;
+                boolean isActiveOrFutureSprint = false;
+
+                Map<String, String> map = new HashMap<String, String>();
+                String reg = ".+@.+\\[(.+)]";
+                Pattern pattern = Pattern.compile(reg);
+                Matcher matcher = pattern.matcher(sprintCustomfields.getString(i));
+                if (matcher.find()) {
+                    String exp = matcher.group(1);
+                    String[] kvs = exp.split(",");
+                    for (String kv : kvs) {
+                        String[] splited = kv.split("=");
+                        if ("id".equalsIgnoreCase(splited[0])) {
+                            if (splited.length == 2) {
+                                id = splited[1];
+                            }
+                        }
+
+                        if ("state".equalsIgnoreCase(splited[0])) {
+                            if (splited.length == 2) {
+                                isActiveOrFutureSprint = "ACTIVE".equalsIgnoreCase(splited[1]) || "FUTURE".equalsIgnoreCase(splited[1]);
+                            }
                         }
                     }
                 }
+
+                // We only consider this the sprint ID if either it's an active or future sprint or it's the only (possibly completed) sprint.
+                if (sprintId == null || isActiveOrFutureSprint) {
+                    sprintId = id;
+                }
             }
-            return null;
+
+            return sprintId;
         }
 
         private JSONArray getWorklogsJSONArrayForIssue(String issueKey) {
