@@ -8,6 +8,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.JIRAConne
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.connector.jira.util.WorkDrivenPercentCompleteExternalTask;
 import com.ppm.integration.agilesdk.pm.*;
+import com.ppm.integration.agilesdk.provider.LocalizationProvider;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import com.ppm.integration.agilesdk.ui.*;
@@ -26,6 +27,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
     @Override
     public List<Field> getMappingConfigurationFields(WorkPlanIntegrationContext context, ValueSet values) {
+
+        final LocalizationProvider lp = Providers.getLocalizationProvider(JIRAIntegrationConnector.class);
 
         List<Field> fields = Arrays.asList(new Field[] {new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true),
 
@@ -78,10 +81,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         List<Option> optionList = new ArrayList<>();
 
                         Option option1 =
-                                new Option(JIRAConstants.IMPORT_ALL_PROJECT_ISSUES, "All project issues");
-                        Option option2 = new Option(JIRAConstants.IMPORT_ONE_EPIC, "One Epic");
-                        Option option3 = new Option(JIRAConstants.IMPORT_ONE_VERSION, "One Version");
-                        Option option4 = new Option(JIRAConstants.IMPORT_ONE_BOARD, "One Board");
+                                new Option(JIRAConstants.IMPORT_ALL_PROJECT_ISSUES, lp.getConnectorText("IMPORT_ALL_PROJECT_ISSUES"));
+                        Option option2 = new Option(JIRAConstants.IMPORT_ONE_EPIC, lp.getConnectorText("IMPORT_ONE_EPIC"));
+                        Option option3 = new Option(JIRAConstants.IMPORT_ONE_VERSION, lp.getConnectorText("IMPORT_ONE_VERSION"));
+                        Option option4 = new Option(JIRAConstants.IMPORT_ONE_BOARD, lp.getConnectorText("IMPORT_ONE_BOARD"));
 
                         optionList.add(option1);
                         optionList.add(option2);
@@ -109,7 +112,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         switch (importSelection) {
                             case JIRAConstants.IMPORT_ALL_PROJECT_ISSUES:
                                 // No extra option when importing everything, it will be ignored anyway.
-                                options.add(new Option("0", "All project issues"));
+                                options.add(new Option("0", lp.getConnectorText("IMPORT_ALL_PROJECT_ISSUES")));
                                 break;
                             case JIRAConstants.IMPORT_ONE_EPIC:
                                 List<JIRASubTaskableIssue> epics = service.get(values).getAllIssues(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
@@ -153,9 +156,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                         List<Option> optionList = new ArrayList<>();
 
-                        Option option1 = new Option(JIRAConstants.GROUP_SPRINT, "Sprint");
-                        Option option2 = new Option(JIRAConstants.GROUP_STATUS, "Status (Kanban)");
-                        Option option3 = new Option(JIRAConstants.GROUP_EPIC, "Epics");
+                        Option option1 = new Option(JIRAConstants.GROUP_SPRINT, lp.getConnectorText("GROUP_SPRINT"));
+                        Option option2 = new Option(JIRAConstants.GROUP_STATUS, lp.getConnectorText("GROUP_STATUS"));
+                        Option option3 = new Option(JIRAConstants.GROUP_EPIC, lp.getConnectorText("GROUP_EPIC"));
 
                         optionList.add(option1);
                         optionList.add(option2);
@@ -178,8 +181,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                         List<Option> optionList = new ArrayList<>();
 
-                        Option option1 = new Option(JIRAConstants.PERCENT_COMPLETE_WORK, "% Work Complete");
-                        Option option2 = new Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS, "% Story Points Done");
+                        Option option1 = new Option(JIRAConstants.PERCENT_COMPLETE_WORK, lp.getConnectorText("PERCENT_COMPLETE_WORK"));
+                        Option option2 = new Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS, lp.getConnectorText("PERCENT_COMPLETE_DONE_STORY_POINTS"));
 
                         optionList.add(option1);
                         optionList.add(option2);
