@@ -389,6 +389,14 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         @Override public List<ExternalTask> getChildren() {
                             return issuesToLeafTasks(noEpicIssues, taskContext);
                         }
+
+                        @Override public Date getScheduledStart() {
+                            return getEarliestScheduledStart(getChildren());
+                        }
+
+                        @Override public Date getScheduledFinish() {
+                            return getLastestScheduledFinish(getChildren());
+                        }
                     }));
                 }
 
