@@ -796,7 +796,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         if (issue.getWork() != null) {
             for (JIRAIssueWork.JIRAWorklogEntry worklog : issue.getWork().getWorklogs()) {
                 if (worklog != null) {
-                    actuals.add(convertWorklogEntryToActuals(worklog, context, issue.isDone()));
+                    // These work done are considered 100% complete only if using % work complete or if using % SP done and the task is done.
+                    actuals.add(convertWorklogEntryToActuals(worklog, context,
+                            JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS.equals(context.percentCompleteType)?issue.isDone(): true));
                 }
             }
 
