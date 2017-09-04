@@ -7,6 +7,7 @@ import com.ppm.integration.agilesdk.connector.jira.model.*;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.IRestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
+import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBuilder;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.provider.Providers;
@@ -148,8 +149,13 @@ public class JIRAServiceProvider {
                 if (!"scrum".equalsIgnoreCase(board.getType())) {
                     continue;
                 }
-
-                jiraSprints.addAll(getBoardSprints(board.getId()));
+                try {
+                    jiraSprints.addAll(getBoardSprints(board.getId()));
+                } catch (RestRequestException e) {
+                    // JIRA will sometimes throw an Error 500 when retrieving sprints
+                    // In this case, we'll simply ignore this sprint, come what may.
+                    logger.error("Error when trying to retrieve JIRA Sprint information for Board ID "+board.getId()+" ('"+board.getName()+"'). Sprints from this board will be ignored.");
+                }
 
             }
 
