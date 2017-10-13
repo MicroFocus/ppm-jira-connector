@@ -67,34 +67,14 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 },
                 new LineBreaker(),
-                new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION, "IMPORT_SELECTION",
-                        JIRAConstants.IMPORT_ALL_PROJECT_ISSUES, "", true) {
 
-                    @Override
-                    public List<String> getDependencies() {
-                        return new ArrayList<String>();
-                    }
+                new SelectList(JIRAConstants.KEY_IMPORT_SELECTION,"IMPORT_SELECTION",JIRAConstants.IMPORT_ALL_PROJECT_ISSUES,true)
+                        .addLevel(JIRAConstants.KEY_IMPORT_SELECTION, "IMPORT_SELECTION")
+                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ALL_PROJECT_ISSUES,"IMPORT_ALL_PROJECT_ISSUES"))
+                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_EPIC,"IMPORT_ONE_EPIC"))
+                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_VERSION,"IMPORT_ONE_VERSION"))
+                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_BOARD,"IMPORT_ONE_BOARD")),
 
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
-
-                        List<Option> optionList = new ArrayList<>();
-
-                        Option option1 =
-                                new Option(JIRAConstants.IMPORT_ALL_PROJECT_ISSUES, lp.getConnectorText("IMPORT_ALL_PROJECT_ISSUES"));
-                        Option option2 = new Option(JIRAConstants.IMPORT_ONE_EPIC, lp.getConnectorText("IMPORT_ONE_EPIC"));
-                        Option option3 = new Option(JIRAConstants.IMPORT_ONE_VERSION, lp.getConnectorText("IMPORT_ONE_VERSION"));
-                        Option option4 = new Option(JIRAConstants.IMPORT_ONE_BOARD, lp.getConnectorText("IMPORT_ONE_BOARD"));
-
-                        optionList.add(option1);
-                        optionList.add(option2);
-                        optionList.add(option3);
-                        optionList.add(option4);
-
-                        return optionList;
-                    }
-
-                },
                 new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS", "", true) {
 
                     @Override
@@ -143,54 +123,17 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 },
                 new LineBreaker(),
-                new DynamicDropdown(JIRAConstants.KEY_IMPORT_GROUPS, "IMPORT_GROUPS",
-                        JIRAConstants.GROUP_EPIC, "", true) {
+                new SelectList(JIRAConstants.KEY_IMPORT_GROUPS,"IMPORT_GROUPS",JIRAConstants.GROUP_EPIC,true)
+                        .addLevel(JIRAConstants.KEY_IMPORT_GROUPS, "IMPORT_GROUPS")
+                        .addOption(new SelectList.Option(JIRAConstants.GROUP_EPIC,"GROUP_EPIC"))
+                        .addOption(new SelectList.Option(JIRAConstants.GROUP_SPRINT,"GROUP_SPRINT"))
+                        .addOption(new SelectList.Option(JIRAConstants.GROUP_STATUS,"GROUP_STATUS")),
 
-                    @Override
-                    public List<String> getDependencies() {
-                        return new ArrayList<String>();
-                    }
+                new SelectList(JIRAConstants.KEY_PERCENT_COMPLETE,"PERCENT_COMPLETE_CHOICE",JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,true)
+                        .addLevel(JIRAConstants.KEY_PERCENT_COMPLETE, "PERCENT_COMPLETE_CHOICE")
+                        .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,"PERCENT_COMPLETE_DONE_STORY_POINTS"))
+                        .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_WORK,"PERCENT_COMPLETE_WORK")),
 
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
-
-                        List<Option> optionList = new ArrayList<>();
-
-                        Option option1 = new Option(JIRAConstants.GROUP_SPRINT, lp.getConnectorText("GROUP_SPRINT"));
-                        Option option2 = new Option(JIRAConstants.GROUP_STATUS, lp.getConnectorText("GROUP_STATUS"));
-                        Option option3 = new Option(JIRAConstants.GROUP_EPIC, lp.getConnectorText("GROUP_EPIC"));
-
-                        optionList.add(option1);
-                        optionList.add(option2);
-                        optionList.add(option3);
-
-                        return optionList;
-                    }
-
-                },
-                new DynamicDropdown(JIRAConstants.KEY_PERCENT_COMPLETE, "PERCENT_COMPLETE_CHOICE",
-                        JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS, "", true) {
-
-                    @Override
-                    public List<String> getDependencies() {
-                        return new ArrayList<String>();
-                    }
-
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
-
-                        List<Option> optionList = new ArrayList<>();
-
-                        Option option1 = new Option(JIRAConstants.PERCENT_COMPLETE_WORK, lp.getConnectorText("PERCENT_COMPLETE_WORK"));
-                        Option option2 = new Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS, lp.getConnectorText("PERCENT_COMPLETE_DONE_STORY_POINTS"));
-
-                        optionList.add(option1);
-                        optionList.add(option2);
-
-                        return optionList;
-                    }
-
-                },
                 new LineBreaker(),
 
                 new LabelText(JIRAConstants.LABEL_ISSUES_TO_IMPORT, "SELECT_ISSUES_TYPES_TO_IMPORT",
@@ -206,8 +149,13 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 new LabelText(JIRAConstants.LABEL_TASKS_OPTIONS, "TASKS_OPTIONS",
                         "Tasks Options:", true),
                 new CheckBox(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, "OPTION_INCLUDE_ISSUE_NO_GROUP", true),
-                new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true)
-
+                new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true),
+                new LineBreaker(),
+                new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES,"OPTION_ADD_EPIC_MILESTONES","",true)
+                        .addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
+                        .addOption(new SelectList.Option("","OPTION_ADD_EPIC_MILESTONES_NO_MILESTONE"))
+                        .addOption(new SelectList.Option("MINOR","OPTION_ADD_EPIC_MILESTONES_MINOR"))
+                        .addOption(new SelectList.Option("MAJOR","OPTION_ADD_EPIC_MILESTONES_MAJOR"))
 
         });
 
@@ -290,6 +238,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         List<JIRASubTaskableIssue> issues = new ArrayList<JIRASubTaskableIssue>();
 
+        final List<JIRAEpic> selectedEpics = new ArrayList<>();
+
         switch(importSelection) {
 
             case JIRAConstants.IMPORT_ONE_BOARD:
@@ -320,6 +270,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
                         // Epic, add it to the root tasks
                         final JIRAEpic epic = (JIRAEpic)issue;
+
+                        selectedEpics.add(epic);
 
                         rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                             @Override public String getName() {
@@ -415,7 +367,16 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     if (isBlank(issue.getStatus())) {
                         noStatusIssues.add(issue);
+
+                        if (includeIssuesWithNoGroup && JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                            selectedEpics.add((JIRAEpic) issue);
+                        }
+
                         continue;
+                    }
+
+                    if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                        selectedEpics.add((JIRAEpic) issue);
                     }
 
                     List<JIRASubTaskableIssue> statusIssues = issuesByStatus.get(issue.getStatus());
@@ -483,7 +444,16 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     if (isBlank(issue.getSprintId())) {
                         backlogIssues.add(issue);
+
+                        if (includeIssuesWithNoGroup && JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                            selectedEpics.add((JIRAEpic) issue);
+                        }
+
                         continue;
+                    }
+
+                    if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                        selectedEpics.add((JIRAEpic) issue);
                     }
 
                     List<JIRASubTaskableIssue> sprintIssues = issuesBySprintId.get(issue.getSprintId());
@@ -537,6 +507,73 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 }
 
                 break;
+        }
+
+        if (!StringUtils.isBlank(values.get(JIRAConstants.OPTION_ADD_EPIC_MILESTONES))) {
+
+            final boolean isMajorMilestone = "MAJOR".equals(values.get(JIRAConstants.OPTION_ADD_EPIC_MILESTONES));
+
+            if (!selectedEpics.isEmpty()) {
+
+                rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+
+                    private List<ExternalTask> children;
+
+                    {
+                        children = new ArrayList<ExternalTask>(selectedEpics.size());
+
+                        for (final JIRAEpic epic: selectedEpics) {
+
+                            final Date epicMilestoneDate = epic.getEstimatedFinishDate(taskContext.sprints);
+
+                            children.add(WorkDrivenPercentCompleteExternalTask.forLeafTask(new ExternalTask() {
+
+                                private Date milestoneDate = epicMilestoneDate;
+
+                                @Override
+                                public String getName() {
+                                    return epic.getName();
+                                }
+
+                                @Override
+                                public boolean isMilestone() {
+                                    return true;
+                                }
+
+                                @Override
+                                public boolean isMajorMilestone() {
+                                    return isMajorMilestone;
+                                }
+
+                                @Override
+                                public Date getScheduledStart() {
+                                    return adjustStartDateTime(milestoneDate);
+                                }
+
+                                @Override
+                                public Double getScheduledDurationOverrideValue() {
+                                    return 0d;
+                                }
+
+                                @Override
+                                public Date getScheduledFinish() {
+                                    return adjustStartDateTime(milestoneDate);
+                                }
+                            }, 0, 0));
+                        }
+                    }
+
+                    @Override
+                    public String getName() {
+                        return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("EPIC_MILESTONE_TASK_NAME");
+                    }
+
+                    @Override
+                    public List<ExternalTask> getChildren() {
+                        return children;
+                    }
+                }));
+            }
         }
 
         return new ExternalWorkPlan() {
@@ -736,7 +773,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         return d == null ? 0d : d.doubleValue();
     }
 
-    private Date getDefaultStartDate() {
+    public static Date getDefaultStartDate() {
         Calendar todayMorning = new GregorianCalendar();
         todayMorning.set(Calendar.HOUR, 1);
         todayMorning.set(Calendar.MINUTE, 0);
