@@ -295,11 +295,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                             }
 
                             @Override public Date getScheduledStart() {
-                                return epic.getContents().isEmpty() ? super.getScheduledStart() : getEarliestScheduledStart(getChildren());
+                                return epic.getContents().isEmpty() ? epic.getScheduledStart(taskContext.sprints) : getEarliestScheduledStart(getChildren());
                             }
 
                             @Override public Date getScheduledFinish() {
-                                return epic.getContents().isEmpty() ? super.getScheduledFinish() : getLastestScheduledFinish(getChildren());
+                                return epic.getContents().isEmpty() ? epic.getScheduledFinish(taskContext.sprints) : getLatestScheduledFinish(getChildren());
                             }
 
                             @Override public Map<Integer, UserData> getUserDataFields() {
@@ -351,7 +351,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public Date getScheduledFinish() {
-                            return getLastestScheduledFinish(getChildren());
+                            return getLatestScheduledFinish(getChildren());
                         }
                     }));
                 }
@@ -402,7 +402,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public Date getScheduledFinish() {
-                            return getLastestScheduledFinish(getChildren());
+                            return getLatestScheduledFinish(getChildren());
                         }
                     }));
                 }
@@ -422,7 +422,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public Date getScheduledFinish() {
-                            return getLastestScheduledFinish(getChildren());
+                            return getLatestScheduledFinish(getChildren());
                         }
                     }));
                 }
@@ -481,7 +481,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public Date getScheduledFinish() {
-                            return (sprint == null || sprint.getEndDateAsDate() == null) ? getLastestScheduledFinish(getChildren()) : sprint.getEndDateAsDate();
+                            return (sprint == null || sprint.getEndDateAsDate() == null) ? getLatestScheduledFinish(getChildren()) : sprint.getEndDateAsDate();
                         }
                     }));
                 }
@@ -501,7 +501,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public Date getScheduledFinish() {
-                            return getLastestScheduledFinish(getChildren());
+                            return getLatestScheduledFinish(getChildren());
                         }
                     }));
                 }
@@ -599,7 +599,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public Date getScheduledFinish() {
-                            return getLastestScheduledFinish(getChildren());
+                            return getLatestScheduledFinish(getChildren());
                         }
                     });
                     return Arrays.asList(new ExternalTask[] {rootTask});
@@ -610,7 +610,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         };
     }
 
-    private Date getLastestScheduledFinish(List<ExternalTask> children) {
+    private Date getLatestScheduledFinish(List<ExternalTask> children) {
         Date date = null;
         for (ExternalTask child : children) {
             if (child.getScheduledFinish() == null) {
@@ -621,7 +621,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         }
 
-        return date != null ? date : getDefaultFinishDate();
+        return date != null ? date : JIRAEntity.getDefaultFinishDate();
     }
 
     private Date getEarliestScheduledStart(List<ExternalTask> children) {
@@ -635,7 +635,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         }
 
-        return date != null ? date : getDefaultStartDate();
+        return date != null ? date : JIRAEntity.getDefaultStartDate();
     }
 
     /**
@@ -714,28 +714,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
 
             @Override public Date getScheduledStart() {
-
-
-                Date start = getDefaultStartDate();
-
-                JIRASprint sprint = context.sprints.get(issue.getSprintId());
-                if (sprint != null && sprint.getStartDateAsDate() != null) {
-                    start = sprint.getStartDateAsDate();
-                }
-
-                return start;
+                return issue.getScheduledStart(context.sprints);
             }
 
             @Override public Date getScheduledFinish() {
-
-                Date finish = getDefaultFinishDate();
-
-                JIRASprint sprint = context.sprints.get(issue.getSprintId());
-                if (sprint != null && sprint.getEndDateAsDate() != null) {
-                    finish = sprint.getEndDateAsDate();
-                }
-
-                return finish;
+                return issue.getScheduledFinish(context.sprints);
             }
 
             @Override public List<ExternalTaskActuals> getActuals() {
@@ -772,27 +755,6 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private double getNullSafeDouble(Double d) {
         return d == null ? 0d : d.doubleValue();
     }
-
-    public static Date getDefaultStartDate() {
-        Calendar todayMorning = new GregorianCalendar();
-        todayMorning.set(Calendar.HOUR, 1);
-        todayMorning.set(Calendar.MINUTE, 0);
-        todayMorning.set(Calendar.SECOND, 0);
-        todayMorning.set(Calendar.MILLISECOND, 0);
-        return todayMorning.getTime();
-
-    }
-
-    private Date getDefaultFinishDate() {
-        Calendar todayEvening = new GregorianCalendar();
-        todayEvening.set(Calendar.HOUR, 23);
-        todayEvening.set(Calendar.MINUTE, 0);
-        todayEvening.set(Calendar.SECOND, 0);
-        todayEvening.set(Calendar.MILLISECOND, 0);
-        return todayEvening.getTime();
-
-    }
-
 
 
     private List<ExternalTaskActuals> getActualsFromWork(final JIRAIssue issue, TasksCreationContext context,

@@ -4,7 +4,9 @@ package com.ppm.integration.agilesdk.connector.jira.model;
 import com.ppm.integration.agilesdk.pm.ExternalTask;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public abstract class JIRAIssue extends JIRAEntity {
 
@@ -129,6 +131,10 @@ public abstract class JIRAIssue extends JIRAEntity {
         return lastUpdateDate;
     }
 
+    public Date getLastUpdateDateAsDate() {
+        return convertToDate(lastUpdateDate);
+    }
+
     public void setLastUpdateDate(String lastUpdateDate) {
         this.lastUpdateDate = lastUpdateDate;
     }
@@ -191,5 +197,35 @@ public abstract class JIRAIssue extends JIRAEntity {
 
     public JIRAIssueWork getWork() {
         return work;
+    }
+
+    public Date getScheduledStart(Map<String, JIRASprint> sprints) {
+        Date start = getDefaultStartDate();
+
+        if (ExternalTask.TaskStatus.COMPLETED.equals(this.getExternalTaskStatus())) {
+            start = adjustStartDateTime(this.getLastUpdateDateAsDate());
+        }
+
+        JIRASprint sprint = sprints.get(this.getSprintId());
+        if (sprint != null && sprint.getStartDateAsDate() != null) {
+            start = sprint.getStartDateAsDate();
+        }
+
+        return start;
+    }
+
+    public Date getScheduledFinish(Map<String, JIRASprint> sprints) {
+        Date finish = getDefaultFinishDate();
+
+        if (ExternalTask.TaskStatus.COMPLETED.equals(this.getExternalTaskStatus())) {
+            finish = adjustFinishDateTime(this.getLastUpdateDateAsDate());
+        }
+
+        JIRASprint sprint = sprints.get(this.getSprintId());
+        if (sprint != null && sprint.getEndDateAsDate() != null) {
+            finish = sprint.getEndDateAsDate();
+        }
+
+        return finish;
     }
 }

@@ -61,7 +61,7 @@ public class JIRAEpic extends JIRASubTaskableIssue {
             return epicFinishDate;
         }
 
-        epicFinishDate = JIRAWorkPlanIntegration.getDefaultStartDate();
+        epicFinishDate = JIRAEntity.getDefaultStartDate();
 
         for (JIRAIssue issue : getContents()) {
             Date issueSprintEndDate = getSprintFinishDate(issue, sprintsInfo);
