@@ -25,6 +25,8 @@ public class JIRAConstants {
 
     public static final String OPTION_ADD_ROOT_TASK = "option_add_root_task";
 
+    public static final String OPTION_ROOT_TASK_NAME = "option_root_task_name";
+
     public static final String OPTION_ADD_EPIC_MILESTONES = "option_add_epic_milestones";
 
     public static final String LABEL_ISSUES_TO_IMPORT = "jira_issues_to_import";

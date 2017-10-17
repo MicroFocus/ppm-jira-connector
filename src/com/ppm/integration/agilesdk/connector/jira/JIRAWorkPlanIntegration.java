@@ -149,7 +149,25 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 new LabelText(JIRAConstants.LABEL_TASKS_OPTIONS, "TASKS_OPTIONS",
                         "Tasks Options:", true),
                 new CheckBox(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, "OPTION_INCLUDE_ISSUE_NO_GROUP", true),
+                new LineBreaker(),
                 new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true),
+                new PlainText(JIRAConstants.OPTION_ROOT_TASK_NAME, "OPTION_ROOT_TASK_NAME", Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_ROOT_TASK_TASK_NAME"), false) {
+                    @Override
+                    public List<String> getStyleDependencies() {
+                        return Arrays.asList(new String[] { JIRAConstants.OPTION_ADD_ROOT_TASK });
+                    }
+
+                    @Override
+                    public FieldAppearance getFieldAppearance(ValueSet values) {
+                        boolean isCreateRootTask = values.getBoolean(JIRAConstants.OPTION_ADD_ROOT_TASK, false);
+                        if (isCreateRootTask) {
+                            return new FieldAppearance("", "disabled");
+                        } else {
+                            return new FieldAppearance("disabled", "");
+                        }
+                    }
+                },
+
                 new LineBreaker(),
                 new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES,"OPTION_ADD_EPIC_MILESTONES","",true)
                         .addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
@@ -168,7 +186,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     /**
      * This method is in Charge of retrieving all Jira Objects and turning them into a workplan structure to be imported in PPM.
      */
-    public ExternalWorkPlan getExternalWorkPlan(WorkPlanIntegrationContext context, ValueSet values) {
+    public ExternalWorkPlan getExternalWorkPlan(WorkPlanIntegrationContext context, final ValueSet values) {
         String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT);
         String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
         String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
@@ -591,7 +609,12 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
 
                         @Override public String getName() {
-                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_ROOT_TASK_TASK_NAME"); // We'll need something fancier...
+                            String rootTaskName = values.get(JIRAConstants.OPTION_ROOT_TASK_NAME);
+                            if (StringUtils.isBlank(rootTaskName)) {
+                                rootTaskName = Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_ROOT_TASK_TASK_NAME");
+                            }
+
+                            return rootTaskName;
                         }
 
                         @Override public Date getScheduledStart() {
