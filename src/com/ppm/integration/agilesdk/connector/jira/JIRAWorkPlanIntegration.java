@@ -21,7 +21,7 @@ import java.util.*;
 public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private final Logger logger = Logger.getLogger(this.getClass());
 
-    private JIRAServiceProvider service = new JIRAServiceProvider();
+    private JIRAServiceProvider service = new JIRAServiceProvider().useAdminAccount();
 
     public JIRAWorkPlanIntegration() {}
 
@@ -30,9 +30,18 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         final LocalizationProvider lp = Providers.getLocalizationProvider(JIRAIntegrationConnector.class);
 
-        List<Field> fields = Arrays.asList(new Field[] {new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true),
+        final boolean useAdminPassword = values.getBoolean(JIRAConstants.KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS, false);
 
-                new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true), new LineBreaker(),
+        List<Field> fields = new ArrayList<Field>();
+
+        if (!useAdminPassword) {
+            service.useNonAdminAccount();
+            fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true));
+            fields.add(new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true));
+            fields.add(new LineBreaker());
+        }
+
+        fields.addAll(Arrays.asList(new Field[] {
 
                 new DynamicDropdown(JIRAConstants.KEY_JIRA_PROJECT, "JIRA_PROJECT", true) {
 
@@ -123,16 +132,44 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 },
                 new LineBreaker(),
+
                 new SelectList(JIRAConstants.KEY_IMPORT_GROUPS,"IMPORT_GROUPS",JIRAConstants.GROUP_EPIC,true)
                         .addLevel(JIRAConstants.KEY_IMPORT_GROUPS, "IMPORT_GROUPS")
                         .addOption(new SelectList.Option(JIRAConstants.GROUP_EPIC,"GROUP_EPIC"))
                         .addOption(new SelectList.Option(JIRAConstants.GROUP_SPRINT,"GROUP_SPRINT"))
                         .addOption(new SelectList.Option(JIRAConstants.GROUP_STATUS,"GROUP_STATUS")),
 
+                new LineBreaker(),
+
+                new LabelText(JIRAConstants.LABEL_PROGRESS_AND_ACTUALS, "LABEL_PROGRESS_AND_ACTUALS",
+                        "Issues Progress and Actuals", true),
                 new SelectList(JIRAConstants.KEY_PERCENT_COMPLETE,"PERCENT_COMPLETE_CHOICE",JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,true)
                         .addLevel(JIRAConstants.KEY_PERCENT_COMPLETE, "PERCENT_COMPLETE_CHOICE")
                         .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,"PERCENT_COMPLETE_DONE_STORY_POINTS"))
                         .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_WORK,"PERCENT_COMPLETE_WORK")),
+                new LineBreaker(),
+                new SelectList(JIRAConstants.KEY_ACTUALS,"ACTUALS_CHOICE",JIRAConstants.ACTUALS_LOGGED_WORK,true)
+                        .addLevel(JIRAConstants.KEY_ACTUALS, "ACTUALS_CHOICE")
+                        .addOption(new SelectList.Option(JIRAConstants.ACTUALS_LOGGED_WORK,"ACTUALS_LOGGED_WORK"))
+                        .addOption(new SelectList.Option(JIRAConstants.ACTUALS_SP,"ACTUALS_SP"))
+                        .addOption(new SelectList.Option(JIRAConstants.ACTUALS_NO_ACTUALS,"ACTUALS_NO_ACTUALS")),
+                new PlainText(JIRAConstants.ACTUALS_SP_RATIO, "ACTUALS_SP_RATIO", "8", false) {
+                    @Override
+                    public List<String> getStyleDependencies() {
+                        return Arrays.asList(new String[]{JIRAConstants.KEY_ACTUALS});
+                    }
+
+                    @Override
+                    public FieldAppearance getFieldAppearance(ValueSet values) {
+                        String actualsChoice = values.get(JIRAConstants.KEY_ACTUALS);
+                        if (JIRAConstants.ACTUALS_SP.equals(actualsChoice)) {
+                            return new FieldAppearance("", "disabled");
+                        } else {
+                            return new FieldAppearance("disabled", "");
+                        }
+                    }
+                },
+
 
                 new LineBreaker(),
 
@@ -175,7 +212,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         .addOption(new SelectList.Option("MINOR","OPTION_ADD_EPIC_MILESTONES_MINOR"))
                         .addOption(new SelectList.Option("MAJOR","OPTION_ADD_EPIC_MILESTONES_MAJOR"))
 
-        });
+        }));
 
         return fields;
     }
@@ -192,6 +229,13 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         String importSelectionDetails = values.get(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS);
         String grouping = values.get(JIRAConstants.KEY_IMPORT_GROUPS);
         String percentCompleteType = values.get(JIRAConstants.KEY_PERCENT_COMPLETE);
+        String actualsType = values.get(JIRAConstants.KEY_ACTUALS);
+        int hoursPerSp = 8;
+        try {
+            hoursPerSp = Integer.parseInt(values.get(JIRAConstants.ACTUALS_SP_RATIO));
+        } catch (Exception e) {
+            // We use default value of 8;
+        }
         final boolean addRootTask = values.getBoolean(JIRAConstants.OPTION_ADD_ROOT_TASK, false);
         boolean includeIssuesWithNoGroup = values.getBoolean(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, false);
 
@@ -220,6 +264,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         taskContext.percentCompleteType = percentCompleteType;
         taskContext.userProvider = service.getUserProvider();
         taskContext.configValues = values;
+        taskContext.actualsType = actualsType;
+        taskContext.hoursPerSp = hoursPerSp;
 
 
 
@@ -745,7 +791,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
 
             @Override public List<ExternalTaskActuals> getActuals() {
-                return getActualsFromWork(issue, context, getScheduledStart());
+                return generateActuals(issue, context, getScheduledStart());
             }
 
             @Override public long getOwnerId() {
@@ -780,8 +826,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     }
 
 
-    private List<ExternalTaskActuals> getActualsFromWork(final JIRAIssue issue, TasksCreationContext context,
-            final Date scheduledStart) {
+    private List<ExternalTaskActuals> generateActuals(final JIRAIssue issue, TasksCreationContext context,
+                                                      final Date scheduledStart) {
 
         List<ExternalTaskActuals> actuals = new ArrayList<ExternalTaskActuals>();
 
@@ -815,60 +861,74 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             });
         }
 
-        if (issue.getWork() != null) {
-            for (JIRAIssueWork.JIRAWorklogEntry worklog : issue.getWork().getWorklogs()) {
-                if (worklog != null) {
-                    // These work done are considered 100% complete only if using % work complete or if using % SP done and the task is done.
-                    actuals.add(convertWorklogEntryToActuals(worklog, context,
-                            JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS.equals(context.percentCompleteType)?issue.isDone(): true));
+        // If the issue is assigned to someone, we need that person to always appear in the actuals even if they did no work to ensure
+        // They appear in the list of people assigned to the task.
+        if (issue.getAssigneePpmUserId() > 0) {
+            actuals.add(new ExternalTaskActuals() {
+                @Override public double getPercentComplete() {
+                    return 0;
+                }
+
+                @Override public long getResourceId() {
+                    return issue.getAssigneePpmUserId();
+                }
+
+                @Override public double getScheduledEffort() {
+                    return 0;
+                }
+
+                @Override public double getActualEffort() {
+                    return 0;
+                }
+
+                @Override public Double getEstimatedRemainingEffort() {
+                    return 0d;
+                }
+            });
+        }
+
+        if (JIRAConstants.ACTUALS_NO_ACTUALS.equals(context.actualsType)) {
+            // No Actuals!
+            return actuals;
+        } else if (JIRAConstants.ACTUALS_SP.equals(context.actualsType)) {
+            // Generate Actual Hours from Story Points
+            actuals.add(convertIssueStoryPointsToActuals(issue, context));
+        } else {
+            // Default: generate Actuals from Work logged in JIRA
+            if (issue.getWork() != null) {
+                for (JIRAIssueWork.JIRAWorklogEntry worklog : issue.getWork().getWorklogs()) {
+                    if (worklog != null) {
+                        // These work done are considered 100% complete only if using % work complete or if using % SP done and the task is done.
+                        actuals.add(convertWorklogEntryToActuals(worklog, context,
+                                JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS.equals(context.percentCompleteType) ? issue.isDone() : true));
+                    }
+                }
+
+                // Remaining Effort has a dedicated Actuals assigned to whoever the issue is assigned to.
+                if (issue.getWork().getRemainingEstimateHours() != null && issue.getWork().getRemainingEstimateHours() > 0) {
+                    actuals.add(getRemainingEffortActuals(issue.getWork().getRemainingEstimateHours(), issue.getAssigneePpmUserId()));
                 }
             }
 
-            // Remaining Effort has a dedicated Actuals assigned to whoever the issue is assigned to.
-            if (issue.getWork().getRemainingEstimateHours() != null && issue.getWork().getRemainingEstimateHours() > 0) {
-                actuals.add(getRemainingEffortActuals(issue.getWork().getRemainingEstimateHours(), issue.getAssigneePpmUserId()));
-            }
+            if (issue instanceof JIRASubTaskableIssue) {
+                // Sub-tasks cannot have story points but they can have time logged against them.
+                List<JIRASubTask> subTasks = ((JIRASubTaskableIssue)issue).getSubTasks();
 
-            // If the issue is assigned to someone, we need that person to always appear in the actuals even if they did no work to ensure
-            // They appear in the list of people assigned to the task.
-            if (issue.getAssigneePpmUserId() > 0) {
-                actuals.add(new ExternalTaskActuals() {
-                    @Override public double getPercentComplete() {
-                        return 0;
+                if (subTasks != null) {
+                    for (JIRASubTask subTask : subTasks) {
+                        actuals.addAll(generateActuals(subTask, context, scheduledStart));
                     }
-
-                    @Override public long getResourceId() {
-                        return issue.getAssigneePpmUserId();
-                    }
-
-                    @Override public double getScheduledEffort() {
-                        return 0;
-                    }
-
-                    @Override public double getActualEffort() {
-                        return 0;
-                    }
-
-                    @Override public Double getEstimatedRemainingEffort() {
-                        return 0d;
-                    }
-                });
-            }
-        }
-
-        if (issue instanceof JIRASubTaskableIssue) {
-            List<JIRASubTask> subTasks = ((JIRASubTaskableIssue)issue).getSubTasks();
-
-            if (subTasks != null) {
-                for (JIRASubTask subTask : subTasks) {
-                    actuals.addAll(getActualsFromWork(subTask, context, scheduledStart));
                 }
             }
         }
+
+
 
         return actuals;
 
     }
+
+
 
     private ExternalTaskActuals getRemainingEffortActuals(final double remainingEstimateHours, final long assigneePpmUserId) {
         return new ExternalTaskActuals() {
@@ -893,6 +953,56 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         };
     }
+
+    private ExternalTaskActuals convertIssueStoryPointsToActuals(final JIRAIssue issue, final TasksCreationContext context) {
+
+        final long spEffort = issue.getStoryPoints() == null ? 0 : issue.getStoryPoints() * context.hoursPerSp;
+
+        return new ExternalTaskActuals() {
+
+            @Override public double getScheduledEffort() {
+                return spEffort;
+            }
+
+            @Override public Date getActualStart() {
+                if (ExternalTask.TaskStatus.IN_PLANNING.equals(issue.getExternalTaskStatus())) {
+                    return null;
+                }
+
+                return issue.getScheduledStart(context.sprints);
+            }
+
+            @Override public Double getEstimatedRemainingEffort() {
+                if (issue.isDone()) {
+                    return 0d;
+                } else {
+                    return Double.valueOf(spEffort);
+                }
+            }
+
+            @Override public Date getActualFinish() {
+                return issue.isDone() ? issue.getScheduledFinish(context.sprints) : null;
+            }
+
+            @Override public double getActualEffort() {
+                return issue.isDone() ? spEffort : 0d;
+            }
+
+            @Override public double getPercentComplete() {
+                // Each actual line from work log will be considered to be completed only if the task is done.
+                return issue.isDone() ? 100d : 0d;
+            }
+
+            @Override public long getResourceId() {
+                return issue.getAssigneePpmUserId();
+            }
+
+            @Override public Date getEstimatedFinishDate() {
+                return issue.getScheduledFinish(context.sprints);
+            }
+        };
+    }
+
 
     private ExternalTaskActuals convertWorklogEntryToActuals(final JIRAIssueWork.JIRAWorklogEntry worklog,
             final TasksCreationContext context, final boolean isTaskDone)
@@ -980,5 +1090,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         public UserProvider userProvider;
 
         public ValueSet configValues;
+
+        public String actualsType;
+
+        public int hoursPerSp;
     }
 }

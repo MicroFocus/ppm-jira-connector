@@ -17,6 +17,8 @@ public class JIRAConstants {
 
     public static final String KEY_ADMIN_PASSWORD = "adminPassword";
 
+    public static final String KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS = "useAdminPasswordToMapTasks";
+
     public static final String KEY_USERNAME = "username";
 
     public static final String KEY_PASSWORD = "password";
@@ -33,9 +35,11 @@ public class JIRAConstants {
 
     public static final String LABEL_TASKS_OPTIONS = "jira_tasks_options";
 
+    public static final String LABEL_PROGRESS_AND_ACTUALS = "label_progress_and_actuals";
+
     public static final String KEY_IMPORT_SELECTION = "import_selection";
 
-    public static final String LABEL_USER_DATA_FIELDS = "jira_user_data_options";
+    public static final String LABEL_WORK_PLAN_OPTIONS = "jira_work_plan_options";
 
     public static final String SELECT_USER_DATA_STORY_POINTS = "jira_user_data_story_points";
 
@@ -52,6 +56,16 @@ public class JIRAConstants {
     public static final String PERCENT_COMPLETE_WORK = "percent_complete_work";
 
     public static final String PERCENT_COMPLETE_DONE_STORY_POINTS = "percent_complete_story_points_done";
+
+    public static final String KEY_ACTUALS = "actuals_choice";
+
+    public static final String ACTUALS_LOGGED_WORK = "actuals_logged_work";
+
+    public static final String ACTUALS_SP = "actuals_sp";
+
+    public static final String ACTUALS_NO_ACTUALS = "actuals_no_actuals";
+
+    public static final String ACTUALS_SP_RATIO = "actuals_sp_ratio";
 
     public static final String GROUP_STATUS = "group_status";
 
@@ -121,4 +135,5 @@ public class JIRAConstants {
     public static final String KEY_EPIC = "epic";
     public static final String KEY_ALL_EPICS = "all_epics";
     public static final String KEY_VERSION = "version";
+
 }

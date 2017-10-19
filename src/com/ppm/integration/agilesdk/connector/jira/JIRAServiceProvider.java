@@ -68,6 +68,11 @@ public class JIRAServiceProvider {
         return this;
     }
 
+    public JIRAServiceProvider useNonAdminAccount() {
+        useAdminAccount = false;
+        return this;
+    }
+
 
     public class JIRAService {
         private final Logger logger = Logger.getLogger(this.getClass());
