@@ -206,8 +206,22 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 },
 
                 new LineBreaker(),
-                new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES,"OPTION_ADD_EPIC_MILESTONES","",true)
-                        .addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
+                new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES,"OPTION_ADD_EPIC_MILESTONES","",true) {
+                    @Override
+                    public List<String> getStyleDependencies() {
+                        return Arrays.asList(new String[]{JIRAConstants.JIRA_ISSUE_EPIC});
+                    }
+
+                    @Override
+                    public FieldAppearance getFieldAppearance(ValueSet values) {
+                        boolean importEpics = values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true);
+                        if (importEpics) {
+                            return new FieldAppearance("", "disabled");
+                        } else {
+                            return new FieldAppearance("disabled", "");
+                        }
+                    }
+                }.addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
                         .addOption(new SelectList.Option("","OPTION_ADD_EPIC_MILESTONES_NO_MILESTONE"))
                         .addOption(new SelectList.Option("MINOR","OPTION_ADD_EPIC_MILESTONES_MINOR"))
                         .addOption(new SelectList.Option("MAJOR","OPTION_ADD_EPIC_MILESTONES_MAJOR"))
@@ -356,6 +370,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                 children.addAll(issuesToLeafTasks(epic.getContents(), taskContext));
 
                                 return children;
+                            }
+
+                            @Override
+                            public TaskStatus getStatus() {
+                                return epic.getExternalTaskStatus();
                             }
 
                             @Override public Date getScheduledStart() {
@@ -617,6 +636,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                 @Override
                                 public Double getScheduledDurationOverrideValue() {
                                     return 0d;
+                                }
+
+                                @Override
+                                public TaskStatus getStatus() {
+                                    return epic.getExternalTaskStatus();
                                 }
 
                                 @Override
