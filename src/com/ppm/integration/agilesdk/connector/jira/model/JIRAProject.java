@@ -10,8 +10,6 @@ public class JIRAProject {
 
     private String name;
 
-    private String projectTypeKey;
-
     public String getKey() {
         return key;
     }
@@ -28,20 +26,12 @@ public class JIRAProject {
         this.name = name;
     }
 
-    public String getProjectTypeKey() {
-        return projectTypeKey;
-    }
-
-    public void setProjectTypeKey(String projectTypeKey) {
-        this.projectTypeKey = projectTypeKey;
-    }
 
     public static JIRAProject fromJSONObject(JSONObject obj) {
         try {
             JIRAProject project = new JIRAProject();
             project.setName(obj.getString("name"));
             project.setKey(obj.getString("key"));
-            project.setProjectTypeKey(obj.getString("projectTypeKey"));
             return project;
         } catch (JSONException e) {
             throw new RuntimeException("Error while reading JSon defintiion of Project", e);
