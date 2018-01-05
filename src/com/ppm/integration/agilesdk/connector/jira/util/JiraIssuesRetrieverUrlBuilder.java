@@ -182,7 +182,7 @@ public class JiraIssuesRetrieverUrlBuilder {
     }
 
     public JiraIssuesRetrieverUrlBuilder addNonNullCustomField(String cf) {
-        nonNullCustomFields.add(cf);
+        nonNullCustomFields.add(cf.substring("customfield_".length()));
         return this;
     }
 

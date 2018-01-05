@@ -66,6 +66,10 @@ public class JIRAIssueWork extends JIRABase {
             return dateStarted;
         }
 
+        public String getDateStartedAsSimpleDate() {
+            return convertToSimpleDate(dateStarted);
+        }
+
         public Date getDateStartedAsDate() {
             return convertToDate(dateStarted);
         }

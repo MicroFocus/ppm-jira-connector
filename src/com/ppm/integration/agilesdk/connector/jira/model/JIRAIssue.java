@@ -34,6 +34,8 @@ public abstract class JIRAIssue extends JIRAEntity {
 
     private JIRAIssueWork work = new JIRAIssueWork();
 
+    private String resolutionDate;
+
     public boolean hasWork() {
         if (getWork() == null) {
             return false;
@@ -60,6 +62,15 @@ public abstract class JIRAIssue extends JIRAEntity {
         }
 
         return false;
+    }
+
+    public String getProjectKey() {
+        String key = getKey();
+        if (StringUtils.isBlank(key) || key.indexOf('-') < 1) {
+            return null;
+        }
+
+        return key.substring(0, key.indexOf('-'));
     }
 
     public String getAgileDataBacklogItemType() {
@@ -133,6 +144,10 @@ public abstract class JIRAIssue extends JIRAEntity {
 
     public Date getLastUpdateDateAsDate() {
         return convertToDate(lastUpdateDate);
+    }
+
+    public Date getResolutionDateAsDate() {
+        return convertToDate(resolutionDate);
     }
 
     public void setLastUpdateDate(String lastUpdateDate) {
@@ -227,5 +242,13 @@ public abstract class JIRAIssue extends JIRAEntity {
         }
 
         return finish;
+    }
+
+    public void setResolutionDate(String resolutionDate) {
+        this.resolutionDate = resolutionDate;
+    }
+
+    public String getResolutionDate() {
+        return resolutionDate;
     }
 }
