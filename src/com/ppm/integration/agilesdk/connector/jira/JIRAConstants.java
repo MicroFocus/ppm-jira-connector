@@ -136,4 +136,30 @@ public class JIRAConstants {
     public static final String KEY_ALL_EPICS = "all_epics";
     public static final String KEY_VERSION = "version";
 
+    // Timesheet import settings
+
+    public static final String TS_ALL_PROJECTS = "ts_all_projects";
+    public static final String TS_GROUP_WORK_BY = "ts_group_work_by";
+    public static final String TS_GROUP_BY_PROJECT = "ts_group_by_project";
+    public static final String TS_GROUP_BY_EPIC = "ts_group_by_epic";
+    public static final String TS_GROUP_BY_ISSUE = "ts_group_by_issue";
+
+    public static final String TS_IMPORT_HOURS_OPTION = "ts_import_hours_option";
+    public static final String TS_IMPORT_HOURS_HOURS_ONLY = "ts_import_hours_hours_only";
+    public static final String TS_IMPORT_HOURS_SP_ONLY = "ts_import_hours_sp_only";
+    public static final String TS_IMPORT_HOURS_BOTH = "ts_import_hours_both";
+
+    public static final String TS_SP_TO_HOURS_RATIO = "ts_sp_to_hours_ratio";
+
+    public static final String TS_ADJUST_HOURS = "ts_adjust_hours";
+    public static final String TS_ADJUST_HOURS_YES = "ts_adjust_hours_yes";
+    public static final String TS_ADJUST_HOURS_NO = "ts_adjust_hours_no";
+
+    public static final String TS_ADJUST_HOURS_CHOICE = "ts_adjust_hours_choice";
+    public static final String TS_ADJUST_HOURS_CHOICE_DAILY = "ts_adjust_hours_choice_daily";
+    public static final String TS_ADJUST_HOURS_CHOICE_TOTAL = "ts_adjust_hours_choice_total";
+
+    public static final String TS_DAILY_HOURS = "ts_daily_hours";
+
+    public static final String JIRA_FIELD_RESOLUTION_DATE = "resolutiondate";
 }

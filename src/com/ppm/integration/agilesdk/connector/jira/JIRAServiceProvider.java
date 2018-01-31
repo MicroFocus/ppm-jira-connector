@@ -1,4 +1,3 @@
-
 package com.ppm.integration.agilesdk.connector.jira;
 
 import com.hp.ppm.user.model.User;
@@ -12,8 +11,6 @@ import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBu
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
-import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
-import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientResponse;
@@ -22,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,7 +71,6 @@ public class JIRAServiceProvider {
         return this;
     }
 
-
     public class JIRAService {
         private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -104,7 +101,7 @@ public class JIRAServiceProvider {
 
             // Base URI should not have a trailing slash.
             while (baseUri.endsWith("/")) {
-                baseUri = baseUri.substring(0, baseUri.length()-1);
+                baseUri = baseUri.substring(0, baseUri.length() - 1);
             }
 
             this.baseUri = baseUri;
@@ -159,7 +156,8 @@ public class JIRAServiceProvider {
                 } catch (RestRequestException e) {
                     // JIRA will sometimes throw an Error 500 when retrieving sprints
                     // In this case, we'll simply ignore this sprint, come what may.
-                    logger.error("Error when trying to retrieve JIRA Sprint information for Board ID "+board.getId()+" ('"+board.getName()+"'). Sprints from this board will be ignored.");
+                    logger.error("Error when trying to retrieve JIRA Sprint information for Board ID " + board.getId()
+                            + " ('" + board.getName() + "'). Sprints from this board will be ignored.");
                 }
 
             }
@@ -236,7 +234,7 @@ public class JIRAServiceProvider {
                 JSONObject jsonObj = new JSONObject(jsonStr);
                 return jsonObj.getString("key");
             } catch (Exception e) {
-                throw new RuntimeException("Error while parsing Epic creation response from JIRA: "+jsonStr, e);
+                throw new RuntimeException("Error while parsing Epic creation response from JIRA: " + jsonStr, e);
             }
         }
 
@@ -317,8 +315,6 @@ public class JIRAServiceProvider {
             return getAllIssues(projectKey, types);
         }
 
-
-
         public List<JIRAVersion> getVersions(String projectKey) {
             List<JIRAVersion> list = new ArrayList<JIRAVersion>();
             String query =
@@ -340,9 +336,9 @@ public class JIRAServiceProvider {
                     version.setName(getStr(versionObj, "name"));
                     version.setId(getStr(versionObj, "id"));
                     version.setKey(getStr(versionObj, "id"));
-                    version.setArchived(versionObj.has("archived")? versionObj.getBoolean("archived"):false);
-                    version.setReleased(versionObj.has("released")? versionObj.getBoolean("released"):false);
-                    version.setOverdue(versionObj.has("overdue")? versionObj.getBoolean("overdue"):false);
+                    version.setArchived(versionObj.has("archived") ? versionObj.getBoolean("archived") : false);
+                    version.setReleased(versionObj.has("released") ? versionObj.getBoolean("released") : false);
+                    version.setOverdue(versionObj.has("overdue") ? versionObj.getBoolean("overdue") : false);
                     version.setDescription(getStr(versionObj, "description"));
                     version.setStartDate(getStr(versionObj, "startDate"));
                     version.setReleaseDate(getStr(versionObj, "releasedDate"));
@@ -357,11 +353,10 @@ public class JIRAServiceProvider {
 
         }
 
-
-
         private long getAssigneeUserId(JSONObject fields) throws JSONException {
 
-            JSONObject assignee = (fields.has("assignee") &&!fields.isNull("assignee")) ? fields.getJSONObject("assignee") : null;
+            JSONObject assignee =
+                    (fields.has("assignee") && !fields.isNull("assignee")) ? fields.getJSONObject("assignee") : null;
             if (assignee != null && assignee.has("emailAddress")) {
                 String assigneeEmail = assignee.getString("emailAddress");
                 User ppmUser = userProvider.getByEmail(assigneeEmail);
@@ -379,7 +374,7 @@ public class JIRAServiceProvider {
 
             try {
                 JSONArray fixVersions = fields.getJSONArray("fixVersions");
-                for (int i = 0 ; i < fixVersions.length() ;  i++) {
+                for (int i = 0; i < fixVersions.length(); i++) {
                     JSONObject fixVersion = fixVersions.getJSONObject(i);
                     fixVersionsIds.add(fixVersion.getString("id"));
                 }
@@ -405,7 +400,9 @@ public class JIRAServiceProvider {
             return value;
         }
 
-        private JiraIssuesRetrieverUrlBuilder decorateOrderBySprintCreatedUrl(JiraIssuesRetrieverUrlBuilder urlBuilder) {
+        private JiraIssuesRetrieverUrlBuilder decorateOrderBySprintCreatedUrl(
+                JiraIssuesRetrieverUrlBuilder urlBuilder)
+        {
             return urlBuilder.setOrderBy(" sprint,created ASC ");
         }
 
@@ -416,22 +413,51 @@ public class JIRAServiceProvider {
         public JIRAIssue getSingleIssue(String projectKey, String issueKey) {
 
             JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
-                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey).setExpandLevel("schema").addAndConstraint("key="+issueKey)
-                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField, storyPointsCustomField);
+                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey).setExpandLevel("schema")
+                            .addAndConstraint("key=" + issueKey)
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                                    storyPointsCustomField);
 
-            IssueRetrievalResult result = runIssueRetrivalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
+            IssueRetrievalResult result =
+                    runIssueRetrivalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
 
             if (result.getIssues().isEmpty()) {
                 return null;
             } else if (result.getIssues().size() > 1) {
-                throw new RuntimeException("Retrieving issue "+issueKey+" in project "+projectKey+" returned more than 1 result ("+result.getIssues().size()+")");
+                throw new RuntimeException(
+                        "Retrieving issue " + issueKey + " in project " + projectKey + " returned more than 1 result ("
+                                + result.getIssues().size() + ")");
             } else {
                 return result.getIssues().get(0);
             }
         }
 
+        /**
+         * We use the search issue API instead of the /rest/issue/{key} because we already have all
+         * the logic to get the right columns and build the right JIRAIssue in the search API.
+         */
+        public List<JIRAIssue> getIssues(String projectKey, Collection<String> issueKeys) {
+
+            if (issueKeys == null || issueKeys.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
+                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey).setExpandLevel("schema")
+                            .addAndConstraint("key in(" + StringUtils.join(issueKeys, ',')+")")
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                                    storyPointsCustomField);
+
+            IssueRetrievalResult result =
+                    runIssueRetrivalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
+
+
+            return result.getIssues();
+        }
+
         public List<JIRABoard> getAllBoards(String projectKey) {
-            ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.BOARD_SUFFIX + "?projectKeyOrId=" + projectKey);
+            ClientResponse response =
+                    wrapper.sendGet(baseUri + JIRAConstants.BOARD_SUFFIX + "?projectKeyOrId=" + projectKey);
 
             List<JIRABoard> boards = new ArrayList<JIRABoard>();
 
@@ -446,7 +472,7 @@ public class JIRAServiceProvider {
                     JIRABoard board = new JIRABoard();
                     board.setId(jsonBoard.getString("id"));
                     board.setKey(board.getId());
-                    board.setType(getStr(jsonBoard,"type"));
+                    board.setType(getStr(jsonBoard, "type"));
                     board.setName(jsonBoard.getString("name"));
                     boards.add(board);
                 }
@@ -468,14 +494,13 @@ public class JIRAServiceProvider {
             try {
                 return obj.getString(key);
             } catch (JSONException e) {
-                throw new RuntimeException("Error when retrieving key "+key +" from JSon object "+obj.toString());
+                throw new RuntimeException("Error when retrieving key " + key + " from JSon object " + obj.toString());
             }
         }
 
         /**
          * This method returns all requested issue types, with sub-tasks always included and returned as part of their parent and never as standalone issues.
          * <br/>Each Epic will have its content available directly as {@link JIRAEpic#getContents()}, but only for the issues types that were requested.
-         *
          */
         public List<JIRASubTaskableIssue> getAllIssues(String projectKey, Set<String> issueTypes) {
 
@@ -490,10 +515,12 @@ public class JIRAServiceProvider {
             return retrieveIssues(searchUrlBuilder);
         }
 
+
         private List<JIRASubTaskableIssue> retrieveIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
 
             IssueRetrievalResult result = null;
             int fetchedResults = 0;
+            searchUrlBuilder.setStartAt(0);
 
             List<JIRAIssue> allIssues = new ArrayList<JIRAIssue>();
 
@@ -504,6 +531,33 @@ public class JIRAServiceProvider {
                 searchUrlBuilder.setStartAt(fetchedResults);
 
             } while (fetchedResults < result.getTotal());
+
+            Map<String, JIRAIssue> indexedIssues = new HashMap<>();
+
+            for (JIRAIssue issue : allIssues) {
+                indexedIssues.put(issue.getKey(), issue);
+            }
+
+            // We first check if all parents of sub-tasks have been retrieved. If not, we retrieve them in a separate call.
+            List<String> missingIssues = new ArrayList<>();
+            for (JIRAIssue issue: allIssues) {
+                if (JIRAConstants.JIRA_ISSUE_SUB_TASK.equalsIgnoreCase(issue.getType())) {
+                    JIRASubTask subTask = (JIRASubTask)issue;
+                    JIRAIssue parent = indexedIssues.get(subTask.getParentKey());
+                    if (parent == null) {
+                        missingIssues.add(subTask.getParentKey());
+                    }
+                }
+            }
+
+            if (!missingIssues.isEmpty()) {
+                // We retrieved some sub-tasks but missed their parents. Let's retrieve them now.
+                List<JIRAIssue> missingParents = getIssues(null, missingIssues);
+                for (JIRAIssue missingParent : missingParents) {
+                    allIssues.add(missingParent);
+                }
+            }
+
 
             List<JIRASubTaskableIssue> processedIssues = new ArrayList<JIRASubTaskableIssue>();
 
@@ -521,7 +575,8 @@ public class JIRAServiceProvider {
 
             // Read all Stories/Tasks/Features, add them to Epic
             for (JIRAIssue issue : allIssues) {
-                if (!JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType()) && issue instanceof JIRASubTaskableIssue) {
+                if (!JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())
+                        && issue instanceof JIRASubTaskableIssue) {
 
                     processedIssues.add((JIRASubTaskableIssue)issue);
                     subTaskableIssues.put(issue.getKey(), (JIRASubTaskableIssue)issue);
@@ -562,7 +617,9 @@ public class JIRAServiceProvider {
             try {
                 JSONObject resultObj = new JSONObject(jsonStr);
 
-                IssueRetrievalResult result = new IssueRetrievalResult(resultObj.getInt("startAt"), resultObj.getInt("maxResults"), resultObj.getInt("total"));
+                IssueRetrievalResult result =
+                        new IssueRetrievalResult(resultObj.getInt("startAt"), resultObj.getInt("maxResults"),
+                                resultObj.getInt("total"));
 
                 JSONArray issues = resultObj.getJSONArray("issues");
 
@@ -588,7 +645,7 @@ public class JIRAServiceProvider {
 
                 JIRAIssue issue = null;
 
-                switch(issueType.toUpperCase()) {
+                switch (issueType.toUpperCase()) {
                     case JIRAConstants.JIRA_ISSUE_EPIC:
                         issue = new JIRAEpic();
                         break;
@@ -612,7 +669,7 @@ public class JIRAServiceProvider {
                         issue = new JIRABug();
                         break;
                     default:
-                        throw new RuntimeException("Unknow issue type:"+issueType);
+                        throw new RuntimeException("Unknow issue type:" + issueType);
                 }
 
                 // Common fields for all issues
@@ -639,12 +696,15 @@ public class JIRAServiceProvider {
                     issue.setName(fields.getString(epicNameCustomField));
                 }
                 issue.setAssigneePpmUserId(getAssigneeUserId(fields));
-                issue.setAuthorName((fields.has("creator") && !fields.isNull("creator") && fields.getJSONObject("creator").has("displayName"))
-                        ? fields.getJSONObject("creator").getString("displayName") : null);
+                issue.setAuthorName(
+                        (fields.has("creator") && !fields.isNull("creator") && fields.getJSONObject("creator")
+                                .has("displayName")) ? fields.getJSONObject("creator").getString("displayName") : null);
                 issue.setCreationDate(fields.has("created") ? fields.getString("created") : "");
                 issue.setLastUpdateDate(fields.has("updated") ? fields.getString("updated") : "");
+                issue.setResolutionDate(fields.has(JIRAConstants.JIRA_FIELD_RESOLUTION_DATE) ? fields.getString(JIRAConstants.JIRA_FIELD_RESOLUTION_DATE) : "");
                 issue.setEpicKey(fields.getString(epicLinkCustomField));
-                issue.setStoryPoints((fields.has(storyPointsCustomField) && !fields.isNull(storyPointsCustomField)) ? new Double(fields.getDouble(storyPointsCustomField)).longValue() : null);
+                issue.setStoryPoints((fields.has(storyPointsCustomField) && !fields.isNull(storyPointsCustomField)) ?
+                        new Double(fields.getDouble(storyPointsCustomField)).longValue() : null);
 
                 issue.setFixVersionIds(extractFixVersionIds(fields));
 
@@ -652,13 +712,14 @@ public class JIRAServiceProvider {
                 if (fields.has("timetracking") && !fields.isNull("timetracking")) {
                     JSONObject timeTracking = fields.getJSONObject("timetracking");
                     if (timeTracking.has("remainingEstimateSeconds")) {
-                        issue.getWork().setRemainingEstimateHours(JIRAIssueWork.secToHours(timeTracking.getInt("remainingEstimateSeconds")));
+                        issue.getWork().setRemainingEstimateHours(
+                                JIRAIssueWork.secToHours(timeTracking.getInt("remainingEstimateSeconds")));
                     }
                     if (timeTracking.has("timeSpentSeconds")) {
-                        issue.getWork().setTimeSpentHours(JIRAIssueWork.secToHours(timeTracking.getInt("timeSpentSeconds")));
+                        issue.getWork()
+                                .setTimeSpentHours(JIRAIssueWork.secToHours(timeTracking.getInt("timeSpentSeconds")));
                     }
                 }
-
 
                 // Worklog info
                 if (fields.has("worklog") && !fields.isNull("worklog")) {
@@ -678,7 +739,8 @@ public class JIRAServiceProvider {
                     if (worklogs != null) {
                         for (int i = 0; i < worklogs.length(); i++) {
                             JSONObject worklogEntry = worklogs.getJSONObject(i);
-                            issue.getWork().addWorklogEntry(JIRAIssueWork.getWorklogEntryFromWorklogJSONObject(worklogEntry));
+                            issue.getWork()
+                                    .addWorklogEntry(JIRAIssueWork.getWorklogEntryFromWorklogJSONObject(worklogEntry));
                         }
                     }
                 }
@@ -689,10 +751,12 @@ public class JIRAServiceProvider {
             }
         }
 
-        /** Retrieves Sprint ID from Sprint custom field.
+        /**
+         * Retrieves Sprint ID from Sprint custom field.
          * The example of origin format of sprintCustomfield is
          * "com.atlassian.greenhopper.service.sprint.Sprint@1f39706[id=1,rapidViewId=1,state=ACTIVE,name=SampleSprint
-         *  2,goal=<null>,startDate=2016-12-07T06:18:24.224+08:00,endDate=2016-12-21T06:38:24.224+08:00,completeDate=<null>,sequence=1]"
+         * 2,goal=<null>,startDate=2016-12-07T06:18:24.224+08:00,endDate=2016-12-21T06:38:24.224+08:00,completeDate=<null>,sequence=1]"
+         *
          * @param sprintCustomfields
          */
         private String getSprintIdFromSprintCustomfield(JSONArray sprintCustomfields) throws JSONException {
@@ -724,7 +788,8 @@ public class JIRAServiceProvider {
 
                         if ("state".equalsIgnoreCase(splited[0])) {
                             if (splited.length == 2) {
-                                isActiveOrFutureSprint = "ACTIVE".equalsIgnoreCase(splited[1]) || "FUTURE".equalsIgnoreCase(splited[1]);
+                                isActiveOrFutureSprint =
+                                        "ACTIVE".equalsIgnoreCase(splited[1]) || "FUTURE".equalsIgnoreCase(splited[1]);
                             }
                         }
                     }
@@ -741,7 +806,8 @@ public class JIRAServiceProvider {
 
         private JSONArray getWorklogsJSONArrayForIssue(String issueKey) {
 
-            ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.JIRA_GET_ISSUE_WORKLOG.replace("%issue%", issueKey));
+            ClientResponse response =
+                    wrapper.sendGet(baseUri + JIRAConstants.JIRA_GET_ISSUE_WORKLOG.replace("%issue%", issueKey));
 
             String jsonStr = response.getEntity(String.class);
             try {
@@ -749,9 +815,8 @@ public class JIRAServiceProvider {
                 JSONArray worklogsArray = obj.getJSONArray("worklogs");
                 return worklogsArray;
 
-
             } catch (JSONException e) {
-                throw new RuntimeException("Ërror when retrieving all worklogs information for issue "+issueKey, e);
+                throw new RuntimeException("Ërror when retrieving all worklogs information for issue " + issueKey, e);
             }
         }
 
@@ -761,9 +826,8 @@ public class JIRAServiceProvider {
 
             JiraIssuesRetrieverUrlBuilder boardIssuesUrlBuilder =
                     new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
-                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField, storyPointsCustomField)
-                            .setBoardType(boardId)
-                            .setIssuesTypes(issueTypes);
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                                    storyPointsCustomField).setBoardType(boardId).setIssuesTypes(issueTypes);
 
             return retrieveIssues(boardIssuesUrlBuilder);
         }
@@ -773,18 +837,18 @@ public class JIRAServiceProvider {
             issueTypes.add(JIRAConstants.JIRA_ISSUE_SUB_TASK);
 
             JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
-                    new JiraIssuesRetrieverUrlBuilder(baseUri)
-                            .setIssuesTypes(issueTypes).setProjectKey(projectKey)
-                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField, storyPointsCustomField);
+                    new JiraIssuesRetrieverUrlBuilder(baseUri).setIssuesTypes(issueTypes).setProjectKey(projectKey)
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                                    storyPointsCustomField);
 
             // Retrieving only issues belonging to that epic
             searchUrlBuilder.addCustomFieldEqualsConstraint(epicLinkCustomField, epicKey);
 
             // We also want to retrieve the Epic itself
-            searchUrlBuilder.addOrConstraint("key="+epicKey);
+            searchUrlBuilder.addOrConstraint("key=" + epicKey);
 
             // We also want sub-tasks of the epic
-            searchUrlBuilder.addOrConstraint("parent="+epicKey);
+            searchUrlBuilder.addOrConstraint("parent=" + epicKey);
 
             return retrieveIssues(searchUrlBuilder);
         }
@@ -795,20 +859,126 @@ public class JIRAServiceProvider {
 
             JiraIssuesRetrieverUrlBuilder versionIssuesUrlBuilder =
                     new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
-                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField, storyPointsCustomField)
-                            .setIssuesTypes(issueTypes)
-                            .addAndConstraint("fixVersion="+versionId);
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                                    storyPointsCustomField).setIssuesTypes(issueTypes)
+                            .addAndConstraint("fixVersion=" + versionId);
 
             return retrieveIssues(versionIssuesUrlBuilder);
         }
 
         /**
-         * @return all the worklog items for the passed author within the passed dates as timesheet lines.
+         * @return Timesheet data for issues owned by the passed author and completed within the passed dates as timesheet lines.
          */
-        public List<ExternalWorkItem> getWorkItems(final XMLGregorianCalendar dateFrom, final XMLGregorianCalendar dateTo, String projectKey, String author)
+        public JIRATimesheetData getSPTimesheetData(final XMLGregorianCalendar dateFrom,
+                final XMLGregorianCalendar dateTo, String projectKey, String author, double spToHoursRatio,
+                Date[] tsDays, boolean[] tsWorkDays)
+        {
+            JIRATimesheetData timesheetData = new JIRATimesheetData();
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+            // By default only Stories & Epics have story points in JIRA, but we'll just filter to keep only issues that have SP defined anyway.
+            JiraIssuesRetrieverUrlBuilder spTimesheetUrlBuilder = new JiraIssuesRetrieverUrlBuilder(baseUri)
+                    .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                            storyPointsCustomField, JIRAConstants.JIRA_FIELD_RESOLUTION_DATE)
+                    // We want story points to be defined.
+                    .addNonNullCustomField(storyPointsCustomField)
+                    // We only want to get issues that were assigned to the user at some point during timesheet period
+                    .addAndConstraint("assignee was '"+encodeForJQLQuery(author)+"' during ('"+dateFrom.toString().substring(0, 10) + "','"+ dateTo.toString().substring(0, 10) + "')")
+                    // We only care about Done and in Progress issues.
+                    .addAndConstraint("status != 'To Do'");
+
+
+            // We also don't want to retrieve issues that have been last updated over 1 month before timesheet period, that should remove all issues that have been closed a long time ago.
+            Calendar oneMonthBeforeTS = dateFrom.toGregorianCalendar();
+            oneMonthBeforeTS.add(Calendar.MONTH, -1);
+            String modifiedAfterDate = sdf.format(oneMonthBeforeTS.getTime());
+            spTimesheetUrlBuilder.addAndConstraint("updated>"+modifiedAfterDate);
+
+            if (!isBlank(projectKey)) {
+                spTimesheetUrlBuilder.setProjectKey(projectKey);
+            }
+
+            List<JIRASubTaskableIssue> issues = retrieveIssues(spTimesheetUrlBuilder);
+
+            Date fromDate = dateFrom.toGregorianCalendar().getTime();
+            Date toDate = dateTo.toGregorianCalendar().getTime();
+
+            for (JIRASubTaskableIssue issue : issues) {
+
+                Long sp = issue.getStoryPoints();
+                if (sp == null || sp <= 0) {
+                    // No SP = no effort
+                    continue;
+                }
+                double issueEffort = sp * spToHoursRatio;
+
+                // We check if
+                // - issue resolution date is within timesheet period.
+                // - status is Done (resolution date is defined).
+                Date resolutionDate = issue.getResolutionDateAsDate();
+                if (resolutionDate == null) {
+                    // Issue is not Done.
+                    continue;
+                }
+                if (resolutionDate.after(toDate) || resolutionDate.before(fromDate)) {
+                    // Issue was closed outside of timesheet window
+                    continue;
+                }
+
+                // We distribute issue effort on the (working) days between start of timesheet and completion period
+
+                // We first compute the number of working between which to distribute the effort.
+                Date firstWorkingDay = tsDays[tsDays.length-1];
+                int totalWorkDaysOfEffort = 0;
+                for (int i = 0 ; i < tsDays.length ; i++) {
+
+                    Date day = tsDays[i];
+
+                    if (tsWorkDays[i]) {
+                        // Working day
+                        if (day.before(firstWorkingDay)) {
+                            firstWorkingDay = day;
+                        }
+                        if (!day.after(resolutionDate)) {
+                            ++totalWorkDaysOfEffort;
+                        }
+                    }
+                }
+
+                if (totalWorkDaysOfEffort == 0) {
+                    // there are no working days within scope, so we put all effort in the first working day, even if it's the last non-working day of the timesheet.
+                    timesheetData.addIssueEffort(issue, sdf.format(firstWorkingDay), issueEffort);
+                } else {
+                    double dailyEffort = issueEffort / totalWorkDaysOfEffort;
+
+                    // We distribute daily effort for each working day.
+                    for (int i = 0 ; i < tsDays.length ; i++) {
+                        Date day = tsDays[i];
+
+                        if (tsWorkDays[i]) {
+                            if (day.after(resolutionDate)) {
+                                break;
+                            } else {
+                                timesheetData.addIssueEffort(issue, sdf.format(day), dailyEffort);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return timesheetData;
+        }
+
+        /**
+         * @return all the work items for worklogs logged by the passed author within the passed dates as timesheet lines.
+         */
+        public JIRATimesheetData getWorkLogsTimesheetData(final XMLGregorianCalendar dateFrom,
+                final XMLGregorianCalendar dateTo, String projectKey, String author)
         {
             JiraIssuesRetrieverUrlBuilder worklogUrlBuilder = new JiraIssuesRetrieverUrlBuilder(baseUri)
-                    .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField, storyPointsCustomField)
+                    .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                            storyPointsCustomField)
                     .addAndConstraint("worklogDate>=" + dateFrom.toString().substring(0, 10))
                     .addAndConstraint("worklogDate<=" + dateTo.toString().substring(0, 10))
                     .addAndConstraint("worklogAuthor=" + encodeForJQLQuery(author));
@@ -819,7 +989,7 @@ public class JIRAServiceProvider {
 
             List<JIRASubTaskableIssue> issues = retrieveIssues(worklogUrlBuilder);
 
-            List<ExternalWorkItem> timesheetLines = new ArrayList<ExternalWorkItem>();
+            JIRATimesheetData timesheetData = new JIRATimesheetData();
 
             Date fromDate = dateFrom.toGregorianCalendar().getTime();
             Date toDate = dateTo.toGregorianCalendar().getTime();
@@ -841,79 +1011,72 @@ public class JIRAServiceProvider {
                 }
 
                 if (!worklogs.isEmpty()) {
-                    timesheetLines.add(new ExternalWorkItem() {
-                        @Override public String getName() {
-                            return "["+issue.getKey()+"] "+issue.getFullTaskName();
-                        }
 
-                        @Override public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
-                            ExternalWorkItemEffortBreakdown effortBreakdown = new ExternalWorkItemEffortBreakdown();
-                            for (JIRAIssueWork.JIRAWorklogEntry worklog : worklogs) {
-                                // We round time values to 2 decimals as we don't want values to look too ugly in Timesheet UI.
-                                // Unfortunately as we're working with Doubles, this won't always work :(
-                                // Luckily, the bad display will only happen on the import recap page, once the data gets in the timesheet page there's proper formatting.
-                                effortBreakdown.addEffort(worklog.getDateStartedAsDate(),  Math.round(worklog.getTimeSpentHours() * 100) / 100d);
-                            }
+                    for (JIRAIssueWork.JIRAWorklogEntry worklog : worklogs) {
 
-                            insertZeroEffortDatesInBreakdown(effortBreakdown, dateFrom.toGregorianCalendar(), dateTo.toGregorianCalendar());
+                        timesheetData.addIssueEffort(issue, worklog.getDateStartedAsSimpleDate(),
+                                Math.round(worklog.getTimeSpentHours() * 100) / 100d);
+                    }
 
-                            return effortBreakdown;
-                        }
-                    });
+                    insertZeroEffortDatesInBreakdown(timesheetData, issue, dateFrom.toGregorianCalendar(),
+                            dateTo.toGregorianCalendar());
                 }
             }
 
-            return timesheetLines;
+            return timesheetData;
         }
 
+        // We must have some time info defined for every date of the timesheet, otherwise the timesheet UI in PPM will bug.
+        // This was fixed in PPM 9.42 as it will fill the gaps for you, but we want this connector to also work on PPM 9.41.
+        private void insertZeroEffortDatesInBreakdown(JIRATimesheetData data, JIRAIssue issue, Calendar startDate,
+                Calendar endDate)
+        {
 
-    }
+            do {
+                data.addIssueEffort(issue, issue.convertDateToString(startDate.getTime()), 0d);
+                startDate.add(Calendar.DATE, 1);
+            } while (!startDate.after(endDate));
 
-    // We must have some time info defined for every date of the timesheet, otherwise the timesheet UI in PPM will bug.
-    // This was fixed in PPM 9.42 as it will fill the gaps for you, but we want this connector to also work on PPM 9.41.
-    private void insertZeroEffortDatesInBreakdown(ExternalWorkItemEffortBreakdown effortBreakdown,
-            Calendar startDate, Calendar endDate) {
+        }
 
-        do {
-            effortBreakdown.addEffort(startDate.getTime(), 0d);
-            startDate.add(Calendar.DATE, 1);
-        } while (!startDate.after(endDate));
+        /**
+         * Returns true if str is null, "", some spaces, or the string "null".
+         *
+         * @param str
+         * @return
+         */
+        private boolean isBlank(String str) {
+            return StringUtils.isBlank(str) || "null".equalsIgnoreCase(str);
+        }
 
-    }
+        /**
+         * @return the worklogs that match the constraints of date & author.
+         */
+        private List<JIRAIssueWork.JIRAWorklogEntry> pickWorklogs(List<JIRAIssueWork.JIRAWorklogEntry> worklogs,
+                Date fromDate, Date toDate, String author)
+        {
+            List<JIRAIssueWork.JIRAWorklogEntry> validWorklogs = new ArrayList<JIRAIssueWork.JIRAWorklogEntry>();
 
-    /**
-     * Returns true if str is null, "", some spaces, or the string "null".
-     * @param str
-     * @return
-     */
-    private boolean isBlank(String str) {
-        return StringUtils.isBlank(str) || "null".equalsIgnoreCase(str);
-    }
+            if (worklogs == null || isBlank(author)) {
+                return validWorklogs;
+            }
 
-    /**
-     * @return the worklogs that match the constraints of date & author.
-     */
-    private List<JIRAIssueWork.JIRAWorklogEntry> pickWorklogs(List<JIRAIssueWork.JIRAWorklogEntry> worklogs, Date fromDate, Date toDate, String author)
-    {
-        List<JIRAIssueWork.JIRAWorklogEntry> validWorklogs = new ArrayList<JIRAIssueWork.JIRAWorklogEntry>();
+            for (JIRAIssueWork.JIRAWorklogEntry worklog : worklogs) {
+                if (worklog == null) {
+                    continue;
+                }
 
-        if (worklogs == null || isBlank(author)) {
+                if (author.equalsIgnoreCase(worklog.getAuthorEmail()) || author
+                        .equalsIgnoreCase(worklog.getAuthorKey())) {
+                    Date logDate = worklog.getDateStartedAsDate();
+                    if ((fromDate.before(logDate) && toDate.after(logDate)) || fromDate.equals(logDate) || toDate
+                            .equals(logDate)) {
+                        validWorklogs.add(worklog);
+                    }
+                }
+            }
+
             return validWorklogs;
         }
-
-        for (JIRAIssueWork.JIRAWorklogEntry worklog : worklogs) {
-            if (worklog == null) {
-                continue;
-            }
-
-            if (author.equalsIgnoreCase(worklog.getAuthorEmail()) || author.equalsIgnoreCase(worklog.getAuthorKey())) {
-                Date logDate = worklog.getDateStartedAsDate();
-                if ((fromDate.before(logDate) && toDate.after(logDate)) || fromDate.equals(logDate) || toDate.equals(logDate)) {
-                    validWorklogs.add(worklog);
-                }
-            }
-        }
-
-        return validWorklogs;
     }
 }
