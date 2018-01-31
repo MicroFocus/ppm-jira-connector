@@ -35,6 +35,14 @@ public class JIRABase {
         return date;
     }
 
+    public String convertDateToString(Date d) {
+        if (d == null) {
+            return null;
+        }
+
+        return format.format(d);
+    }
+
     protected Date convertToDate(String dateStr) {
         if (StringUtils.isEmpty(dateStr) || NULL_VALUE.equalsIgnoreCase(dateStr)) {
             return null;
@@ -47,6 +55,18 @@ public class JIRABase {
             return format.parse(dateStr);
         } catch (ParseException e) {
             logger.error("Date Parse Error,the input dateStr is " + dateStr, e);
+            return null;
+        }
+    }
+
+    protected String convertToSimpleDate(String dateStr) {
+        if (StringUtils.isEmpty(dateStr) || NULL_VALUE.equalsIgnoreCase(dateStr)) {
+            return null;
+        }
+
+        if (dateStr.length() >= 10) {
+            return dateStr.substring(0, 10);
+        } else {
             return null;
         }
     }
