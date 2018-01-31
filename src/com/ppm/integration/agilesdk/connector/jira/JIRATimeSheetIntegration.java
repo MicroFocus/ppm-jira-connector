@@ -40,6 +40,11 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
         XMLGregorianCalendar end = timesheetContext.currentTimeSheet().getPeriodEndDate();
 
         String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT);
+        if (JIRAConstants.TS_ALL_PROJECTS.equals(projectKey)) {
+            // Import all projects
+            projectKey = null;
+        }
+
         String author = values.get(JIRAConstants.KEY_USERNAME);
 
         String groupBy = values.get(JIRAConstants.TS_GROUP_WORK_BY);
