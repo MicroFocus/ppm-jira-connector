@@ -83,9 +83,13 @@ public class JIRAConstants {
 
     public static final String API_VERSION2_API_ROOT = "/rest/api/2/";
 
+    public static final String SEARCH_USER = API_VERSION2_API_ROOT + "user/search";
+
     public static final String API_VERSION1_API_ROOT = "/rest/agile/1.0/";
 
     public static final String PROJECT_SUFFIX = API_VERSION2_API_ROOT + "project";
+
+    public static final String CREATEMETA_SUFFIX = API_VERSION2_API_ROOT + "issue/createmeta";
 
     public static final String BOARD_SUFFIX = API_VERSION1_API_ROOT + "board";
 
@@ -124,7 +128,7 @@ public class JIRAConstants {
 
     public static final String JIRA_EPIC_NAME_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-label";
 
-    public static final String JIRA_CREATE_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
+    public static final String JIRA_REST_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
 
     public static final String JIRA_GET_ISSUE_WORKLOG = API_VERSION2_API_ROOT + "issue/%issue%/worklog";
 
@@ -162,4 +166,6 @@ public class JIRAConstants {
     public static final String TS_DAILY_HOURS = "ts_daily_hours";
 
     public static final String JIRA_FIELD_RESOLUTION_DATE = "resolutiondate";
+
+
 }

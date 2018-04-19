@@ -1,10 +1,7 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
 import com.ppm.integration.agilesdk.ValueSet;
-import com.ppm.integration.agilesdk.connector.jira.model.JIRAEpic;
-import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
-import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
-import com.ppm.integration.agilesdk.connector.jira.model.JIRASubTaskableIssue;
+import com.ppm.integration.agilesdk.connector.jira.model.*;
 import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicIntegration;
@@ -40,13 +37,16 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
         }
 
         // We want to retrieve the epic and all of its contents to be able to compute aggregated story points & percent SP complete
+        // That means retrieve all issue types except Sub-Tasks.
+
+        List<JIRAIssueType> jiraIssueTypes =  service.get(instanceConfigurationParameters).getProjectIssueTypes(agileProjectValue);
 
         Set<String> issueTypes = new HashSet<String>();
-        issueTypes.add(JIRAConstants.JIRA_ISSUE_TASK);
-        issueTypes.add(JIRAConstants.JIRA_ISSUE_STORY);
-        issueTypes.add(JIRAConstants.JIRA_ISSUE_BUG);
-        issueTypes.add(JIRAConstants.JIRA_ISSUE_EPIC);
-        issueTypes.add(JIRAConstants.JIRA_ISSUE_FEATURE);
+        for (JIRAIssueType jiraIssueType : jiraIssueTypes) {
+            if (!JIRAConstants.JIRA_ISSUE_SUB_TASK.equalsIgnoreCase(jiraIssueType.getName())) {
+                issueTypes.add(jiraIssueType.getName().toUpperCase());
+            }
+        }
 
         List<JIRASubTaskableIssue> issues = null;
 

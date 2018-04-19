@@ -68,6 +68,14 @@ public class JiraIssuesRetrieverUrlBuilder {
         return this;
     }
 
+    public JiraIssuesRetrieverUrlBuilder retrieveAllFields() {
+        this.fields = new String[] {};
+        extraFields = new ArrayList<>();
+        addExtraFields("*all");
+
+        return this;
+    }
+
     public String toUrlString() {
 
 
@@ -105,11 +113,9 @@ public class JiraIssuesRetrieverUrlBuilder {
             urlParameters.add("jql=" + jql);
         }
 
-        searchUrl.append(StringUtils.join(urlParameters, "&"));
+        searchUrl.append(encodeUrl(StringUtils.join(urlParameters, "&")));
 
-        String url = encodeUrl(searchUrl.toString());
-
-        return url;
+        return searchUrl.toString();
 
     }
 
@@ -149,16 +155,11 @@ public class JiraIssuesRetrieverUrlBuilder {
     }
 
     private String getIssueTypeConstraintJQL() {
-
         if (issuesTypes == null || issuesTypes.isEmpty()) {
             return "";
-        }
-
-        if (issuesTypes != null && !issuesTypes.isEmpty()) {
+        } else {
             return " and issuetype in(" + StringUtils.join(issuesTypes, ",") + ") ";
         }
-
-        return "";
     }
 
     public JiraIssuesRetrieverUrlBuilder setProjectKey(String projectKey) {

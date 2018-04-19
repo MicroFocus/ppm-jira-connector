@@ -9,6 +9,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBuilder;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
+import com.ppm.integration.agilesdk.model.AgileEntity;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import org.apache.commons.lang.StringUtils;
@@ -121,9 +122,31 @@ public class JIRAServiceProvider {
                     list.add(project);
                 }
             } catch (JSONException e) {
-                logger.error("", e);
+                logger.error("Error when retrieving Projects list", e);
             }
             return list;
+        }
+
+        public List<JIRAIssueType> getProjectIssueTypes(String projectKey) {
+            ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey);
+
+            String jsonStr = response.getEntity(String.class);
+
+            List<JIRAIssueType> jiraIssueTypes = new ArrayList<>();
+            try {
+                JSONObject result = new JSONObject(jsonStr);
+                JSONObject projectInfo = result.getJSONArray("projects").getJSONObject(0);
+                JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
+                for (int i = 0; i < issueTypes.length(); i++) {
+                    JSONObject issueType = issueTypes.getJSONObject(i);
+                    JIRAIssueType jiraIssueType = JIRAIssueType.fromJSONObject(issueType);
+
+                    jiraIssueTypes.add(jiraIssueType);
+                }
+            } catch (JSONException e) {
+                logger.error("Error when retrieving Issues Types list for project "+projectKey, e);
+            }
+            return jiraIssueTypes;
         }
 
         public JIRAProject getProject(String projectKey) {
@@ -197,45 +220,91 @@ public class JIRAServiceProvider {
             return jiraSprints;
         }
 
-        public String createEpic(String projectKey, PortfolioEpicCreationInfo epicInfo) {
-            // Read all custom field info required to create an Epic
-            initCustomFieldsInfo();
+        /**
+         * @return the Issue Key (NOT the ID!)
+         */
+        public String createIssue(String projectKey, Map<String, String> fields, String issueTypeName, String issueTypeId) {
 
-            // Create Epic
-            String createEpicUri = baseUri + JIRAConstants.JIRA_CREATE_ISSUE_URL;
+            String createIssueUri = baseUri + JIRAConstants.JIRA_REST_ISSUE_URL;
 
-            JSONObject createEpicPayload = new JSONObject();
+            JSONObject createIssuePayload = new JSONObject();
 
             try {
 
-                JSONObject fields = new JSONObject();
+                JSONObject fieldsObj = new JSONObject();
 
                 JSONObject project = new JSONObject();
                 project.put("key", projectKey);
 
                 JSONObject issueType = new JSONObject();
-                issueType.put("name", "Epic");
+                if (!StringUtils.isBlank(issueTypeName)) {
+                    issueType.put("name", issueTypeName);
+                }
+                if (!StringUtils.isBlank(issueTypeId)) {
+                    issueType.put("id", issueTypeId);
+                }
 
-                fields.put("summary", epicInfo.getEpicName());
-                fields.put(epicNameCustomField, epicInfo.getEpicName());
-                fields.put("description", epicInfo.getEpicDescription());
-                fields.put("project", project);
-                fields.put("issuetype", issueType);
+                fieldsObj.put("project", project);
+                fieldsObj.put("issuetype", issueType);
 
-                createEpicPayload.put("fields", fields);
+                for (Map.Entry<String, String> fieldEntry : fields.entrySet()) {
+                    fieldsObj.put(fieldEntry.getKey(), fieldEntry.getValue());
+                }
+
+                createIssuePayload.put("fields", fieldsObj);
 
             } catch (JSONException e) {
-                throw new RuntimeException("Error when generating create Epic JSON Payload", e);
+                throw new RuntimeException("Error when generating create Issue JSON Payload", e);
             }
 
-            ClientResponse response = wrapper.sendPost(createEpicUri, createEpicPayload.toString(), 201);
+            ClientResponse response = wrapper.sendPost(createIssueUri, createIssuePayload.toString(), 201);
             String jsonStr = response.getEntity(String.class);
             try {
                 JSONObject jsonObj = new JSONObject(jsonStr);
                 return jsonObj.getString("key");
             } catch (Exception e) {
-                throw new RuntimeException("Error while parsing Epic creation response from JIRA: " + jsonStr, e);
+                throw new RuntimeException("Error while parsing Issue creation response from JIRA: " + jsonStr, e);
             }
+        }
+
+
+        public String updateIssue(String projectKey, String issueKey, Map<String, String> fields) {
+
+            String updateIssueUri = baseUri + JIRAConstants.JIRA_REST_ISSUE_URL + issueKey;
+
+            JSONObject updateIssuePayload = new JSONObject();
+
+            try {
+
+                JSONObject fieldsObj = new JSONObject();
+
+                for (Map.Entry<String, String> fieldEntry : fields.entrySet()) {
+                    fieldsObj.put(fieldEntry.getKey(), fieldEntry.getValue());
+                }
+
+                updateIssuePayload.put("fields", fieldsObj);
+
+            } catch (JSONException e) {
+                throw new RuntimeException("Error when generating update Issue JSON Payload", e);
+            }
+
+            ClientResponse response = wrapper.sendPut(updateIssueUri, updateIssuePayload.toString(), 204);
+            String jsonStr = response.getEntity(String.class);
+
+            return issueKey;
+        }
+
+        public String createEpic(String projectKey, PortfolioEpicCreationInfo epicInfo) {
+            // Read all custom field info required to create an Epic
+            initCustomFieldsInfo();
+
+            Map<String, String> fields = new HashMap<>();
+
+            fields.put("summary", epicInfo.getEpicName());
+            fields.put(epicNameCustomField, epicInfo.getEpicName());
+            fields.put("description", epicInfo.getEpicDescription());
+
+            return createIssue(projectKey, fields, "Epic", null);
         }
 
         /**
@@ -407,29 +476,44 @@ public class JIRAServiceProvider {
         }
 
         /**
-         * We use the search issue API instead of the /rest/issue/{key} because we already have all
-         * the logic to get the right columns and build the right JIRAIssue in the search API.
+         * This call gets an issue through /issue/ REST API and not through search.
          */
-        public JIRAIssue getSingleIssue(String projectKey, String issueKey) {
+        public AgileEntity getSingleAgileEntityIssue(String projectKey, String issueKey) {
+
+            AgileEntity entity = new AgileEntity();
+
+            entity.setId(issueKey);
+
+            ClientResponse response =
+                    wrapper.sendGet(baseUri + JIRAConstants.JIRA_REST_ISSUE_URL + issueKey);
+
+            String jsonStr = response.getEntity(String.class);
+
+            try {
+                JSONObject issueObj = new JSONObject(jsonStr);
+                return getAgileEntityFromIssueJSon(issueObj);
+
+            } catch (JSONException e) {
+                throw new RuntimeException("Ërror when retrieving issue information for issue "+issueKey, e);
+            }
+        }
+
+        public List<AgileEntity> getAgileEntityIssuesModifiedSince(Set<String> entityIds, Date modifiedSinceDate) {
 
             JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
-                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey).setExpandLevel("schema")
-                            .addAndConstraint("key=" + issueKey)
-                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
-                                    storyPointsCustomField);
+                    new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveAllFields();
 
-            IssueRetrievalResult result =
-                    runIssueRetrivalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
+            searchUrlBuilder.addAndConstraint("key in ("+StringUtils.join(entityIds, ",")+")");
+            searchUrlBuilder.addAndConstraint("updated>='"+new SimpleDateFormat("yyyy-MM-dd HH:mm").format(modifiedSinceDate)+"'");
 
-            if (result.getIssues().isEmpty()) {
-                return null;
-            } else if (result.getIssues().size() > 1) {
-                throw new RuntimeException(
-                        "Retrieving issue " + issueKey + " in project " + projectKey + " returned more than 1 result ("
-                                + result.getIssues().size() + ")");
-            } else {
-                return result.getIssues().get(0);
-            }
+            return retrieveAgileEntities(searchUrlBuilder);
+        }
+
+        private void addJSONObjectFieldToEntity(String fieldKey, JSONObject field, AgileEntity entity) throws JSONException {
+            String name = field.has("name") ? field.getString("name"):"";
+            // ID is Key attribute or ID if no key is present.
+            String key = field.has("key") ? field.getString("key"):(field.has("id") ? field.getString("id") : "");
+            entity.addField(fieldKey, name, key);
         }
 
         /**
@@ -451,8 +535,13 @@ public class JIRAServiceProvider {
             IssueRetrievalResult result =
                     runIssueRetrivalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
 
+            List<JIRAIssue> issues = new ArrayList<>();
 
-            return result.getIssues();
+            for (JSONObject obj : result.getIssues()) {
+                issues.add(getIssueFromJSONObj(obj));
+            }
+
+            return issues;
         }
 
         public List<JIRABoard> getAllBoards(String projectKey) {
@@ -515,6 +604,94 @@ public class JIRAServiceProvider {
             return retrieveIssues(searchUrlBuilder);
         }
 
+        private List<AgileEntity> retrieveAgileEntities(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
+
+            IssueRetrievalResult result = null;
+            int fetchedResults = 0;
+            searchUrlBuilder.setStartAt(0);
+
+            List<AgileEntity> allIssues = new ArrayList<AgileEntity>();
+
+            do {
+                result = runIssueRetrivalRequest(searchUrlBuilder.toUrlString());
+                for (JSONObject obj : result.getIssues()) {
+                    allIssues.add(getAgileEntityFromIssueJSon(obj));
+                }
+
+                fetchedResults += result.getMaxResults();
+                searchUrlBuilder.setStartAt(fetchedResults);
+
+            } while (fetchedResults < result.getTotal());
+
+            return allIssues;
+        }
+
+        private AgileEntity getAgileEntityFromIssueJSon(JSONObject issueObj) {
+
+            AgileEntity entity = new AgileEntity();
+
+            try {
+                JSONObject fieldsObj = issueObj.getJSONObject("fields");
+
+                for (String fieldKey : JSONObject.getNames(fieldsObj)) {
+
+                    if (fieldsObj.isNull(fieldKey)) {
+                        // Null fields in JIRA are considered empty fields in PPM.
+                        entity.addField(fieldKey, "", "");
+                        continue;
+                    }
+
+                    Object fieldContents = fieldsObj.get(fieldKey);
+
+                    if (fieldContents instanceof JSONObject) {
+                        JSONObject field = (JSONObject)fieldContents;
+                        addJSONObjectFieldToEntity(fieldKey, field, entity);
+
+                    } else if (fieldContents instanceof JSONArray) {
+                        JSONArray field = (JSONArray)fieldContents;
+                        for (int i = 0; i < field.length(); i++) {
+                            Object arrayValue = field.get(i);
+                            if (arrayValue instanceof JSONObject) {
+                                addJSONObjectFieldToEntity(fieldKey, (JSONObject)arrayValue, entity);
+                            } else if (arrayValue instanceof String) {
+                                entity.addField(fieldKey, (String)arrayValue, (String)arrayValue);
+                            }
+                            // We don't support arrays in arrays.
+                        }
+                    } else {
+                        // If it's not an object nor an array, it's a string
+                        entity.addField(fieldKey, fieldContents.toString(), fieldContents.toString());
+                    }
+                }
+
+                if (fieldsObj.has("updated") && !fieldsObj.isNull("updated")) {
+                    String updated = fieldsObj.getString("updated");
+
+
+                    if (!StringUtils.isBlank(updated)) {
+
+                        // JIRA will return dates with timezone offset not including colon (for example: +0800. However, XML Spec requires a colon, so let's add it.
+                        if (updated.length() == 28) {
+                            updated = updated.substring(0, 26) + ":" + updated.substring(26);
+                        }
+
+                        entity.setLastUpdateTime(javax.xml.bind.DatatypeConverter.parseDateTime(updated).getTime());
+                    }
+                }
+
+                if (fieldsObj.has("key") && !fieldsObj.isNull("key")) {
+                        entity.setId(fieldsObj.getString("key"));
+                }
+
+                entity.setEntityUrl(getBaseUrl()+ "/browse/"+entity.getId());
+
+            } catch (JSONException e) {
+                throw new RuntimeException("Error while parsing Issue JSon", e);
+            }
+
+            return entity;
+
+        }
 
         private List<JIRASubTaskableIssue> retrieveIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
 
@@ -526,7 +703,9 @@ public class JIRAServiceProvider {
 
             do {
                 result = runIssueRetrivalRequest(searchUrlBuilder.toUrlString());
-                allIssues.addAll(result.getIssues());
+                for (JSONObject issueObj : result.getIssues()) {
+                    allIssues.add(getIssueFromJSONObj(issueObj));
+                }
                 fetchedResults += result.getMaxResults();
                 searchUrlBuilder.setStartAt(fetchedResults);
 
@@ -626,9 +805,7 @@ public class JIRAServiceProvider {
                 for (int i = 0; i < issues.length(); i++) {
                     JSONObject issueObj = issues.getJSONObject(i);
 
-                    JIRAIssue issue = getIssueFromJSONObj(issueObj);
-
-                    result.addIssue(issue);
+                    result.addIssue(issueObj);
                 }
 
                 return result;
@@ -1077,6 +1254,77 @@ public class JIRAServiceProvider {
             }
 
             return validWorklogs;
+        }
+
+        public List<JIRAFieldInfo> getFields(String projectKey, String issuetypeId) {
+            ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey+"&issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields");
+
+            String jsonStr = response.getEntity(String.class);
+
+            List<JIRAFieldInfo> jiraFieldsInfo = new ArrayList<>();
+            try {
+                JSONObject result = new JSONObject(jsonStr);
+                JSONObject projectInfo = result.getJSONArray("projects").getJSONObject(0);
+                JSONObject fields = projectInfo.getJSONArray("issuetypes").getJSONObject(0).getJSONObject("fields");
+
+                for (String fieldKey : JSONObject.getNames(fields)) {
+                    JSONObject field = fields.getJSONObject(fieldKey);
+                    JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
+                    jiraFieldsInfo.add(fieldInfo);
+                }
+
+            } catch (JSONException e) {
+                logger.error("Error when retrieving Issues Type fields for project "+projectKey+" and issue type ID "+issuetypeId, e);
+            }
+            return jiraFieldsInfo;
+
+        }
+
+        public String getBaseUrl() {
+            return baseUri;
+        }
+
+        /**
+         * In JIRA, it's possible to login with your email address but the actual user identifier will be different ;
+         * searches based on users must use the correct account username.
+         */
+        public String getAccountUsernameFromLogonUsername(String logonUsername) {
+
+            String accountUsernameFromEmailMatch = null;
+
+            boolean hasMultipleEmailMatch = false;
+
+            ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.SEARCH_USER + "?username="+logonUsername);
+            String jsonStr = response.getEntity(String.class);
+
+            try {
+                JSONArray results = new JSONArray(jsonStr);
+
+                for (int i = 0 ; i < results.length() ; i++) {
+                    JSONObject userInfo = results.getJSONObject(i);
+
+                    if (logonUsername.equalsIgnoreCase(userInfo.getString("name"))) {
+                        // Perfect match on username;
+                        return logonUsername;
+                    }
+
+                    if (logonUsername.equalsIgnoreCase(userInfo.getString("emailAddress"))) {
+                        if (accountUsernameFromEmailMatch != null) {
+                            // We have multiple users with the same email, so search by email is inconclusive.
+                            hasMultipleEmailMatch = true;
+                        }
+
+                        accountUsernameFromEmailMatch = userInfo.getString("name");
+                    }
+                }
+
+
+
+            } catch (JSONException e) {
+                logger.error("Error when retrieving User account info for user "+logonUsername, e);
+            }
+
+            return accountUsernameFromEmailMatch == null || hasMultipleEmailMatch ? logonUsername : accountUsernameFromEmailMatch;
         }
     }
 }
