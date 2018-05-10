@@ -12,6 +12,8 @@ public abstract class JIRAIssue extends JIRAEntity {
 
     private String type;
 
+    private String typeId;
+
     private String authorName;
 
     private String creationDate;
@@ -250,5 +252,13 @@ public abstract class JIRAIssue extends JIRAEntity {
 
     public String getResolutionDate() {
         return resolutionDate;
+    }
+
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
     }
 }

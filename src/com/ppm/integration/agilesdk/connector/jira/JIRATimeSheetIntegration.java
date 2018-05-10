@@ -47,6 +47,8 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
         String author = values.get(JIRAConstants.KEY_USERNAME);
 
+        author = s.getAccountUsernameFromLogonUsername(author);
+
         String groupBy = values.get(JIRAConstants.TS_GROUP_WORK_BY);
         String importEffortBy = values.get(JIRAConstants.TS_IMPORT_HOURS_OPTION);
         String adjustHours = values.get(JIRAConstants.TS_ADJUST_HOURS);

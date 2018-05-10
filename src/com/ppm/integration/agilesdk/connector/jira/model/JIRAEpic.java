@@ -24,13 +24,19 @@ public class JIRAEpic extends JIRASubTaskableIssue {
         contents.add(issue);
     }
 
-    // Sums up the Story Points from all the Epic contents
+    // Sums up the Story Points from all the Epic contents, or use Epic SP if there's not content SP info.
     public int getAggregatedStoryPoints() {
 
         int aggSP = 0;
+        int epicSP = getStoryPoints() == null ? 0 : getStoryPoints().intValue();
 
         for (JIRASubTaskableIssue content : contents) {
             aggSP += content.getStoryPoints() == null ? 0 : content.getStoryPoints();
+        }
+
+        if (aggSP == 0) {
+            // Epic story points are used if Epic hasn't yet been broken down & sized
+            aggSP = epicSP;
         }
 
         return aggSP;
