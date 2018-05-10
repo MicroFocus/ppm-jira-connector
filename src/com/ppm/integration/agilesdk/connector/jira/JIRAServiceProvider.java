@@ -8,6 +8,8 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBuilder;
+import com.ppm.integration.agilesdk.dm.MultiUserField;
+import com.ppm.integration.agilesdk.dm.StringField;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.model.AgileEntity;
 import com.ppm.integration.agilesdk.provider.Providers;
@@ -182,7 +184,6 @@ public class JIRAServiceProvider {
                     logger.error("Error when trying to retrieve JIRA Sprint information for Board ID " + board.getId()
                             + " ('" + board.getName() + "'). Sprints from this board will be ignored.");
                 }
-
             }
 
             return jiraSprints;
@@ -247,9 +248,7 @@ public class JIRAServiceProvider {
                 fieldsObj.put("project", project);
                 fieldsObj.put("issuetype", issueType);
 
-                for (Map.Entry<String, String> fieldEntry : fields.entrySet()) {
-                    fieldsObj.put(fieldEntry.getKey(), fieldEntry.getValue());
-                }
+                setJiraJSonFields(fieldsObj, fields, projectKey, issueTypeId);
 
                 createIssuePayload.put("fields", fieldsObj);
 
@@ -274,13 +273,13 @@ public class JIRAServiceProvider {
 
             JSONObject updateIssuePayload = new JSONObject();
 
+            JIRAIssue issue = getIssues(projectKey, Arrays.asList(new String[] {issueKey})).get(0);
+
             try {
 
                 JSONObject fieldsObj = new JSONObject();
 
-                for (Map.Entry<String, String> fieldEntry : fields.entrySet()) {
-                    fieldsObj.put(fieldEntry.getKey(), fieldEntry.getValue());
-                }
+                setJiraJSonFields(fieldsObj, fields, projectKey, issue.getTypeId());
 
                 updateIssuePayload.put("fields", fieldsObj);
 
@@ -292,6 +291,38 @@ public class JIRAServiceProvider {
             String jsonStr = response.getEntity(String.class);
 
             return issueKey;
+        }
+
+        private void setJiraJSonFields(JSONObject fieldsObj, Map<String, String> fields, String projectKey,
+                String issueTypeId) throws JSONException {
+
+            // We need to know the types of the issue fields in order to parse them to number when needed.
+            Map<String, JIRAFieldInfo> fieldsInfo = getFields(projectKey, issueTypeId);
+
+
+            for (Map.Entry<String, String> fieldEntry : fields.entrySet()) {
+                String fieldKey = fieldEntry.getKey();
+                String value = fieldEntry.getValue();
+
+                JIRAFieldInfo fieldInfo = fieldsInfo.get(fieldKey);
+
+                boolean isNumber = fieldInfo != null && "number".equals(fieldInfo.getType());
+
+                if (value == null || (isNumber && StringUtils.isBlank(value))) {
+                    fieldsObj.put(fieldEntry.getKey(), (Object)null);
+                } else if (value.startsWith(JIRAConstants.JIRA_NAME_PREFIX)) {
+                    value = value.substring(JIRAConstants.JIRA_NAME_PREFIX.length());
+                    JSONObject nameObj = new JSONObject();
+                    nameObj.put("name", value);
+                    fieldsObj.put(fieldEntry.getKey(), nameObj);
+                } else {
+                    if (isNumber) {
+                        fieldsObj.put(fieldEntry.getKey(), Double.parseDouble(value));
+                    } else {
+                        fieldsObj.put(fieldEntry.getKey(), value);
+                    }
+                }
+            }
         }
 
         public String createEpic(String projectKey, PortfolioEpicCreationInfo epicInfo) {
@@ -510,10 +541,51 @@ public class JIRAServiceProvider {
         }
 
         private void addJSONObjectFieldToEntity(String fieldKey, JSONObject field, AgileEntity entity) throws JSONException {
-            String name = field.has("name") ? field.getString("name"):"";
-            // ID is Key attribute or ID if no key is present.
-            String key = field.has("key") ? field.getString("key"):(field.has("id") ? field.getString("id") : "");
-            entity.addField(fieldKey, name, key);
+
+            if (isUserField(field)) {
+                Long ppmUserId = getPpmUserIdFromJiraUserField(field);
+                if (ppmUserId == null) {
+                    entity.addField(fieldKey, null);
+                } else {
+                    // PPM Only supports Multi User fields for now
+                    MultiUserField muf = new MultiUserField();
+                    com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
+                    user.setUserId(ppmUserId);
+                    List<com.ppm.integration.agilesdk.dm.User> users = new ArrayList<>(1);
+                    users.add(user);
+                    muf.set(users);
+                    entity.addField(fieldKey, muf);
+                }
+
+            } else {
+                // Standard field.
+                String name = field.has("name") ? field.getString("name") : "";
+                StringField sf = new StringField();
+                // Since only strings are supported, we only set the Name, not the key. That will be for when CodeMeaning will be supported.
+                sf.set(name);
+                entity.addField(fieldKey, sf);
+            }
+        }
+
+        private Long getPpmUserIdFromJiraUserField(JSONObject field) throws JSONException {
+            String email = field.getString("emailAddress");
+
+            UserProvider provider = Providers.getUserProvider(JIRAIntegrationConnector.class);
+            User user = provider.getByEmail(email);
+
+            if (user != null) {
+                return user.getUserId();
+            }
+
+            return null;
+        }
+
+        private boolean isUserField(JSONObject field) throws JSONException {
+            return field != null && field.has("self") && field.has("emailAddress") && field.getString("self").contains("/user?");
+        }
+
+        private String getValueFromJsonObject(JSONObject jsonObject) throws JSONException {
+            return jsonObject.has("name") ? jsonObject.getString("name"):"";
         }
 
         /**
@@ -637,7 +709,7 @@ public class JIRAServiceProvider {
 
                     if (fieldsObj.isNull(fieldKey)) {
                         // Null fields in JIRA are considered empty fields in PPM.
-                        entity.addField(fieldKey, "", "");
+                        entity.addField(fieldKey, new StringField());
                         continue;
                     }
 
@@ -648,19 +720,14 @@ public class JIRAServiceProvider {
                         addJSONObjectFieldToEntity(fieldKey, field, entity);
 
                     } else if (fieldContents instanceof JSONArray) {
-                        JSONArray field = (JSONArray)fieldContents;
-                        for (int i = 0; i < field.length(); i++) {
-                            Object arrayValue = field.get(i);
-                            if (arrayValue instanceof JSONObject) {
-                                addJSONObjectFieldToEntity(fieldKey, (JSONObject)arrayValue, entity);
-                            } else if (arrayValue instanceof String) {
-                                entity.addField(fieldKey, (String)arrayValue, (String)arrayValue);
-                            }
-                            // We don't support arrays in arrays.
-                        }
+                        StringField sf = getStringFieldFromJsonArray((JSONArray)fieldContents);
+                        entity.addField(fieldKey, sf);
+
                     } else {
                         // If it's not an object nor an array, it's a string
-                        entity.addField(fieldKey, fieldContents.toString(), fieldContents.toString());
+                        StringField sf = new StringField();
+                        sf.set(fieldContents.toString());
+                        entity.addField(fieldKey, sf);
                     }
                 }
 
@@ -679,8 +746,8 @@ public class JIRAServiceProvider {
                     }
                 }
 
-                if (fieldsObj.has("key") && !fieldsObj.isNull("key")) {
-                        entity.setId(fieldsObj.getString("key"));
+                if (issueObj.has("key") && !issueObj.isNull("key")) {
+                        entity.setId(issueObj.getString("key"));
                 }
 
                 entity.setEntityUrl(getBaseUrl()+ "/browse/"+entity.getId());
@@ -691,6 +758,27 @@ public class JIRAServiceProvider {
 
             return entity;
 
+        }
+
+        private StringField getStringFieldFromJsonArray(JSONArray jsonArray) throws JSONException {
+
+
+            List<String> values = new ArrayList<>();
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                Object arrayValue = jsonArray.get(i);
+                if (arrayValue instanceof JSONObject) {
+                    values.add(getValueFromJsonObject((JSONObject)arrayValue));
+                } else if (arrayValue instanceof String) {
+                    values.add((String)arrayValue);
+                }
+                // We don't support arrays in arrays.
+            }
+
+            StringField sf = new StringField();
+            sf.set(StringUtils.join(values, ";"));
+
+            return sf;
         }
 
         private List<JIRASubTaskableIssue> retrieveIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
@@ -851,6 +939,8 @@ public class JIRAServiceProvider {
 
                 // Common fields for all issues
                 issue.setType(issueType);
+
+                issue.setTypeId(fields.getJSONObject("issuetype").getString("id"));
 
                 if (fields.has("status") && fields.getJSONObject("status").has("name")) {
                     issue.setStatus(fields.getJSONObject("status").getString("name"));
@@ -1256,12 +1346,12 @@ public class JIRAServiceProvider {
             return validWorklogs;
         }
 
-        public List<JIRAFieldInfo> getFields(String projectKey, String issuetypeId) {
+        public Map<String, JIRAFieldInfo> getFields(String projectKey, String issuetypeId) {
             ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey+"&issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields");
 
             String jsonStr = response.getEntity(String.class);
 
-            List<JIRAFieldInfo> jiraFieldsInfo = new ArrayList<>();
+            Map<String, JIRAFieldInfo> jiraFieldsInfo = new HashMap<>();
             try {
                 JSONObject result = new JSONObject(jsonStr);
                 JSONObject projectInfo = result.getJSONArray("projects").getJSONObject(0);
@@ -1270,7 +1360,7 @@ public class JIRAServiceProvider {
                 for (String fieldKey : JSONObject.getNames(fields)) {
                     JSONObject field = fields.getJSONObject(fieldKey);
                     JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
-                    jiraFieldsInfo.add(fieldInfo);
+                    jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
                 }
 
             } catch (JSONException e) {
@@ -1325,6 +1415,42 @@ public class JIRAServiceProvider {
             }
 
             return accountUsernameFromEmailMatch == null || hasMultipleEmailMatch ? logonUsername : accountUsernameFromEmailMatch;
+        }
+
+        public String getJiraUsernameFromPpmUser(com.ppm.integration.agilesdk.dm.User user) {
+            // We search first by email, or by username, or by full name, whatever comes first.
+            String jiraUserSearch = user.getEmail();
+            if (StringUtils.isBlank(jiraUserSearch)) {
+                jiraUserSearch = user.getUsername();
+            }
+            if (StringUtils.isBlank(jiraUserSearch)) {
+                jiraUserSearch = user.getFullName();
+            }
+            if (StringUtils.isBlank(jiraUserSearch)) {
+                return null;
+            }
+
+            ClientResponse response =
+                    wrapper.sendGet(baseUri + JIRAConstants.SEARCH_USER + "?username=" + jiraUserSearch);
+            String jsonStr = response.getEntity(String.class);
+
+            try {
+                JSONArray results = new JSONArray(jsonStr);
+
+                if (results.length() == 0) {
+                    return null;
+                }
+
+                // We only match with the first user returned.
+                JSONObject userInfo = results.getJSONObject(0);
+
+                return userInfo.getString("name");
+
+            } catch (JSONException e) {
+                logger.error("Error when retrieving User account info for PPM user " + user.getUserId(), e);
+            }
+
+            return null;
         }
     }
 }

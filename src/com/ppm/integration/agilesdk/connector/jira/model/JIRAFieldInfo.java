@@ -1,8 +1,8 @@
 
 package com.ppm.integration.agilesdk.connector.jira.model;
 
-import com.ppm.integration.agilesdk.model.AgileEntityField;
-import com.ppm.integration.agilesdk.model.AgileEntityFieldValue;
+import com.ppm.integration.agilesdk.dm.DataField;
+import com.ppm.integration.agilesdk.dm.StringField;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,7 +24,7 @@ public class JIRAFieldInfo {
 
     private String items;
 
-    private List<AgileEntityField> allowedValues = null;
+    private List<DataField> allowedValues = null;
 
 
     public static JIRAFieldInfo fromJSONObject(JSONObject obj, String key) {
@@ -36,14 +36,12 @@ public class JIRAFieldInfo {
             if (obj.has("allowedValues")) {
                 JSONArray allowedValues = obj.getJSONArray("allowedValues");
                 if (allowedValues != null) {
-                    fieldInfo.setAllowedValues(new ArrayList<AgileEntityField>(allowedValues.length()));
+                    fieldInfo.setAllowedValues(new ArrayList<DataField>(allowedValues.length()));
 
                     for (int i = 0 ; i < allowedValues.length() ; i++) {
-                        AgileEntityField listValue = new AgileEntityField();
+                        DataField listValue = new StringField();
                         JSONObject listValueObj = allowedValues.getJSONObject(i);
-                        listValue.setKey(listValueObj.getString("id"));
-                        AgileEntityFieldValue value = new AgileEntityFieldValue(listValueObj.getString("name"), listValueObj.getString("id"));
-                        listValue.setValue(value);
+                        listValue.set(listValueObj.getString("name"));
                         fieldInfo.getAllowedValues().add(listValue);
                     }
                 }
@@ -121,11 +119,11 @@ public class JIRAFieldInfo {
         this.items = items;
     }
 
-    public List<AgileEntityField> getAllowedValues() {
+    public List<DataField> getAllowedValues() {
         return allowedValues;
     }
 
-    public void setAllowedValues(List<AgileEntityField> allowedValues) {
+    public void setAllowedValues(List<DataField> allowedValues) {
         this.allowedValues = allowedValues;
     }
 }

@@ -3,6 +3,8 @@ package com.ppm.integration.agilesdk.connector.jira;
 
 public class JIRAConstants {
 
+    public static final String JIRA_NAME_PREFIX = "#@#name#@#";
+
     public static final String NULL_VALUE = "<null>";
 
     public static final String REPLACE_PROJECT_KEY = "%PROJECT_KEY%";
