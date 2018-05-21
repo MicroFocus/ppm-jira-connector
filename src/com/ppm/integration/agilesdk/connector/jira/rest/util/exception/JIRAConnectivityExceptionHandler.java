@@ -3,6 +3,7 @@ package com.ppm.integration.agilesdk.connector.jira.rest.util.exception;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
+import com.ppm.integration.agilesdk.provider.Providers;
 import org.apache.wink.client.ClientRuntimeException;
 
 import com.ppm.integration.IntegrationException;
@@ -37,8 +38,9 @@ public class JIRAConnectivityExceptionHandler implements UncaughtExceptionHandle
                 throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getStatusCode())
                         .setMessage("ERROR_BAD_REQUEST");
             case 401:
+                String error_message_auth = Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("ERROR_AUTHENTICATION_FAILED");
                 throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_" + e.getStatusCode())
-                        .setMessage("ERROR_AUTHENTICATION_FAILED");
+                        .setMessage(error_message_auth);
             default:
                 throw IntegrationException.build(cls).setErrorCode("PPM_INT_JIRA_ERR_202")
                         .setMessage("ERROR_CONNECTIVITY_ERROR", e.getMessage());
