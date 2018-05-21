@@ -2,6 +2,7 @@
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
@@ -91,29 +92,38 @@ public class RestWrapper {
         Resource resource = this.getJIRAResource(uri);
         ClientResponse response = resource.get();
 
-        int statusCode = response.getStatusCode();
-
-        if (statusCode != 200) {
-            // for easier troubleshooting, include the request URI in the exception message
-            throw new RestRequestException(
-                    statusCode,
-                    String.format("Unexpected HTTP response status code %s for %s", statusCode, uri));
-        }
+        checkResponseStatus(200, response, uri, "GET", null);
 
         return response;
+    }
+
+    private void checkResponseStatus(int expectedHttpStatusCode, ClientResponse response, String uri, String verb, String payload) {
+
+        if (response.getStatusCode() != expectedHttpStatusCode) {
+            StringBuilder errorMessage = new StringBuilder(String.format("## Unexpected HTTP response status code %s for %s uri %s, expected %s", response.getStatusCode(), verb,  uri, expectedHttpStatusCode));
+            if (payload != null) {
+                errorMessage.append(System.lineSeparator()).append(System.lineSeparator()).append("# Sent Payload:").append(System.lineSeparator()).append(payload);
+            }
+            String responseStr = null;
+            try {
+                responseStr = response.getEntity(String.class);
+            } catch (Exception e) {
+                // we don't do anything if we cannot get the response.
+            }
+            if (!StringUtils.isBlank(responseStr)) {
+                errorMessage.append(System.lineSeparator()).append(System.lineSeparator()).append("# Received Response:").append(System.lineSeparator()).append(responseStr);
+            }
+
+            throw new RestRequestException(response.getStatusCode(), errorMessage.toString());
+        }
+
     }
 
     public ClientResponse sendPost(String uri, String jsonPayload, int expectedHttpStatusCode) {
         Resource resource = this.getJIRAResource(uri);
         ClientResponse response = resource.post(jsonPayload);
 
-        int statusCode = response.getStatusCode();
-
-        if (statusCode != expectedHttpStatusCode) {
-            // for easier troubleshooting, include the request URI in the exception message
-            throw new RestRequestException(statusCode,
-                    String.format("Unexpected HTTP response status code %s for %s, expected %s", statusCode, uri, expectedHttpStatusCode));
-        }
+        checkResponseStatus(expectedHttpStatusCode, response, uri, "POST", jsonPayload);
 
         return response;
     }
@@ -122,13 +132,7 @@ public class RestWrapper {
         Resource resource = this.getJIRAResource(uri);
         ClientResponse response = resource.put(jsonPayload);
 
-        int statusCode = response.getStatusCode();
-
-        if (statusCode != expectedHttpStatusCode) {
-            // for easier troubleshooting, include the request URI in the exception message
-            throw new RestRequestException(statusCode,
-                    String.format("Unexpected HTTP response status code %s for %s, expected %s", statusCode, uri, expectedHttpStatusCode));
-        }
+        checkResponseStatus(expectedHttpStatusCode, response, uri, "PUT", jsonPayload);
 
         return response;
     }
