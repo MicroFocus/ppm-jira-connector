@@ -297,7 +297,13 @@ public class JIRAServiceProvider {
                 String issueTypeId) throws JSONException {
 
             // We need to know the types of the issue fields in order to parse them to number when needed.
-            Map<String, JIRAFieldInfo> fieldsInfo = getFields(projectKey, issueTypeId);
+            // But that's only valid if we have the issueTypeId, which we won't if creating portfolio Epic - and we don't care.
+
+            Map<String, JIRAFieldInfo> fieldsInfo = new HashMap<>();
+
+            if (!StringUtils.isBlank(issueTypeId)) {
+                fieldsInfo = getFields(projectKey, issueTypeId);
+            }
 
 
             for (Map.Entry<String, String> fieldEntry : fields.entrySet()) {
