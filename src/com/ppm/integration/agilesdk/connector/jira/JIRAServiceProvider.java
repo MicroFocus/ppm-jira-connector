@@ -8,10 +8,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.JIRARestConfig;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.RestWrapper;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
 import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBuilder;
-import com.ppm.integration.agilesdk.dm.MultiUserField;
-import com.ppm.integration.agilesdk.dm.StringField;
-import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
-import com.ppm.integration.agilesdk.model.AgileEntity;
+import com.ppm.integration.agilesdk.connector.jira.util.dm.AgileEntityUtils;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import org.apache.commons.lang.StringUtils;
@@ -331,15 +328,15 @@ public class JIRAServiceProvider {
             }
         }
 
-        public String createEpic(String projectKey, PortfolioEpicCreationInfo epicInfo) {
+        public String createEpic(String projectKey, String epicName, String epicDescription) {
             // Read all custom field info required to create an Epic
             initCustomFieldsInfo();
 
             Map<String, String> fields = new HashMap<>();
 
-            fields.put("summary", epicInfo.getEpicName());
-            fields.put(epicNameCustomField, epicInfo.getEpicName());
-            fields.put("description", epicInfo.getEpicDescription());
+            fields.put("summary", epicName);
+            fields.put(epicNameCustomField, epicName);
+            fields.put("description", epicDescription);
 
             return createIssue(projectKey, fields, "Epic", null);
         }
@@ -515,9 +512,9 @@ public class JIRAServiceProvider {
         /**
          * This call gets an issue through /issue/ REST API and not through search.
          */
-        public AgileEntity getSingleAgileEntityIssue(String projectKey, String issueKey) {
+        public JIRAAgileEntity getSingleAgileEntityIssue(String projectKey, String issueKey) {
 
-            AgileEntity entity = new AgileEntity();
+            JIRAAgileEntity entity = new JIRAAgileEntity();
 
             entity.setId(issueKey);
 
@@ -528,14 +525,14 @@ public class JIRAServiceProvider {
 
             try {
                 JSONObject issueObj = new JSONObject(jsonStr);
-                return getAgileEntityFromIssueJSon(issueObj);
+                return AgileEntityUtils.getAgileEntityFromIssueJSon(issueObj, getBaseUrl());
 
             } catch (JSONException e) {
                 throw new RuntimeException("Ërror when retrieving issue information for issue "+issueKey, e);
             }
         }
 
-        public List<AgileEntity> getAgileEntityIssuesModifiedSince(Set<String> entityIds, Date modifiedSinceDate) {
+        public List<JIRAAgileEntity> getAgileEntityIssuesModifiedSince(Set<String> entityIds, Date modifiedSinceDate) {
 
             JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                     new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveAllFields();
@@ -544,54 +541,6 @@ public class JIRAServiceProvider {
             searchUrlBuilder.addAndConstraint("updated>='"+new SimpleDateFormat("yyyy-MM-dd HH:mm").format(modifiedSinceDate)+"'");
 
             return retrieveAgileEntities(searchUrlBuilder);
-        }
-
-        private void addJSONObjectFieldToEntity(String fieldKey, JSONObject field, AgileEntity entity) throws JSONException {
-
-            if (isUserField(field)) {
-                Long ppmUserId = getPpmUserIdFromJiraUserField(field);
-                if (ppmUserId == null) {
-                    entity.addField(fieldKey, null);
-                } else {
-                    // PPM Only supports Multi User fields for now
-                    MultiUserField muf = new MultiUserField();
-                    com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
-                    user.setUserId(ppmUserId);
-                    List<com.ppm.integration.agilesdk.dm.User> users = new ArrayList<>(1);
-                    users.add(user);
-                    muf.set(users);
-                    entity.addField(fieldKey, muf);
-                }
-
-            } else {
-                // Standard field.
-                String name = field.has("name") ? field.getString("name") : "";
-                StringField sf = new StringField();
-                // Since only strings are supported, we only set the Name, not the key. That will be for when CodeMeaning will be supported.
-                sf.set(name);
-                entity.addField(fieldKey, sf);
-            }
-        }
-
-        private Long getPpmUserIdFromJiraUserField(JSONObject field) throws JSONException {
-            String email = field.getString("emailAddress");
-
-            UserProvider provider = Providers.getUserProvider(JIRAIntegrationConnector.class);
-            User user = provider.getByEmail(email);
-
-            if (user != null) {
-                return user.getUserId();
-            }
-
-            return null;
-        }
-
-        private boolean isUserField(JSONObject field) throws JSONException {
-            return field != null && field.has("self") && field.has("emailAddress") && field.getString("self").contains("/user?");
-        }
-
-        private String getValueFromJsonObject(JSONObject jsonObject) throws JSONException {
-            return jsonObject.has("name") ? jsonObject.getString("name"):"";
         }
 
         /**
@@ -682,18 +631,18 @@ public class JIRAServiceProvider {
             return retrieveIssues(searchUrlBuilder);
         }
 
-        private List<AgileEntity> retrieveAgileEntities(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
+        private List<JIRAAgileEntity> retrieveAgileEntities(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
 
             IssueRetrievalResult result = null;
             int fetchedResults = 0;
             searchUrlBuilder.setStartAt(0);
 
-            List<AgileEntity> allIssues = new ArrayList<AgileEntity>();
+            List<JIRAAgileEntity> allIssues = new ArrayList<JIRAAgileEntity>();
 
             do {
                 result = runIssueRetrivalRequest(searchUrlBuilder.toUrlString());
                 for (JSONObject obj : result.getIssues()) {
-                    allIssues.add(getAgileEntityFromIssueJSon(obj));
+                    allIssues.add(AgileEntityUtils.getAgileEntityFromIssueJSon(obj, getBaseUrl()));
                 }
 
                 fetchedResults += result.getMaxResults();
@@ -704,88 +653,9 @@ public class JIRAServiceProvider {
             return allIssues;
         }
 
-        private AgileEntity getAgileEntityFromIssueJSon(JSONObject issueObj) {
-
-            AgileEntity entity = new AgileEntity();
-
-            try {
-                JSONObject fieldsObj = issueObj.getJSONObject("fields");
-
-                for (String fieldKey : JSONObject.getNames(fieldsObj)) {
-
-                    if (fieldsObj.isNull(fieldKey)) {
-                        // Null fields in JIRA are considered empty fields in PPM.
-                        entity.addField(fieldKey, new StringField());
-                        continue;
-                    }
-
-                    Object fieldContents = fieldsObj.get(fieldKey);
-
-                    if (fieldContents instanceof JSONObject) {
-                        JSONObject field = (JSONObject)fieldContents;
-                        addJSONObjectFieldToEntity(fieldKey, field, entity);
-
-                    } else if (fieldContents instanceof JSONArray) {
-                        StringField sf = getStringFieldFromJsonArray((JSONArray)fieldContents);
-                        entity.addField(fieldKey, sf);
-
-                    } else {
-                        // If it's not an object nor an array, it's a string
-                        StringField sf = new StringField();
-                        sf.set(fieldContents.toString());
-                        entity.addField(fieldKey, sf);
-                    }
-                }
-
-                if (fieldsObj.has("updated") && !fieldsObj.isNull("updated")) {
-                    String updated = fieldsObj.getString("updated");
 
 
-                    if (!StringUtils.isBlank(updated)) {
 
-                        // JIRA will return dates with timezone offset not including colon (for example: +0800. However, XML Spec requires a colon, so let's add it.
-                        if (updated.length() == 28) {
-                            updated = updated.substring(0, 26) + ":" + updated.substring(26);
-                        }
-
-                        entity.setLastUpdateTime(javax.xml.bind.DatatypeConverter.parseDateTime(updated).getTime());
-                    }
-                }
-
-                if (issueObj.has("key") && !issueObj.isNull("key")) {
-                        entity.setId(issueObj.getString("key"));
-                }
-
-                entity.setEntityUrl(getBaseUrl()+ "/browse/"+entity.getId());
-
-            } catch (JSONException e) {
-                throw new RuntimeException("Error while parsing Issue JSon", e);
-            }
-
-            return entity;
-
-        }
-
-        private StringField getStringFieldFromJsonArray(JSONArray jsonArray) throws JSONException {
-
-
-            List<String> values = new ArrayList<>();
-
-            for (int i = 0; i < jsonArray.length(); i++) {
-                Object arrayValue = jsonArray.get(i);
-                if (arrayValue instanceof JSONObject) {
-                    values.add(getValueFromJsonObject((JSONObject)arrayValue));
-                } else if (arrayValue instanceof String) {
-                    values.add((String)arrayValue);
-                }
-                // We don't support arrays in arrays.
-            }
-
-            StringField sf = new StringField();
-            sf.set(StringUtils.join(values, ";"));
-
-            return sf;
-        }
 
         private List<JIRASubTaskableIssue> retrieveIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
 

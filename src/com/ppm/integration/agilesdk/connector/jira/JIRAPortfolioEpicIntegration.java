@@ -26,7 +26,7 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
     @Override public String createEpicInAgileProject(PortfolioEpicCreationInfo epicInfo, String agileProjectValue,
             ValueSet instanceConfigurationParameters)
     {
-        return service.get(instanceConfigurationParameters).createEpic(agileProjectValue, epicInfo);
+        return service.get(instanceConfigurationParameters).createEpic(agileProjectValue, epicInfo.getEpicName(), epicInfo.getEpicDescription());
     }
 
     @Override public PortfolioEpicSyncInfo getPortfolioEpicSyncInfo(String epicId, String agileProjectValue,

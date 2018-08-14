@@ -1,6 +1,7 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
 import com.ppm.integration.agilesdk.ValueSet;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRAAgileEntity;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAFieldInfo;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssueType;
 import com.ppm.integration.agilesdk.dm.*;
@@ -164,7 +165,12 @@ public class JIRARequestIntegration extends RequestIntegration {
             return new ArrayList<AgileEntity>();
         }
 
-        return service.get(instanceConfigurationParameters).getAgileEntityIssuesModifiedSince(entityIds, modifiedSinceDate);
+        List<JIRAAgileEntity> jiraEntities = service.get(instanceConfigurationParameters).getAgileEntityIssuesModifiedSince(entityIds, modifiedSinceDate);
+
+        List<AgileEntity> entities = new ArrayList<>(jiraEntities.size());
+        entities.addAll(jiraEntities);
+
+        return entities;
     }
 
     @Override public AgileEntity getEntity(String agileProjectValue, String entityType,

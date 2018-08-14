@@ -31,6 +31,8 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
         loadSprints(projectKey);
         loadEpics(projectKey);
         loadBugsAndStories(projectKey);
+
+        
     }
 
     private void loadVersions(String projectKey) {
