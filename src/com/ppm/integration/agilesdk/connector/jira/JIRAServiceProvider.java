@@ -1334,7 +1334,7 @@ public class JIRAServiceProvider {
 
             Set<String> issueTypes = new HashSet<>();
 
-            // We will always include sub-tasks
+            // We only retrieve Epics.
             issueTypes.add(JIRAConstants.JIRA_ISSUE_EPIC);
 
             JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
