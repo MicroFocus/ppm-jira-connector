@@ -104,7 +104,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                 options.add(new Option("0", lp.getConnectorText("IMPORT_ALL_PROJECT_ISSUES")));
                                 break;
                             case JIRAConstants.IMPORT_ONE_EPIC:
-                                List<JIRASubTaskableIssue> epics = service.get(values).getAllIssues(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
+                                List<JIRASubTaskableIssue> epics = service.get(values).getProjectEpics(projectKey);
                                 for (JIRAIssue epic : epics) {
                                     Option option = new Option(epic.getKey(), epic.getName());
                                     options.add(option);

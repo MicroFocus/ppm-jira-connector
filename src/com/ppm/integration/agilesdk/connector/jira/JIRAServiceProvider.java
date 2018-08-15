@@ -1328,5 +1328,33 @@ public class JIRAServiceProvider {
 
             return null;
         }
+
+        /** This method only returns Epics issues, without any content. It should be only used to list Epics. */
+        public List<JIRASubTaskableIssue> getProjectEpics(String projectKey) {
+
+            Set<String> issueTypes = new HashSet<>();
+
+            // We only retrieve Epics.
+            issueTypes.add(JIRAConstants.JIRA_ISSUE_EPIC);
+
+            JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
+                    new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
+                            .addExtraFields(epicLinkCustomField, epicNameCustomField, sprintIdCustomField,
+                                    storyPointsCustomField).setIssuesTypes(issueTypes);
+
+            List<JIRASubTaskableIssue> epics = retrieveIssues(searchUrlBuilder);
+            Collections.sort(epics, new Comparator<JIRASubTaskableIssue>() {
+                @Override public int compare(JIRASubTaskableIssue o1, JIRASubTaskableIssue o2) {
+                    try {
+                        return o1.getName().compareToIgnoreCase(o2.getName());
+                    } catch (Exception e) {
+                        // In case any epic or name is null, which shouldn't happen.
+                        return 0;
+                    }
+                }
+            });
+
+            return epics;
+        }
     }
 }
