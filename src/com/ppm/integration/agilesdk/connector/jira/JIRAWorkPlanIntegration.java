@@ -34,6 +34,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         List<Field> fields = new ArrayList<Field>();
 
+        service.useAdminAccount();
+
+        final Map<String, Set<String>> issueTypesPerProjectKey = service.get(values).getIssueTypesPerProject();
+
         if (!useAdminPassword) {
             service.useNonAdminAccount();
             fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true));
@@ -174,59 +178,84 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 new LineBreaker(),
 
                 new LabelText(JIRAConstants.LABEL_ISSUES_TO_IMPORT, "SELECT_ISSUES_TYPES_TO_IMPORT",
-                        "Select issue types to import:", true),
-                new CheckBox(JIRAConstants.JIRA_ISSUE_EPIC, "JIRA_ISSUE_EPIC", true),
-                new CheckBox(JIRAConstants.JIRA_ISSUE_STORY, "JIRA_ISSUE_STORY", true),
-                new CheckBox(JIRAConstants.JIRA_ISSUE_TASK, "JIRA_ISSUE_TASK", false),
-                new CheckBox(JIRAConstants.JIRA_ISSUE_FEATURE, "JIRA_ISSUE_FEATURE", false),
-                new CheckBox(JIRAConstants.JIRA_ISSUE_BUG, "JIRA_ISSUE_BUG", false),
+                        "Select issue types to import:", true)}));
 
-                new LineBreaker(),
+        // List of issue types checkboxes.
+        Set<String> allIssueTypes = new HashSet<String>();
+        for (Set<String> issueTypes : issueTypesPerProjectKey.values()) {
+            allIssueTypes.addAll(issueTypes);
+        }
 
-                new LabelText(JIRAConstants.LABEL_TASKS_OPTIONS, "TASKS_OPTIONS",
-                        "Tasks Options:", true),
-                new CheckBox(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, "OPTION_INCLUDE_ISSUE_NO_GROUP", true),
-                new LineBreaker(),
-                new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true),
-                new PlainText(JIRAConstants.OPTION_ROOT_TASK_NAME, "OPTION_ROOT_TASK_NAME", Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_ROOT_TASK_TASK_NAME"), false) {
-                    @Override
-                    public List<String> getStyleDependencies() {
-                        return Arrays.asList(new String[] { JIRAConstants.OPTION_ADD_ROOT_TASK });
+        List<String> sortedIssueTypes = new ArrayList<String>(allIssueTypes);
+
+        Collections.sort(sortedIssueTypes, new Comparator<String>() {
+                    @Override public int compare(String o1, String o2) {
+                        return o1.compareToIgnoreCase(o2);
                     }
+                });
 
-                    @Override
-                    public FieldAppearance getFieldAppearance(ValueSet values) {
-                        boolean isCreateRootTask = values.getBoolean(JIRAConstants.OPTION_ADD_ROOT_TASK, false);
-                        if (isCreateRootTask) {
-                            return new FieldAppearance("", "disabled");
-                        } else {
-                            return new FieldAppearance("disabled", "");
-                        }
+        for (final String issueType : sortedIssueTypes) {
+            fields.add( new CheckBox(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX+issueType, issueType, "Epic".equalsIgnoreCase(issueType) || "Story".equalsIgnoreCase(issueType)) {
+
+                @Override public List<String> getStyleDependencies() {
+                    return Arrays.asList(new String[] {JIRAConstants.KEY_JIRA_PROJECT});
+                }
+
+                @Override public FieldAppearance getFieldAppearance(ValueSet values) {
+                    String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT);
+                    if (issueTypesPerProjectKey.get(projectKey) != null && issueTypesPerProjectKey.get(projectKey).contains(issueType)) {
+                        // This issue type is enabled for this project
+                        return new FieldAppearance("", "disabled");
+                    } else {
+                        // This issue type is disabled for this project
+                        return new FieldAppearance("disabled", "");
                     }
-                },
+                }
+            });
+        }
 
-                new LineBreaker(),
-                new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES,"OPTION_ADD_EPIC_MILESTONES","",true) {
-                    @Override
-                    public List<String> getStyleDependencies() {
-                        return Arrays.asList(new String[]{JIRAConstants.JIRA_ISSUE_EPIC});
-                    }
+                // Last options
+                fields.addAll(Arrays.asList(new Field[] {new LineBreaker(),
 
-                    @Override
-                    public FieldAppearance getFieldAppearance(ValueSet values) {
-                        boolean importEpics = values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true);
-                        if (importEpics) {
-                            return new FieldAppearance("", "disabled");
-                        } else {
-                            return new FieldAppearance("disabled", "");
-                        }
-                    }
-                }.addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
-                        .addOption(new SelectList.Option("","OPTION_ADD_EPIC_MILESTONES_NO_MILESTONE"))
-                        .addOption(new SelectList.Option("MINOR","OPTION_ADD_EPIC_MILESTONES_MINOR"))
-                        .addOption(new SelectList.Option("MAJOR","OPTION_ADD_EPIC_MILESTONES_MAJOR"))
+                        new LabelText(JIRAConstants.LABEL_TASKS_OPTIONS, "TASKS_OPTIONS", "Tasks Options:", true),
+                        new CheckBox(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, "OPTION_INCLUDE_ISSUE_NO_GROUP", true),
+                        new LineBreaker(), new CheckBox(JIRAConstants.OPTION_ADD_ROOT_TASK, "OPTION_ADD_ROOT_TASK", true),
+                        new PlainText(JIRAConstants.OPTION_ROOT_TASK_NAME, "OPTION_ROOT_TASK_NAME",
+                                Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_ROOT_TASK_TASK_NAME"), false) {
+                            @Override public List<String> getStyleDependencies() {
+                                return Arrays.asList(new String[] {JIRAConstants.OPTION_ADD_ROOT_TASK});
+                            }
 
-        }));
+                            @Override public FieldAppearance getFieldAppearance(ValueSet values) {
+                                boolean isCreateRootTask = values.getBoolean(JIRAConstants.OPTION_ADD_ROOT_TASK, false);
+                                if (isCreateRootTask) {
+                                    return new FieldAppearance("", "disabled");
+                                } else {
+                                    return new FieldAppearance("disabled", "");
+                                }
+                            }
+                        },
+
+                        new LineBreaker(),
+                        new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES", "", true) {
+                            @Override public List<String> getStyleDependencies() {
+                                return Arrays.asList(new String[] {JIRAConstants.JIRA_ISSUE_EPIC});
+                            }
+
+                            @Override public FieldAppearance getFieldAppearance(ValueSet values) {
+                                boolean importEpics = values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true);
+                                if (importEpics) {
+                                    return new FieldAppearance("", "disabled");
+                                } else {
+                                    return new FieldAppearance("disabled", "");
+                                }
+                            }
+                        }.addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
+                                .addOption(new SelectList.Option("", "OPTION_ADD_EPIC_MILESTONES_NO_MILESTONE"))
+                                .addOption(new SelectList.Option("MINOR", "OPTION_ADD_EPIC_MILESTONES_MINOR")).addOption(
+                                new SelectList.Option("MAJOR", "OPTION_ADD_EPIC_MILESTONES_MAJOR"))
+
+                }));
 
         return fields;
     }
@@ -293,6 +322,16 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
 
         Set<String> issueTypes = new HashSet<>();
+
+        for (String key: values.keySet()) {
+            if (key.startsWith(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX)) {
+                if (values.getBoolean(key, false)) {
+                    issueTypes.add(key.substring(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX.length()));
+                }
+            }
+        }
+
+        // Following code handles backward compatibility with static issue types selection
         if (values.getBoolean(JIRAConstants.JIRA_ISSUE_TASK, false)) {
             issueTypes.add(JIRAConstants.JIRA_ISSUE_TASK);
         }
@@ -308,6 +347,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         if (values.getBoolean(JIRAConstants.JIRA_ISSUE_FEATURE, false)) {
             issueTypes.add(JIRAConstants.JIRA_ISSUE_FEATURE);
         }
+        // End of backward compatibility code
 
         // We always want to retrieve epics if grouping tasks by Epics
         if (JIRAConstants.GROUP_EPIC.equalsIgnoreCase(grouping)) {
