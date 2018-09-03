@@ -110,6 +110,8 @@ public class JIRAConstants {
 
     public static final String VERSIONS_SUFFIX = API_VERSION2_API_ROOT + "project/" + REPLACE_PROJECT_KEY + "/versions";
 
+    public static final String JIRA_ISSUE_TYPE_PREFIX = "ISSUE_TYPE_";
+
     public static final String JIRA_ISSUE_STORY = "STORY";
 
     public static final String JIRA_ISSUE_EPIC = "EPIC";

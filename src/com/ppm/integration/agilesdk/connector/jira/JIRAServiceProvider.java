@@ -790,15 +790,6 @@ public class JIRAServiceProvider {
                     case JIRAConstants.JIRA_ISSUE_EPIC:
                         issue = new JIRAEpic();
                         break;
-                    case JIRAConstants.JIRA_ISSUE_FEATURE:
-                        issue = new JIRAFeature();
-                        break;
-                    case JIRAConstants.JIRA_ISSUE_STORY:
-                        issue = new JIRAStory();
-                        break;
-                    case JIRAConstants.JIRA_ISSUE_TASK:
-                        issue = new JIRATask();
-                        break;
                     case JIRAConstants.JIRA_ISSUE_SUB_TASK:
                         issue = new JIRASubTask();
 
@@ -806,11 +797,9 @@ public class JIRAServiceProvider {
                             ((JIRASubTask)issue).setParentKey(fields.getJSONObject("parent").getString("key"));
                         }
                         break;
-                    case JIRAConstants.JIRA_ISSUE_BUG:
-                        issue = new JIRABug();
-                        break;
                     default:
-                        throw new RuntimeException("Unknow issue type:" + issueType);
+                        issue = new JIRAStandardIssue();
+                        break;
                 }
 
                 // Common fields for all issues
@@ -1355,6 +1344,46 @@ public class JIRAServiceProvider {
             });
 
             return epics;
+        }
+
+        // Returns the non-sub-tasks issue types keys for each project key.
+        public Map<String, Set<String>> getIssueTypesPerProject() {
+            Map<String, Set<String>> issueTypesPerProject = new HashMap<>();
+
+            ClientResponse response = wrapper.sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX);
+            String jsonStr = response.getEntity(String.class);
+
+            try {
+                JSONObject results = new JSONObject(jsonStr);
+
+                JSONArray projects = results.getJSONArray("projects");
+
+                for (int i = 0 ; i < projects.length() ; i++) {
+                    JSONObject projectInfo = projects.getJSONObject(i);
+
+                    String projectKey = projectInfo.getString("key");
+
+                    Set<String> issueTypesSet = new HashSet<String>();
+
+                    JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
+
+                    for (int j = 0 ; j < issueTypes.length() ; j++) {
+                        JSONObject issueType = issueTypes.getJSONObject(j);
+
+                        if (!issueType.getBoolean("subtask")) {
+                            String issueTypeName = issueType.getString("name");
+                            issueTypesSet.add(issueTypeName);
+                        }
+                    }
+
+                    issueTypesPerProject.put(projectKey, issueTypesSet);
+                }
+            } catch (JSONException e) {
+                logger.error("Error when retrieving issue types per project", e);
+            }
+
+            return issueTypesPerProject;
+
         }
     }
 }
