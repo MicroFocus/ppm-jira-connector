@@ -41,7 +41,13 @@ public class JIRAFieldInfo {
                     for (int i = 0 ; i < allowedValues.length() ; i++) {
                         DataField listValue = new StringField();
                         JSONObject listValueObj = allowedValues.getJSONObject(i);
-                        listValue.set(listValueObj.getString("name"));
+                        String value = "?";
+                        if (listValueObj.has("name")) {
+                            value = listValueObj.getString("name");
+                        } else if (listValueObj.has("value")) {
+                            value = listValueObj.getString("value");
+                        }
+                        listValue.set(value);
                         fieldInfo.getAllowedValues().add(listValue);
                     }
                 }
