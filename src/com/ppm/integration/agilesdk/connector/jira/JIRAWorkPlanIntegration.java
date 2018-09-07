@@ -6,6 +6,7 @@ import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.*;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.JIRAConnectivityExceptionHandler;
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
+import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
 import com.ppm.integration.agilesdk.connector.jira.util.WorkDrivenPercentCompleteExternalTask;
 import com.ppm.integration.agilesdk.pm.*;
 import com.ppm.integration.agilesdk.provider.LocalizationProvider;
@@ -21,8 +22,6 @@ import java.util.*;
 public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private final Logger logger = Logger.getLogger(this.getClass());
 
-    private JIRAServiceProvider service = new JIRAServiceProvider().useAdminAccount();
-
     public JIRAWorkPlanIntegration() {}
 
     @Override
@@ -34,18 +33,49 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         List<Field> fields = new ArrayList<Field>();
 
-        service.useAdminAccount();
+        final JIRAService service = JIRAServiceProvider.get(values).useAdminAccount();
 
-        final Map<String, Set<String>> issueTypesPerProjectKey = service.get(values).getIssueTypesPerProject();
+        final Map<String, Set<String>> issueTypesPerProjectKey = service.getIssueTypesPerProject();
 
         if (!useAdminPassword) {
-            service.useNonAdminAccount();
             fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true));
             fields.add(new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true));
             fields.add(new LineBreaker());
         }
 
+        SelectList importSelectionSelectList = new SelectList(JIRAConstants.KEY_IMPORT_SELECTION,"IMPORT_SELECTION",JIRAConstants.IMPORT_ALL_PROJECT_ISSUES,true)
+                .addLevel(JIRAConstants.KEY_IMPORT_SELECTION, "IMPORT_SELECTION")
+                .addOption(new SelectList.Option(JIRAConstants.IMPORT_ALL_PROJECT_ISSUES,"IMPORT_ALL_PROJECT_ISSUES"))
+                .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_EPIC,"IMPORT_ONE_EPIC"))
+                .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_VERSION,"IMPORT_ONE_VERSION"))
+                .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_BOARD,"IMPORT_ONE_BOARD"));
+
+        if (service.isJiraPortfolioEnabled()) {
+            for (HierarchyLevelInfo portfolioLevel : service.getJiraPortfolioLevelsInfo()) {
+                if (portfolioLevel.getId() <= 2) {
+                    // We don't want to display Sub-Task, Story or Epic.
+                    continue;
+                }
+                importSelectionSelectList.addOption(
+                        new SelectList.Option(JIRAConstants.IMPORT_PORTFOLIO_PREFIX+portfolioLevel.getId(), portfolioLevel.getTitle()));
+            }
+        }
+
+
+        SelectList importGroupSelectList = new SelectList(JIRAConstants.KEY_IMPORT_GROUPS,"IMPORT_GROUPS",JIRAConstants.GROUP_EPIC,true)
+                .addLevel(JIRAConstants.KEY_IMPORT_GROUPS, "IMPORT_GROUPS")
+                .addOption(new SelectList.Option(JIRAConstants.GROUP_EPIC,"GROUP_EPIC"))
+                .addOption(new SelectList.Option(JIRAConstants.GROUP_SPRINT,"GROUP_SPRINT"))
+                .addOption(new SelectList.Option(JIRAConstants.GROUP_STATUS,"GROUP_STATUS"));
+
+        if (service.isJiraPortfolioEnabled()) {
+            importGroupSelectList.addOption(new SelectList.Option(JIRAConstants.GROUP_JIRA_PORTFOLIO_HIERARCHY,"GROUP_JIRA_PORTFOLIO_HIERARCHY"));
+        }
+
         fields.addAll(Arrays.asList(new Field[] {
+
+                new LabelText(JIRAConstants.LABEL_SELECT_WHAT_TO_IMPORT, "LABEL_SELECT_WHAT_TO_IMPORT",
+                        "Select what to import:", true),
 
                 new DynamicDropdown(JIRAConstants.KEY_JIRA_PROJECT, "JIRA_PROJECT", true) {
 
@@ -57,9 +87,13 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
 
+                        if (!useAdminPassword) {
+                            service.resetUserCredentials(values).useNonAdminAccount();
+                        }
+
                         List<JIRAProject> list = new ArrayList<>();
                         try {
-                            list = service.get(values).getProjects();
+                            list = service.getProjects();
                         } catch (ClientRuntimeException | RestRequestException e) {
                             logger.error("", e);
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
@@ -81,12 +115,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 },
                 new LineBreaker(),
 
-                new SelectList(JIRAConstants.KEY_IMPORT_SELECTION,"IMPORT_SELECTION",JIRAConstants.IMPORT_ALL_PROJECT_ISSUES,true)
-                        .addLevel(JIRAConstants.KEY_IMPORT_SELECTION, "IMPORT_SELECTION")
-                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ALL_PROJECT_ISSUES,"IMPORT_ALL_PROJECT_ISSUES"))
-                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_EPIC,"IMPORT_ONE_EPIC"))
-                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_VERSION,"IMPORT_ONE_VERSION"))
-                        .addOption(new SelectList.Option(JIRAConstants.IMPORT_ONE_BOARD,"IMPORT_ONE_BOARD")),
+                importSelectionSelectList,
 
                 new DynamicDropdown(JIRAConstants.KEY_IMPORT_SELECTION_DETAILS, "IMPORT_SELECTION_DETAILS", "", true) {
 
@@ -99,6 +128,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
+
+                        if (!useAdminPassword) {
+                            service.resetUserCredentials(values).useNonAdminAccount();
+                        }
+
                         String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
                         String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT);
                         List<Option> options = new ArrayList<>();
@@ -108,14 +142,14 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                 options.add(new Option("0", lp.getConnectorText("IMPORT_ALL_PROJECT_ISSUES")));
                                 break;
                             case JIRAConstants.IMPORT_ONE_EPIC:
-                                List<JIRASubTaskableIssue> epics = service.get(values).getProjectEpics(projectKey);
+                                List<JIRASubTaskableIssue> epics = service.getProjectIssuesList(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
                                 for (JIRAIssue epic : epics) {
                                     Option option = new Option(epic.getKey(), epic.getName());
                                     options.add(option);
                                 }
                                 break;
                             case JIRAConstants.IMPORT_ONE_BOARD:
-                                List<JIRABoard> boards = service.get(values).getAllBoards(projectKey);
+                                List<JIRABoard> boards = service.getAllBoards(projectKey);
                                 for (JIRABoard board : boards) {
                                     Option option = new Option(board.getKey(), board.getName());
                                     options.add(option);
@@ -123,13 +157,33 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                 }
                                 break;
                             case JIRAConstants.IMPORT_ONE_VERSION:
-                                List<JIRAVersion> versions = service.get(values).getVersions(projectKey);
+                                List<JIRAVersion> versions = service.getVersions(projectKey);
                                 for (JIRAVersion version : versions) {
                                     Option option = new Option(version.getId(), version.getName());
                                     options.add(option);
 
                                 }
                                 break;
+                            default:
+                                // Jira Portfolio Type then?
+                                if (importSelection.startsWith(JIRAConstants.IMPORT_PORTFOLIO_PREFIX)) {
+                                    long levelId = Long.parseLong(importSelection.substring(JIRAConstants.IMPORT_PORTFOLIO_PREFIX.length()));
+
+                                    List<JIRASubTaskableIssue> portfolioIssues = new ArrayList<>();
+
+                                    for (HierarchyLevelInfo portfolioLevel : service.getJiraPortfolioLevelsInfo()) {
+                                        if (portfolioLevel.getId() == levelId) {
+                                            portfolioIssues = service.getProjectIssuesList(projectKey, portfolioLevel.getIssueTypeIds());
+                                            break;
+                                        }
+                                    }
+
+                                    for (JIRAIssue portfolioIssue : portfolioIssues) {
+                                        Option option = new Option(portfolioIssue.getKey(), portfolioIssue.getName());
+                                        options.add(option);
+                                    }
+
+                                }
                         }
                         return options;
                     }
@@ -137,43 +191,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 },
                 new LineBreaker(),
 
-                new SelectList(JIRAConstants.KEY_IMPORT_GROUPS,"IMPORT_GROUPS",JIRAConstants.GROUP_EPIC,true)
-                        .addLevel(JIRAConstants.KEY_IMPORT_GROUPS, "IMPORT_GROUPS")
-                        .addOption(new SelectList.Option(JIRAConstants.GROUP_EPIC,"GROUP_EPIC"))
-                        .addOption(new SelectList.Option(JIRAConstants.GROUP_SPRINT,"GROUP_SPRINT"))
-                        .addOption(new SelectList.Option(JIRAConstants.GROUP_STATUS,"GROUP_STATUS")),
-
-                new LineBreaker(),
-
-                new LabelText(JIRAConstants.LABEL_PROGRESS_AND_ACTUALS, "LABEL_PROGRESS_AND_ACTUALS",
-                        "Issues Progress and Actuals", true),
-                new SelectList(JIRAConstants.KEY_PERCENT_COMPLETE,"PERCENT_COMPLETE_CHOICE",JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,true)
-                        .addLevel(JIRAConstants.KEY_PERCENT_COMPLETE, "PERCENT_COMPLETE_CHOICE")
-                        .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,"PERCENT_COMPLETE_DONE_STORY_POINTS"))
-                        .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_WORK,"PERCENT_COMPLETE_WORK")),
-                new LineBreaker(),
-                new SelectList(JIRAConstants.KEY_ACTUALS,"ACTUALS_CHOICE",JIRAConstants.ACTUALS_LOGGED_WORK,true)
-                        .addLevel(JIRAConstants.KEY_ACTUALS, "ACTUALS_CHOICE")
-                        .addOption(new SelectList.Option(JIRAConstants.ACTUALS_LOGGED_WORK,"ACTUALS_LOGGED_WORK"))
-                        .addOption(new SelectList.Option(JIRAConstants.ACTUALS_SP,"ACTUALS_SP"))
-                        .addOption(new SelectList.Option(JIRAConstants.ACTUALS_NO_ACTUALS,"ACTUALS_NO_ACTUALS")),
-                new PlainText(JIRAConstants.ACTUALS_SP_RATIO, "ACTUALS_SP_RATIO", "8", false) {
-                    @Override
-                    public List<String> getStyleDependencies() {
-                        return Arrays.asList(new String[]{JIRAConstants.KEY_ACTUALS});
-                    }
-
-                    @Override
-                    public FieldAppearance getFieldAppearance(ValueSet values) {
-                        String actualsChoice = values.get(JIRAConstants.KEY_ACTUALS);
-                        if (JIRAConstants.ACTUALS_SP.equals(actualsChoice)) {
-                            return new FieldAppearance("", "disabled");
-                        } else {
-                            return new FieldAppearance("disabled", "");
-                        }
-                    }
-                },
-
+                importGroupSelectList,
 
                 new LineBreaker(),
 
@@ -198,13 +216,15 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             fields.add( new CheckBox(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX+issueType, issueType, "Epic".equalsIgnoreCase(issueType) || "Story".equalsIgnoreCase(issueType)) {
 
                 @Override public List<String> getStyleDependencies() {
-                    return Arrays.asList(new String[] {JIRAConstants.KEY_JIRA_PROJECT});
+                    return Arrays.asList(new String[] {JIRAConstants.KEY_JIRA_PROJECT, JIRAConstants.KEY_IMPORT_SELECTION});
                 }
 
                 @Override public FieldAppearance getFieldAppearance(ValueSet values) {
                     String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT);
-                    if (issueTypesPerProjectKey.get(projectKey) != null && issueTypesPerProjectKey.get(projectKey).contains(issueType)) {
-                        // This issue type is enabled for this project
+                    String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
+
+                    if ((importSelection != null && importSelection.startsWith(JIRAConstants.IMPORT_PORTFOLIO_PREFIX)) || (issueTypesPerProjectKey.get(projectKey) != null && issueTypesPerProjectKey.get(projectKey).contains(issueType))) {
+                        // This issue type is enabled for this project or if picking a Jira Portfolio entity as their contents are cross projects.
                         return new FieldAppearance("", "disabled");
                     } else {
                         // This issue type is disabled for this project
@@ -216,6 +236,40 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 // Last options
                 fields.addAll(Arrays.asList(new Field[] {new LineBreaker(),
+
+                        new LineBreaker(),
+
+                        new LabelText(JIRAConstants.LABEL_PROGRESS_AND_ACTUALS, "LABEL_PROGRESS_AND_ACTUALS",
+                                "Issues Progress and Actuals", true),
+                        new SelectList(JIRAConstants.KEY_PERCENT_COMPLETE,"PERCENT_COMPLETE_CHOICE",JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,true)
+                                .addLevel(JIRAConstants.KEY_PERCENT_COMPLETE, "PERCENT_COMPLETE_CHOICE")
+                                .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_DONE_STORY_POINTS,"PERCENT_COMPLETE_DONE_STORY_POINTS"))
+                                .addOption(new SelectList.Option(JIRAConstants.PERCENT_COMPLETE_WORK,"PERCENT_COMPLETE_WORK")),
+                        new LineBreaker(),
+                        new SelectList(JIRAConstants.KEY_ACTUALS,"ACTUALS_CHOICE",JIRAConstants.ACTUALS_LOGGED_WORK,true)
+                                .addLevel(JIRAConstants.KEY_ACTUALS, "ACTUALS_CHOICE")
+                                .addOption(new SelectList.Option(JIRAConstants.ACTUALS_LOGGED_WORK,"ACTUALS_LOGGED_WORK"))
+                                .addOption(new SelectList.Option(JIRAConstants.ACTUALS_SP,"ACTUALS_SP"))
+                                .addOption(new SelectList.Option(JIRAConstants.ACTUALS_NO_ACTUALS,"ACTUALS_NO_ACTUALS")),
+                        new PlainText(JIRAConstants.ACTUALS_SP_RATIO, "ACTUALS_SP_RATIO", "8", false) {
+                            @Override
+                            public List<String> getStyleDependencies() {
+                                return Arrays.asList(new String[]{JIRAConstants.KEY_ACTUALS});
+                            }
+
+                            @Override
+                            public FieldAppearance getFieldAppearance(ValueSet values) {
+                                String actualsChoice = values.get(JIRAConstants.KEY_ACTUALS);
+                                if (JIRAConstants.ACTUALS_SP.equals(actualsChoice)) {
+                                    return new FieldAppearance("", "disabled");
+                                } else {
+                                    return new FieldAppearance("disabled", "");
+                                }
+                            }
+                        },
+
+
+                        new LineBreaker(),
 
                         new LabelText(JIRAConstants.LABEL_TASKS_OPTIONS, "TASKS_OPTIONS", "Tasks Options:", true),
                         new CheckBox(JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP, "OPTION_INCLUDE_ISSUE_NO_GROUP", true),
@@ -305,15 +359,15 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         final TasksCreationContext taskContext = new TasksCreationContext();
         taskContext.workplanIntegrationContext = context;
         taskContext.percentCompleteType = percentCompleteType;
-        taskContext.userProvider = service.getUserProvider();
+        taskContext.userProvider = JIRAServiceProvider.getUserProvider();
         taskContext.configValues = values;
         taskContext.actualsType = actualsType;
         taskContext.hoursPerSp = hoursPerSp;
 
-
+        JIRAService service = JIRAServiceProvider.get(values).useAdminAccount();
 
         // Let's get the sprints info for that project
-        List<JIRASprint> sprints = service.get(values).getAllSprints(projectKey);
+        List<JIRASprint> sprints = service.getAllSprints(projectKey);
         final Map <String, JIRASprint> sprintsById = new LinkedHashMap<String, JIRASprint>();
         for (JIRASprint sprint : sprints) {
             sprintsById.put(sprint.getKey(), sprint);
@@ -362,19 +416,25 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
             case JIRAConstants.IMPORT_ONE_BOARD:
                 String boardId = importSelectionDetails;
-                issues = service.get(values).getBoardIssues(projectKey, issueTypes, boardId);
+                issues = service.getBoardIssues(projectKey, issueTypes, boardId);
                 break;
             case JIRAConstants.IMPORT_ONE_EPIC:
                 String epicKey = importSelectionDetails;
-                issues = service.get(values).getEpicIssues(projectKey, issueTypes, epicKey);
+                issues = service.getAllEpicIssues(projectKey, issueTypes, epicKey);
                 break;
             case JIRAConstants.IMPORT_ONE_VERSION:
                 String versionId = importSelectionDetails;
-                issues = service.get(values).getVersionIssues(projectKey, issueTypes, versionId);
+                issues = service.getVersionIssues(projectKey, issueTypes, versionId);
                 break;
             case JIRAConstants.IMPORT_ALL_PROJECT_ISSUES:
-                issues = service.get(values).getAllIssues(projectKey, issueTypes);
+                issues = service.getAllIssues(projectKey, issueTypes);
                 break;
+            default:
+                // Jira Portfolio Type then?
+                if (importSelection.startsWith(JIRAConstants.IMPORT_PORTFOLIO_PREFIX)) {
+                    String portfolioIssueKey = importSelectionDetails;
+                    issues = service.getPortfolioIssueDescendants(portfolioIssueKey, issueTypes);
+                }
         }
 
         final List<ExternalTask> rootTasks = new ArrayList<ExternalTask>();
@@ -402,7 +462,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                                 if (epic.hasWork()) {
                                     // Epics that will be stored as summary tasks will not have their work taken into account, so we need to create a dummy leaf task for it.
-                                    final WorkDrivenPercentCompleteExternalTask epicWorkTask = convertJiraIssueToExternalTask(epic, taskContext);
+                                    final WorkDrivenPercentCompleteExternalTask epicWorkTask = convertJiraIssueToLeafExternalTask(epic, taskContext);
                                     epicWorkTask.setNameOverride("[Work]"+epicWorkTask.getName());
                                     children.add(epicWorkTask);
                                 }
@@ -630,6 +690,54 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 }
 
                 break;
+            case JIRAConstants.GROUP_JIRA_PORTFOLIO_HIERARCHY:
+
+                // The Jira Portfolio Hierarchy is based on the "Portfolio Parent" field.
+                // So we must first re-build the full hierarchy of tasks, not only with Epic children (Epic only), but with Portfolio Children.
+                // Epic Children remain as it's still used as part of Jira Portfolio Hierarchy.
+                // However, if an issue has different Epic parent & Portfolio [Epic] Parent, the Portfolio one prevails.
+
+                JIRAPortfolioHierarchy hierarchy = new JIRAPortfolioHierarchy(issues, service);
+
+                // Jira Portfolio allows loops at some point, so we have to check and prevent them.
+                List<List<JIRAPortfolioHierarchy.Node>> loops = hierarchy.findLoops();
+
+                if (!loops.isEmpty()) {
+
+                    // Error, loop detected in Hierarchy
+
+                    for (final List<JIRAPortfolioHierarchy.Node>loop : loops) {
+                        rootTasks.add(new ExternalTask() {
+                            @Override public String getName() {
+                                StringBuilder errorMessage = new StringBuilder("ERROR: Loop detected in JIRA issues hierarchy: ");
+                                boolean first = true;
+                                for (JIRAPortfolioHierarchy.Node node : loop) {
+                                    if (first) {
+                                        first = false;
+                                    } else {
+                                        errorMessage.append("->");
+                                    }
+                                    errorMessage.append(node.getIssue().getKey());
+                                }
+                                return errorMessage.toString();
+                            }
+                        });
+                    }
+                } else {
+
+                    for (JIRAPortfolioHierarchy.Node root : hierarchy.getRootNodes()) {
+                        rootTasks.add(convertNodeToExternalTask(root, taskContext));
+                    }
+
+                    for (JIRAPortfolioHierarchy.Node standaloneTask : hierarchy.getStandaloneNodes()) {
+                        rootTasks.add(convertNodeToExternalTask(standaloneTask, taskContext));
+                    }
+
+                    selectedEpics.addAll(hierarchy.getEpics());
+
+                }
+
+                break;
         }
 
         if (!StringUtils.isBlank(values.get(JIRAConstants.OPTION_ADD_EPIC_MILESTONES))) {
@@ -704,6 +812,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         }
 
+
         return new ExternalWorkPlan() {
             @Override public List<ExternalTask> getRootTasks() {
                 if (addRootTask) {
@@ -741,6 +850,81 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 }
             }
         };
+    }
+
+    private ExternalTask convertNodeToExternalTask(final JIRAPortfolioHierarchy.Node node, final TasksCreationContext taskContext) {
+
+        if (node.getChildren().isEmpty()) {
+            // Leaf task.
+            return convertJiraIssueToLeafExternalTask(node.getIssue(), taskContext);
+        }
+
+        // Summary Task.
+        final JIRASubTaskableIssue issue = node.getIssue();
+
+        return WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+            @Override public String getName() {
+                return issue.getFullTaskName();
+            }
+
+            @Override public List<ExternalTask> getChildren() {
+
+                List<ExternalTask> children = new ArrayList<ExternalTask>();
+
+                if (issue.hasWork()) {
+                    // Epics that will be stored as summary tasks will not have their work taken into account, so we need to create a dummy leaf task for it.
+                    final WorkDrivenPercentCompleteExternalTask workTask = convertJiraIssueToLeafExternalTask(issue, taskContext);
+                    workTask.setNameOverride("[Work]"+workTask.getName());
+                    children.add(workTask);
+                }
+
+                for (JIRAPortfolioHierarchy.Node child: node.getChildren()) {
+                    children.add(convertNodeToExternalTask(child, taskContext));
+                }
+
+                return children;
+            }
+
+            @Override
+            public TaskStatus getStatus() {
+                return issue.getExternalTaskStatus();
+            }
+
+            @Override public Date getScheduledStart() {
+                return node.getChildren().isEmpty() ? issue.getScheduledStart(taskContext.sprints) : getEarliestScheduledStart(getChildren());
+            }
+
+            @Override public Date getScheduledFinish() {
+                return node.getChildren().isEmpty() ? issue.getScheduledFinish(taskContext.sprints) : getLatestScheduledFinish(getChildren());
+            }
+
+            @Override public Map<Integer, UserData> getUserDataFields() {
+
+
+                Map<Integer, ExternalTask.UserData> userData = new HashMap<Integer, ExternalTask.UserData>();
+
+                // Epics can have normal story points, like any leaf task
+                String storyPointsUserDataIndex = taskContext.configValues.get(JIRAConstants.SELECT_USER_DATA_STORY_POINTS);
+
+                if (!StringUtils.isBlank(storyPointsUserDataIndex) && !"0".equals(storyPointsUserDataIndex)) {
+                    if (issue.getStoryPoints() != null) {
+                        userData.put(Integer.parseInt(storyPointsUserDataIndex), new ExternalTask.UserData(issue.getStoryPoints().toString(), issue.getStoryPoints().toString()));
+                    }
+                }
+
+                // Epics can also have aggregated Story points.
+                String aggregatedStoryPointsUserDataIndex = taskContext.configValues.get(JIRAConstants.SELECT_USER_DATA_AGGREGATED_STORY_POINTS);
+
+                if (!StringUtils.isBlank(aggregatedStoryPointsUserDataIndex) && !"0".equals(aggregatedStoryPointsUserDataIndex)) {
+                    String aggSP = String.valueOf(node.getAggregatedStoryPoints());
+                    userData.put(Integer.parseInt(aggregatedStoryPointsUserDataIndex), new ExternalTask.UserData(aggSP, aggSP));
+                }
+
+                return userData;
+            }
+
+        });
+
     }
 
     private Date getLatestScheduledFinish(List<ExternalTask> children) {
@@ -787,13 +971,13 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         List<ExternalTask> externalTasks = new ArrayList<ExternalTask>(issues.size());
 
         for (JIRASubTaskableIssue issue : issues) {
-            externalTasks.add(convertJiraIssueToExternalTask(issue, context));
+            externalTasks.add(convertJiraIssueToLeafExternalTask(issue, context));
         }
 
         return externalTasks;
     }
 
-    private WorkDrivenPercentCompleteExternalTask convertJiraIssueToExternalTask(final JIRASubTaskableIssue issue, final TasksCreationContext context)
+    private WorkDrivenPercentCompleteExternalTask convertJiraIssueToLeafExternalTask(final JIRASubTaskableIssue issue, final TasksCreationContext context)
     {
         // First, let's compute the work of that task
         double doneWork = 0d;

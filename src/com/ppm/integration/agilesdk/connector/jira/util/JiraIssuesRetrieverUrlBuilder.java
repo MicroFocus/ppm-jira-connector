@@ -158,7 +158,16 @@ public class JiraIssuesRetrieverUrlBuilder {
         if (issuesTypes == null || issuesTypes.isEmpty()) {
             return "";
         } else {
-            return " and issuetype in(" + StringUtils.join(issuesTypes, ",") + ") ";
+            // Issue types names have to be put in quotes if they contain spaces.
+            Set<String> sanitizedIssueTypesNames = new HashSet<>();
+            for (String issueType: issuesTypes) {
+                if (issueType.contains(" ")) {
+                    sanitizedIssueTypesNames.add("'"+issueType+"'");
+                } else {
+                    sanitizedIssueTypesNames.add(issueType);
+                }
+            }
+            return " and issuetype in(" + StringUtils.join(sanitizedIssueTypesNames, ",") + ") ";
         }
     }
 
@@ -174,6 +183,13 @@ public class JiraIssuesRetrieverUrlBuilder {
 
     public JiraIssuesRetrieverUrlBuilder setOrderBy(String orderBy) {
         this.orderBy = orderBy;
+        return this;
+    }
+
+    public JiraIssuesRetrieverUrlBuilder setIssuesTypes(String... issuesTypes) {
+        Set<String> issueTypesSet = new HashSet<>();
+        issueTypesSet.addAll(Arrays.asList(issuesTypes));
+        this.issuesTypes = issueTypesSet;
         return this;
     }
 
@@ -212,8 +228,9 @@ public class JiraIssuesRetrieverUrlBuilder {
 
     // The OR constraints will be added next to all the AND constraints.
     // You can use it if you want to make some exceptions to all the AND constraints.
-    public void addOrConstraint(String orConstraint) {
+    public JiraIssuesRetrieverUrlBuilder addOrConstraint(String orConstraint) {
         orConstraints.add(orConstraint);
+        return this;
     }
 
     public enum IssueRetrievalType {

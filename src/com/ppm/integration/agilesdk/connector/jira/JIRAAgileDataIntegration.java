@@ -3,6 +3,7 @@ package com.ppm.integration.agilesdk.connector.jira;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.agiledata.*;
 import com.ppm.integration.agilesdk.connector.jira.model.*;
+import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
 
 import java.util.*;
 
@@ -12,7 +13,7 @@ import java.util.*;
  */
 public class JIRAAgileDataIntegration extends AgileDataIntegration {
 
-    private JIRAServiceProvider.JIRAService service = null;
+    private JIRAService service = null;
 
     private AgileDataProject project = null;
 
@@ -25,7 +26,7 @@ public class JIRAAgileDataIntegration extends AgileDataIntegration {
     List<AgileDataRelease> releases;
 
     @Override public void setUp(ValueSet configuration, String projectKey) {
-        service = (new JIRAServiceProvider()).useAdminAccount().get(configuration);
+        service = JIRAServiceProvider.get(configuration);
         loadProject(projectKey);
         loadVersions(projectKey);
         loadSprints(projectKey);

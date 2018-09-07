@@ -8,6 +8,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class represents any type of Jira issue, be it a sub-task, a standard task, an Epic,
+ * or any of the issue type in Portfolio Higher hierarchy.
+ */
 public abstract class JIRAIssue extends JIRAEntity {
 
     private String type;
@@ -21,6 +25,8 @@ public abstract class JIRAIssue extends JIRAEntity {
     private String lastUpdateDate;
 
     private String epicKey;
+
+    private String portfolioParentKey;
 
     private String sprintId;
 
@@ -260,5 +266,13 @@ public abstract class JIRAIssue extends JIRAEntity {
 
     public void setTypeId(String typeId) {
         this.typeId = typeId;
+    }
+
+    public String getPortfolioParentKey() {
+        return portfolioParentKey;
+    }
+
+    public void setPortfolioParentKey(String portfolioParentKey) {
+        this.portfolioParentKey = portfolioParentKey;
     }
 }

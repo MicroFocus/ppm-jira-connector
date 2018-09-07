@@ -67,7 +67,7 @@ public class JIRAFieldInfo {
 
             return fieldInfo;
         } catch (JSONException e) {
-            throw new RuntimeException("Error while reading JSon defintion of Issue Type", e);
+            throw new RuntimeException("Error while reading JSon definition of Issue Type", e);
         }
     }
 
