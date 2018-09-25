@@ -12,6 +12,8 @@ public class JIRAIssueType {
 
     private String description;
 
+    private boolean subTask;
+
 
     public static JIRAIssueType fromJSONObject(JSONObject obj) {
         try {
@@ -19,9 +21,10 @@ public class JIRAIssueType {
             issueType.setName(obj.getString("name"));
             issueType.setId(obj.getString("id"));
             issueType.setDescription(obj.getString("description"));
+            issueType.setSubTask(obj.has("subtask") ? obj.getBoolean("subtask") : false);
             return issueType;
         } catch (JSONException e) {
-            throw new RuntimeException("Error while reading JSon defintion of Issue Type", e);
+            throw new RuntimeException("Error while reading JSon definition of Issue Type", e);
         }
     }
 
@@ -47,5 +50,13 @@ public class JIRAIssueType {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isSubTask() {
+        return subTask;
+    }
+
+    public void setSubTask(boolean st) {
+        this.subTask = st;
     }
 }

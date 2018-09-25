@@ -1,6 +1,8 @@
 
 package com.ppm.integration.agilesdk.connector.jira;
 
+import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
+
 public class JIRAConstants {
 
     public static final String JIRA_NAME_PREFIX = "#@#name#@#";
@@ -39,6 +41,8 @@ public class JIRAConstants {
 
     public static final String LABEL_PROGRESS_AND_ACTUALS = "label_progress_and_actuals";
 
+    public static final String LABEL_SELECT_WHAT_TO_IMPORT = "label_select_what_to_import";
+
     public static final String KEY_IMPORT_SELECTION = "import_selection";
 
     public static final String LABEL_WORK_PLAN_OPTIONS = "jira_work_plan_options";
@@ -75,15 +79,21 @@ public class JIRAConstants {
 
     public static final String GROUP_EPIC = "group_epic";
 
+    public static final String GROUP_JIRA_PORTFOLIO_HIERARCHY = "group_jira_portfolio_hierarchy";
+
     public static final String IMPORT_ALL_PROJECT_ISSUES = "all_project_planned_issues";
 
     public static final String IMPORT_ONE_EPIC = "epic";
 
     public static final String IMPORT_ONE_BOARD = "board";
 
+    public static final String IMPORT_PORTFOLIO_PREFIX  = "portfolio_";
+
     public static final String IMPORT_ONE_VERSION = "version";
 
     public static final String API_VERSION2_API_ROOT = "/rest/api/2/";
+
+    public static final String PORTFOLIO_HIERARCHY_REST = "/rest/jpo-api/1.0/hierarchy";
 
     public static final String SEARCH_USER = API_VERSION2_API_ROOT + "user/search";
 
@@ -101,27 +111,33 @@ public class JIRAConstants {
     public static final String SEARCH_URL =
             API_VERSION2_API_ROOT + "search?expand=schema&jql=";
 
-    public static final String ISSUES_IN_SPRINT_SUFFIX =
-            API_VERSION2_API_ROOT + "search?expand=schema&jql=sprint!=null and issueType!=sub-task and project=";
-
-    public static final String ISSUES_SUFFIX =
-            API_VERSION2_API_ROOT + "search?expand=schema&jql=issueType!=sub-task and project=";
-
-
     public static final String VERSIONS_SUFFIX = API_VERSION2_API_ROOT + "project/" + REPLACE_PROJECT_KEY + "/versions";
 
+    /**
+     * @see JIRAService#getIssueTypesPerProject()
+     */
     public static final String JIRA_ISSUE_TYPE_PREFIX = "ISSUE_TYPE_";
 
+    /** @deprecated
+     * @see JIRAService#getIssueTypesPerProject()
+     */
     public static final String JIRA_ISSUE_STORY = "STORY";
 
     public static final String JIRA_ISSUE_EPIC = "EPIC";
 
+    /** @deprecated
+     * @see JIRAService#getIssueTypesPerProject()
+     */
     public static final String JIRA_ISSUE_BUG = "BUG";
 
+    /** @deprecated
+     * @see JIRAService#getIssueTypesPerProject()
+     */
     public static final String JIRA_ISSUE_TASK = "TASK";
 
-    public static final String JIRA_ISSUE_SUB_TASK = "SUB-TASK";
-
+    /** @deprecated
+     * @see JIRAService#getIssueTypesPerProject()
+     */
     public static final String JIRA_ISSUE_FEATURE = "FEATURE";
 
     public static final String JIRA_STORY_POINTS_CUSTOM_NAME = "Story Points";
@@ -131,6 +147,8 @@ public class JIRAConstants {
     public static final String JIRA_EPIC_LINK_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-link";
 
     public static final String JIRA_EPIC_NAME_CUSTOM = "com.pyxis.greenhopper.jira:gh-epic-label";
+
+    public static final String JIRA_PORTFOLIO_PARENT_CUSTOM =  "com.atlassian.jpo:jpo-custom-field-parent";
 
     public static final String JIRA_REST_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
 

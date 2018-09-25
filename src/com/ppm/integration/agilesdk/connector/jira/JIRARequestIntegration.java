@@ -4,6 +4,7 @@ import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAAgileEntity;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAFieldInfo;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssueType;
+import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
 import com.ppm.integration.agilesdk.dm.*;
 import com.ppm.integration.agilesdk.model.*;
 import org.apache.commons.lang.StringUtils;
@@ -14,11 +15,9 @@ import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_NAM
 
 public class JIRARequestIntegration extends RequestIntegration {
 
-    private JIRAServiceProvider service = new JIRAServiceProvider().useAdminAccount();
-
     @Override public List<AgileEntityInfo> getAgileEntitiesInfo(String agileProjectValue,  ValueSet instanceConfigurationParameters) {
 
-        List<JIRAIssueType> issueTypes = service.get(instanceConfigurationParameters).getProjectIssueTypes(agileProjectValue);
+        List<JIRAIssueType> issueTypes = JIRAServiceProvider.get(instanceConfigurationParameters).getProjectIssueTypes(agileProjectValue);
 
         List<AgileEntityInfo> entityList = new ArrayList<AgileEntityInfo>();
         for (JIRAIssueType issueType : issueTypes) {
@@ -36,7 +35,7 @@ public class JIRARequestIntegration extends RequestIntegration {
     {
         List<AgileEntityFieldInfo> fieldsInfo = new ArrayList<>();
 
-        List<JIRAFieldInfo> fields = new ArrayList(service.get(instanceConfigurationParameters).getFields(agileProjectValue, entityType).values());
+        List<JIRAFieldInfo> fields = new ArrayList(JIRAServiceProvider.get(instanceConfigurationParameters).getFields(agileProjectValue, entityType).values());
 
         for (JIRAFieldInfo field: fields) {
 
@@ -91,17 +90,16 @@ public class JIRARequestIntegration extends RequestIntegration {
             ValueSet instanceConfigurationParameters)
     {
 
-        JIRAServiceProvider.JIRAService jiraService = service.get(instanceConfigurationParameters);
+        JIRAService jiraService = JIRAServiceProvider.get(instanceConfigurationParameters);
 
         Map<String, String> fields = getFieldsFromAgileEntity(entity, jiraService);
-
 
         String issueKey = jiraService.updateIssue(agileProjectValue, entity.getId(), fields);
 
         return jiraService.getSingleAgileEntityIssue(agileProjectValue, issueKey);
     }
 
-    private Map<String,String> getFieldsFromAgileEntity(AgileEntity entity, JIRAServiceProvider.JIRAService service) {
+    private Map<String,String> getFieldsFromAgileEntity(AgileEntity entity, JIRAService service) {
         Map<String, String> fields = new HashMap<>();
 
         Iterator<Map.Entry<String, DataField>> fieldsIterator = entity.getAllFields();
@@ -148,7 +146,7 @@ public class JIRARequestIntegration extends RequestIntegration {
     @Override public AgileEntity createEntity(String agileProjectValue, String entityType, AgileEntity entity,
             ValueSet instanceConfigurationParameters)
     {
-        JIRAServiceProvider.JIRAService jiraService = service.get(instanceConfigurationParameters);
+        JIRAService jiraService = JIRAServiceProvider.get(instanceConfigurationParameters);
 
         Map<String, String> fields = getFieldsFromAgileEntity(entity, jiraService);
 
@@ -165,7 +163,7 @@ public class JIRARequestIntegration extends RequestIntegration {
             return new ArrayList<AgileEntity>();
         }
 
-        List<JIRAAgileEntity> jiraEntities = service.get(instanceConfigurationParameters).getAgileEntityIssuesModifiedSince(entityIds, modifiedSinceDate);
+        List<JIRAAgileEntity> jiraEntities = JIRAServiceProvider.get(instanceConfigurationParameters).getAgileEntityIssuesModifiedSince(entityIds, modifiedSinceDate);
 
         List<AgileEntity> entities = new ArrayList<>(jiraEntities.size());
         entities.addAll(jiraEntities);
@@ -180,7 +178,7 @@ public class JIRARequestIntegration extends RequestIntegration {
             return null;
         }
 
-        return service.get(instanceConfigurationParameters).getSingleAgileEntityIssue(agileProjectValue, entityId);
+        return JIRAServiceProvider.get(instanceConfigurationParameters).getSingleAgileEntityIssue(agileProjectValue, entityId);
     }
 
 }

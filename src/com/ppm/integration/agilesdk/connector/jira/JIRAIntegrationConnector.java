@@ -61,7 +61,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 
     @Override
     public List<AgileProject> getAgileProjects(ValueSet instanceConfigurationParameters) {
-        List<JIRAProject> jiraProjects = new JIRAServiceProvider().useAdminAccount().get(instanceConfigurationParameters).getProjects();
+        List<JIRAProject> jiraProjects = JIRAServiceProvider.get(instanceConfigurationParameters).useAdminAccount().getProjects();
         List<AgileProject> agileProjects = new ArrayList<AgileProject>(jiraProjects.size());
 
         for (JIRAProject jiraProject : jiraProjects) {

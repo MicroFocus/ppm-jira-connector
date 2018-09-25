@@ -2,14 +2,13 @@ package com.ppm.integration.agilesdk.connector.jira;
 
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.*;
-import com.ppm.integration.agilesdk.model.AgileProject;
+import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicIntegration;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicSyncInfo;
 import com.ppm.integration.agilesdk.provider.Providers;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,12 +20,12 @@ import java.util.Set;
 public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
 
     // All operations for Portfolio Epics are using the admin account as users are not prompted for account info upon sync.
-    private JIRAServiceProvider service = new JIRAServiceProvider().useAdminAccount();
+
 
     @Override public String createEpicInAgileProject(PortfolioEpicCreationInfo epicInfo, String agileProjectValue,
             ValueSet instanceConfigurationParameters)
     {
-        return service.get(instanceConfigurationParameters).createEpic(agileProjectValue, epicInfo.getEpicName(), epicInfo.getEpicDescription());
+        return JIRAServiceProvider.get(instanceConfigurationParameters).createEpic(agileProjectValue, epicInfo.getEpicName(), epicInfo.getEpicDescription());
     }
 
     @Override public PortfolioEpicSyncInfo getPortfolioEpicSyncInfo(String epicId, String agileProjectValue,
@@ -36,22 +35,24 @@ public class JIRAPortfolioEpicIntegration extends PortfolioEpicIntegration {
             return null;
         }
 
+        JIRAService service = JIRAServiceProvider.get(instanceConfigurationParameters);
+
         // We want to retrieve the epic and all of its contents to be able to compute aggregated story points & percent SP complete
         // That means retrieve all issue types except Sub-Tasks.
 
-        List<JIRAIssueType> jiraIssueTypes =  service.get(instanceConfigurationParameters).getProjectIssueTypes(agileProjectValue);
+        List<JIRAIssueType> jiraIssueTypes =  service.getProjectIssueTypes(agileProjectValue);
 
         Set<String> issueTypes = new HashSet<String>();
         for (JIRAIssueType jiraIssueType : jiraIssueTypes) {
-            if (!JIRAConstants.JIRA_ISSUE_SUB_TASK.equalsIgnoreCase(jiraIssueType.getName())) {
-                issueTypes.add(jiraIssueType.getName().toUpperCase());
+            if (!jiraIssueType.isSubTask()) {
+                issueTypes.add(jiraIssueType.getName());
             }
         }
 
         List<JIRASubTaskableIssue> issues = null;
 
         try {
-            issues = service.get(instanceConfigurationParameters).getEpicIssues(agileProjectValue, issueTypes, epicId);
+            issues = service.getAllEpicIssues(agileProjectValue, issueTypes, epicId);
         } catch (Exception e) {
             String errorEpicName = Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("ERROR_EPIC_CANNOT_BE_RETRIEVED");
             // If there's an error when retrieving the Epic, it may mean that the Epic was deleted, that the JIRA server is down or that JIRA user doesn't have access to it anymore.

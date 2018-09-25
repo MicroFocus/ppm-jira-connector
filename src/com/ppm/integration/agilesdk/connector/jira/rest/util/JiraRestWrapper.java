@@ -11,58 +11,22 @@ import javax.ws.rs.core.MediaType;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
 
-public class RestWrapper {
-    private RestClient restClient;
+public class JiraRestWrapper {
 
+    private RestClient restClient;
     private IRestConfig config;
 
-    public IRestConfig getConfig() {
-        return config;
-    }
-
-    public void setConfig(IRestConfig config) {
-        this.config = config;
-    }
-
-    public RestClient getRestClient() {
-        return restClient;
-    }
-
-    public void setRestClient(RestClient restClient) {
-        this.restClient = restClient;
-    }
-
-    public RestWrapper() {
-        restClient = new RestClient();
-    }
-
-    public RestWrapper(IRestConfig config) {
+    public JiraRestWrapper(IRestConfig config) {
         this.config = config;
         restClient = createRestClient(config);
     }
 
-    public RestClient createRestClient(IRestConfig config) {
+    private RestClient createRestClient(IRestConfig config) {
         restClient = new RestClient(config.getClientConfig());
         return restClient;
     }
 
-    public Resource getResource(String uri) {
-        return restClient.resource(uri);
-    }
-
-    public Resource getResource(IRestConfig config, String uri) {
-        restClient = createRestClient(config);
-        return restClient.resource(uri);
-    }
-
-    public Resource getJIRAResource(IRestConfig config, String uri) {
-        restClient = createRestClient(config);
-        Resource resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
-        return resource;
-    }
-
-    public Resource getJIRAResource(String urlAdd) {
+    private Resource getJIRAResource(String urlAdd) {
         Resource resource;
         try {
             URL url = new URL(urlAdd);
@@ -75,10 +39,10 @@ public class RestWrapper {
                 uri = new URI(url.getProtocol(), urlPath, url.getPath(), url.getQuery() == null ? null : URLDecoder.decode(url.getQuery(), "UTF-8"), null);
             } catch (UnsupportedEncodingException e) {
                 // This will never happen.
-                throw new RuntimeException("Impossible encoding error occured", e);
+                throw new RuntimeException("Impossible encoding error occurred", e);
             }
             resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizaton());
+                    .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizationToken());
         } catch (MalformedURLException e) {
             throw new RestRequestException( // is a malformed URL
                     400, String.format("%s is a malformed URL", urlAdd));

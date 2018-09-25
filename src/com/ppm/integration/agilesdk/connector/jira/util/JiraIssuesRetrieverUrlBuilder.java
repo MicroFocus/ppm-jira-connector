@@ -37,7 +37,7 @@ public class JiraIssuesRetrieverUrlBuilder {
 
     private List<String> orConstraints = new ArrayList<String>();
 
-    private Set<String> issuesTypes = new HashSet<String>();
+    private Set<String> standardIssueTypes = new HashSet<String>();
 
     // These are the fields that we always want to retrieve from the issues.
     private String[] fields = {"key", "issuetype", "fixVersions", "summary", "worklog", "creator",
@@ -155,10 +155,19 @@ public class JiraIssuesRetrieverUrlBuilder {
     }
 
     private String getIssueTypeConstraintJQL() {
-        if (issuesTypes == null || issuesTypes.isEmpty()) {
+        if (standardIssueTypes == null || standardIssueTypes.isEmpty()) {
             return "";
         } else {
-            return " and issuetype in(" + StringUtils.join(issuesTypes, ",") + ") ";
+            // Issue types names have to be put in quotes if they contain spaces.
+            Set<String> sanitizedIssueTypesNames = new HashSet<>();
+            for (String issueType: standardIssueTypes) {
+                if (issueType.contains(" ")) {
+                    sanitizedIssueTypesNames.add("'"+issueType+"'");
+                } else {
+                    sanitizedIssueTypesNames.add(issueType);
+                }
+            }
+            return " and issuetype in(" + StringUtils.join(sanitizedIssueTypesNames, ",") + ") ";
         }
     }
 
@@ -177,8 +186,15 @@ public class JiraIssuesRetrieverUrlBuilder {
         return this;
     }
 
+    public JiraIssuesRetrieverUrlBuilder setStandardIssueTypes(String... standardIssueTypes) {
+        Set<String> issueTypesSet = new HashSet<>();
+        issueTypesSet.addAll(Arrays.asList(standardIssueTypes));
+        this.standardIssueTypes = issueTypesSet;
+        return this;
+    }
+
     public JiraIssuesRetrieverUrlBuilder setIssuesTypes(Set<String> issuesTypes) {
-        this.issuesTypes = issuesTypes;
+        this.standardIssueTypes = issuesTypes;
         return this;
     }
 
@@ -212,8 +228,9 @@ public class JiraIssuesRetrieverUrlBuilder {
 
     // The OR constraints will be added next to all the AND constraints.
     // You can use it if you want to make some exceptions to all the AND constraints.
-    public void addOrConstraint(String orConstraint) {
+    public JiraIssuesRetrieverUrlBuilder addOrConstraint(String orConstraint) {
         orConstraints.add(orConstraint);
+        return this;
     }
 
     public enum IssueRetrievalType {

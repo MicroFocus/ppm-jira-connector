@@ -8,6 +8,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAExternalWorkItem;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssue;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRATimesheetData;
+import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
 import com.ppm.integration.agilesdk.pm.LinkedTaskAgileEntityInfo;
 import com.ppm.integration.agilesdk.provider.LocalizationProvider;
 import com.ppm.integration.agilesdk.provider.Providers;
@@ -27,14 +28,11 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
     private final Logger logger = Logger.getLogger(this.getClass());
 
-    private JIRAServiceProvider service = new JIRAServiceProvider();
-
     @Override
     public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext timesheetContext, ValueSet values) {
 
         // Retrieving external work items is done with admin account.
-        service.useAdminAccount();
-        JIRAServiceProvider.JIRAService s = service.get(values);
+        JIRAService s = JIRAServiceProvider.get(values).useAdminAccount();
 
         XMLGregorianCalendar start = timesheetContext.currentTimeSheet().getPeriodStartDate();
         XMLGregorianCalendar end = timesheetContext.currentTimeSheet().getPeriodEndDate();
@@ -76,7 +74,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
         // First, we retrieve all timesheet lines with "raw" effort from Jira
         if (JIRAConstants.TS_IMPORT_HOURS_SP_ONLY.equals(importEffortBy)) {
-            timesheetData = service.get(values).getSPTimesheetData(start, end, projectKey, author, spToHoursRatio,
+            timesheetData = s.getSPTimesheetData(start, end, projectKey, author, spToHoursRatio,
                     tsDays, tsWorkDays);
         } else if (JIRAConstants.TS_IMPORT_HOURS_BOTH.equals(importEffortBy)) {
             timesheetData = s.getWorkLogsTimesheetData(start, end, projectKey, author);
@@ -175,7 +173,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
     }
 
     private List<JIRAExternalWorkItem> convertTimesheetDataToTimesheetLines(final JIRATimesheetData data, String groupBy,
-            JIRAServiceProvider.JIRAService s)
+            JIRAService s)
     {
         List<JIRAExternalWorkItem> timesheetLines = new ArrayList<>();
 
@@ -278,7 +276,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
     }
 
     private List<JIRAExternalWorkItem> getTimesheetLinesGroupedByProject(final Map<String, Set<String>> issuesInProjects,
-            final Map<String, Map<String, Double>> effortPerIssue, JIRAServiceProvider.JIRAService s, final String lineNamePrefix)
+            final Map<String, Map<String, Double>> effortPerIssue, JIRAService s, final String lineNamePrefix)
     {
         List<JIRAExternalWorkItem> workItems = new ArrayList<>();
 
@@ -389,10 +387,11 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
     }
 
     @Override
-    public List<Field> getMappingConfigurationFields(ValueSet arg0) {
+    public List<Field> getMappingConfigurationFields(final ValueSet values) {
 
         final LocalizationProvider lp = Providers.getLocalizationProvider(JIRAIntegrationConnector.class);
 
+        final JIRAService s = JIRAServiceProvider.get(values).useAdminAccount();
 
         return Arrays.asList(new Field[] {new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true),
                 new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true),
@@ -409,7 +408,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
                         List<JIRAProject> list = new ArrayList<>();
                         try {
-                            list = service.get(values).getProjects();
+                            list = s.getProjects();
                         } catch (ClientRuntimeException | RestRequestException e) {
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
                                     JIRATimeSheetIntegration.class);
