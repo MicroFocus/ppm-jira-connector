@@ -37,7 +37,7 @@ public class JiraIssuesRetrieverUrlBuilder {
 
     private List<String> orConstraints = new ArrayList<String>();
 
-    private Set<String> issuesTypes = new HashSet<String>();
+    private Set<String> standardIssueTypes = new HashSet<String>();
 
     // These are the fields that we always want to retrieve from the issues.
     private String[] fields = {"key", "issuetype", "fixVersions", "summary", "worklog", "creator",
@@ -155,12 +155,12 @@ public class JiraIssuesRetrieverUrlBuilder {
     }
 
     private String getIssueTypeConstraintJQL() {
-        if (issuesTypes == null || issuesTypes.isEmpty()) {
+        if (standardIssueTypes == null || standardIssueTypes.isEmpty()) {
             return "";
         } else {
             // Issue types names have to be put in quotes if they contain spaces.
             Set<String> sanitizedIssueTypesNames = new HashSet<>();
-            for (String issueType: issuesTypes) {
+            for (String issueType: standardIssueTypes) {
                 if (issueType.contains(" ")) {
                     sanitizedIssueTypesNames.add("'"+issueType+"'");
                 } else {
@@ -186,15 +186,15 @@ public class JiraIssuesRetrieverUrlBuilder {
         return this;
     }
 
-    public JiraIssuesRetrieverUrlBuilder setIssuesTypes(String... issuesTypes) {
+    public JiraIssuesRetrieverUrlBuilder setStandardIssueTypes(String... standardIssueTypes) {
         Set<String> issueTypesSet = new HashSet<>();
-        issueTypesSet.addAll(Arrays.asList(issuesTypes));
-        this.issuesTypes = issueTypesSet;
+        issueTypesSet.addAll(Arrays.asList(standardIssueTypes));
+        this.standardIssueTypes = issueTypesSet;
         return this;
     }
 
     public JiraIssuesRetrieverUrlBuilder setIssuesTypes(Set<String> issuesTypes) {
-        this.issuesTypes = issuesTypes;
+        this.standardIssueTypes = issuesTypes;
         return this;
     }
 

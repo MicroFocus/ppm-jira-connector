@@ -1,6 +1,7 @@
 
 package com.ppm.integration.agilesdk.connector.jira;
 
+import com.hp.ppm.integration.model.WorkplanMapping;
 import com.hp.ppm.user.model.User;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.*;
@@ -13,6 +14,9 @@ import com.ppm.integration.agilesdk.provider.LocalizationProvider;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import com.ppm.integration.agilesdk.ui.*;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientRuntimeException;
@@ -203,6 +207,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         for (Set<String> issueTypes : issueTypesPerProjectKey.values()) {
             allIssueTypes.addAll(issueTypes);
         }
+
 
         List<String> sortedIssueTypes = new ArrayList<String>(allIssueTypes);
 
@@ -850,6 +855,54 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 }
             }
         };
+    }
+
+    @Override
+    public WorkplanMapping linkTaskWithExternal(WorkPlanIntegrationContext context, WorkplanMapping workplanMapping, ValueSet values) {
+        // A config that's too long will exceed varchar 4000 for storing config, so we'll remove all issue types that are not selected.
+        return removeUncheckedIssuesTypesFromConfig(workplanMapping);
+    }
+
+    private WorkplanMapping removeUncheckedIssuesTypesFromConfig(WorkplanMapping workplanMapping) {
+
+        Set<String> issueTypesToRemove = new HashSet<>();
+
+        // Update the display config JSon
+        String displayConfigJson = workplanMapping.getConfigDisplayJson();
+        if (displayConfigJson != null) {
+            JSONObject json = (JSONObject)JSONSerializer.toJSON(displayConfigJson);
+            JSONArray oldConfig = json.getJSONArray("config");
+            JSONArray newConfig = new JSONArray();
+            for (int i = 0; i < oldConfig.size(); i++) {
+                JSONObject entry = oldConfig.getJSONObject(i);
+                String label = entry.getString("label");
+                String text =  entry.getString("text");
+
+                if ("NO.TXT".equals(text) && !JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP.equals(label)
+                        && !JIRAConstants.OPTION_ADD_ROOT_TASK.equals(label)){
+                    // Skip that issue type
+                    issueTypesToRemove.add(label);
+                } else {
+                    newConfig.add(entry);
+                }
+            }
+
+            json.put("config", newConfig);
+            workplanMapping.setConfigDisplayJson(json.toString());
+        }
+
+        // Update the real config JSon
+        String configJson = workplanMapping.getConfigJson();
+        if (configJson != null) {
+            JSONObject json = (JSONObject)JSONSerializer.toJSON(configJson);
+            for (String issueTypeToRemove: issueTypesToRemove) {
+                json.remove(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX + issueTypeToRemove);
+            }
+            workplanMapping.setConfigJson(json.toString());
+        }
+
+        return workplanMapping;
+
     }
 
     private ExternalTask convertNodeToExternalTask(final JIRAPortfolioHierarchy.Node node, final TasksCreationContext taskContext) {

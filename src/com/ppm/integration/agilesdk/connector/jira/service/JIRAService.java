@@ -12,6 +12,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestReque
 import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBuilder;
 import com.ppm.integration.agilesdk.connector.jira.util.dm.AgileEntityUtils;
 import com.ppm.integration.agilesdk.provider.UserProvider;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientResponse;
@@ -32,11 +33,15 @@ import java.util.regex.Pattern;
  */
 public class JIRAService {
 
+    private static final int SUB_TASK_BATCH_SIZE = 250;
+
     private UserProvider userProvider = null;
 
     private final Logger logger = Logger.getLogger(this.getClass());
 
     private String baseUri;
+
+    private Boolean isJiraPortfolioEnabled = null;
 
     private  List<HierarchyLevelInfo> portfolioHierarchyLevelsInfo = null;
 
@@ -88,12 +93,11 @@ public class JIRAService {
     /**
      * Returns Portfolio children or Epic Children of the provided parent issues keys, only if they do match the issue Types.
      *
-     * Sub-tasks are retrieved with a Second REST Call based on retrieved issues Keys.
+     * Sub-tasks included.
      */
     private List<JIRASubTaskableIssue> getAllEpicOrPortfolioDirectDescendants(List<String> parentIssueKeys, Set<String> issueTypes, Set<String> excludedIds)
     {
         // First, get all descendant issues (without sub-tasks) and retrieve their Keys.
-
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setIssuesTypes(issueTypes)
                         .addExtraFields(getCustomFields().getJiraCustomFields());
@@ -115,20 +119,9 @@ public class JIRAService {
         // Exclude other IDs
         searchUrlBuilder.addAndConstraint("key not in ("+StringUtils.join(excludedIds, ",")+")");
 
-        List<JIRASubTaskableIssue> descendants = retrieveIssues(searchUrlBuilder);
+        List<JIRASubTaskableIssue> descendants = retrieveIssues(searchUrlBuilder, true);
 
-        if (descendants.isEmpty()) {
-            // No results, we've reached the bottom of the hierarchy.
-            return descendants;
-        }
-
-        Set<String> keys = new HashSet<String>();
-        for (JIRASubTaskableIssue descendant : descendants) {
-            keys.add(descendant.getKey());
-        }
-
-        // Finally, make a call using the Issues Keys as this can retrieve Sub-Tasks.
-        return getAllIssuesByKeys(keys);
+        return descendants;
     }
 
     private class CustomFields {
@@ -216,9 +209,28 @@ public class JIRAService {
     }
 
     public boolean isJiraPortfolioEnabled() {
-        return !StringUtils.isBlank(getCustomFields().portfolioParentCustomField);
-    }
 
+        if (isJiraPortfolioEnabled == null) {
+
+            if (StringUtils.isBlank(getCustomFields().portfolioParentCustomField)) {
+                isJiraPortfolioEnabled = false;
+            } else {
+                // Jira Portfolio Cloud doesn't have a REST API
+                try {
+                    Collection col = getJiraPortfolioLevelsInfo();
+                    if (col != null && !col.isEmpty()) {
+                        isJiraPortfolioEnabled = true;
+                    } else {
+                        isJiraPortfolioEnabled = false;
+                    }
+                } catch (Exception e) {
+                    isJiraPortfolioEnabled = false;
+                }
+            }
+        }
+
+        return isJiraPortfolioEnabled.booleanValue();
+    }
 
     public List<JIRAProject> getProjects() {
         ClientResponse response = getWrapper().sendGet(baseUri + JIRAConstants.PROJECT_SUFFIX);
@@ -739,14 +751,11 @@ public class JIRAService {
      */
     public List<JIRASubTaskableIssue> getAllIssues(String projectKey, Set<String> issueTypes) {
 
-        // We will always include sub-tasks
-        issueTypes.addAll(getSubTasksIssueTypes());
-
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
                         .addExtraFields(getCustomFields().getJiraCustomFields()).setIssuesTypes(issueTypes);
 
-        return retrieveIssues(searchUrlBuilder);
+        return retrieveIssues(searchUrlBuilder, true);
     }
 
     /**
@@ -763,7 +772,7 @@ public class JIRAService {
                             // We also want sub-tasks of the requested tasks.
                         .addOrConstraint("parent in (" + StringUtils.join(issueKeys, ',')+")");
 
-        return retrieveIssues(searchUrlBuilder);
+        return retrieveIssues(searchUrlBuilder, true);
     }
 
     private List<JIRAAgileEntity> retrieveAgileEntities(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
@@ -789,53 +798,54 @@ public class JIRAService {
     }
 
 
-
-
-
-    private List<JIRASubTaskableIssue> retrieveIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
-
+    private List<JIRAIssue> fetchResults(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
         IssueRetrievalResult result = null;
         int fetchedResults = 0;
         searchUrlBuilder.setStartAt(0);
 
-        List<JIRAIssue> allIssues = new ArrayList<JIRAIssue>();
+        List<JIRAIssue> issues = new ArrayList<JIRAIssue>();
 
         do {
             result = runIssueRetrievalRequest(searchUrlBuilder.toUrlString());
             for (JSONObject issueObj : result.getIssues()) {
-                allIssues.add(getIssueFromJSONObj(issueObj));
+                issues.add(getIssueFromJSONObj(issueObj));
             }
             fetchedResults += result.getMaxResults();
             searchUrlBuilder.setStartAt(fetchedResults);
 
         } while (fetchedResults < result.getTotal());
 
-        Map<String, JIRAIssue> indexedIssues = new HashMap<>();
+        return issues;
+    }
+
+    /**
+     * Retrieve the issues using the passed JiraIssuesRetrieverUrlBuilder, and if needed, retrieve the subTasks in a different call and adds them to issues.
+     */
+    private List<JIRASubTaskableIssue> retrieveIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder, boolean retrieveSubTasks) {
+
+        List<JIRAIssue> allIssues = fetchResults(searchUrlBuilder);
+
+        Map<String, JIRASubTaskableIssue> indexedIssues = new HashMap<>();
 
         for (JIRAIssue issue : allIssues) {
-            indexedIssues.put(issue.getKey(), issue);
+            indexedIssues.put(issue.getKey(), (JIRASubTaskableIssue)issue);
         }
 
-        // We first check if all parents of sub-tasks have been retrieved. If not, we retrieve them in a separate call.
-        List<String> missingIssues = new ArrayList<>();
-        for (JIRAIssue issue: allIssues) {
-            if (getSubTasksIssueTypes().contains(issue.getType())) {
-                JIRASubTask subTask = (JIRASubTask)issue;
-                JIRAIssue parent = indexedIssues.get(subTask.getParentKey());
-                if (parent == null) {
-                    missingIssues.add(subTask.getParentKey());
-                }
+        List<JIRAIssue> subTasks = new ArrayList<JIRAIssue>();
+
+        // We retrieve all sub-tasks in different calls, in batches of 250 parent issues.
+        if (retrieveSubTasks) {
+            List<String> issuesKeys = new ArrayList<String>(indexedIssues.keySet());
+            for (int i = 0; i < issuesKeys.size(); i += SUB_TASK_BATCH_SIZE) {
+                List<String> selectedIssuesKeys = issuesKeys.subList(i,
+                        i + SUB_TASK_BATCH_SIZE > issuesKeys.size() ? issuesKeys.size() : i + SUB_TASK_BATCH_SIZE);
+                JiraIssuesRetrieverUrlBuilder subTasksSearchUrlBuilder = new JiraIssuesRetrieverUrlBuilder(baseUri).addExtraFields(getCustomFields().getJiraCustomFields());
+                subTasksSearchUrlBuilder
+                        .addAndConstraint("parent in (" + StringUtils.join(selectedIssuesKeys, ",") + ")");
+
+                subTasks.addAll(fetchResults(subTasksSearchUrlBuilder));
             }
         }
-
-        if (!missingIssues.isEmpty()) {
-            // We retrieved some sub-tasks but missed their parents. Let's retrieve them now.
-            List<JIRAIssue> missingParents = getIssues(null, missingIssues);
-            for (JIRAIssue missingParent : missingParents) {
-                allIssues.add(missingParent);
-            }
-        }
-
 
         List<JIRASubTaskableIssue> processedIssues = new ArrayList<JIRASubTaskableIssue>();
 
@@ -851,7 +861,7 @@ public class JIRAService {
             }
         }
 
-        // Read all Stories/Tasks/Features, add them to Epic
+        // Read all non-Epic standard issue types, add them to Epic
         for (JIRAIssue issue : allIssues) {
             if (!JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())
                     && issue instanceof JIRASubTaskableIssue) {
@@ -869,16 +879,12 @@ public class JIRAService {
         }
 
         // Read all sub-tasks, add them to parent
-        for (JIRAIssue issue : allIssues) {
-            if (getSubTasksIssueTypes().contains(issue.getType())) {
-
-                JIRASubTask subTask = (JIRASubTask)issue;
-
-                if (subTask.getParentKey() != null) {
-                    JIRASubTaskableIssue parent = subTaskableIssues.get(subTask.getParentKey());
-                    if (parent != null) {
-                        parent.addSubTask(subTask);
-                    }
+        for (JIRAIssue issue : subTasks) {
+            JIRASubTask subTask = (JIRASubTask)issue;
+            if (subTask.getParentKey() != null) {
+                JIRASubTaskableIssue parent = subTaskableIssues.get(subTask.getParentKey());
+                if (parent != null) {
+                    parent.addSubTask(subTask);
                 }
             }
         }
@@ -923,7 +929,7 @@ public class JIRAService {
 
             if (issueType.equalsIgnoreCase(JIRAConstants.JIRA_ISSUE_EPIC)) {
                 issue = new JIRAEpic();
-            } else if (getSubTasksIssueTypes().contains(issueType)) {
+            } else if (getSubTasksIssueTypes().contains(issueType)) { // This is the only place where calling getSubTasksIssueTypes() is appropriate.
                 issue = new JIRASubTask();
 
                 if (fields.has("parent")) {
@@ -1089,22 +1095,17 @@ public class JIRAService {
     }
 
     public List<JIRASubTaskableIssue> getBoardIssues(String projectKey, Set<String> issueTypes, String boardId) {
-        // We will always include sub-tasks
-        issueTypes.addAll(getSubTasksIssueTypes());
-
         JiraIssuesRetrieverUrlBuilder boardIssuesUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
                         .addExtraFields(getCustomFields().getJiraCustomFields()).setBoardType(boardId).setIssuesTypes(issueTypes);
 
-        return retrieveIssues(boardIssuesUrlBuilder);
+        return retrieveIssues(boardIssuesUrlBuilder, true);
     }
 
     /**
      * @return all the issues that are part of an Epic. Sub-tasks are included in returned tasks, but not as tasks of the list themselves.
      */
     public List<JIRASubTaskableIssue> getAllEpicIssues(String projectKey, Set<String> issueTypes, String epicKey) {
-        // We will always include sub-tasks to make sure we get sub-tasks of the Epic itself
-        issueTypes.addAll(getSubTasksIssueTypes());
 
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setIssuesTypes(issueTypes).setProjectKey(projectKey)
@@ -1116,22 +1117,17 @@ public class JIRAService {
         // We also want to retrieve the Epic itself
         searchUrlBuilder.addOrConstraint("key=" + epicKey);
 
-        // We also want sub-tasks of the epic
-        searchUrlBuilder.addOrConstraint("parent=" + epicKey);
-
-        return retrieveIssues(searchUrlBuilder);
+        return retrieveIssues(searchUrlBuilder, true);
     }
 
     public List<JIRASubTaskableIssue> getVersionIssues(String projectKey, Set<String> issueTypes, String versionId)
     {
-        issueTypes.addAll(getSubTasksIssueTypes());
-
         JiraIssuesRetrieverUrlBuilder versionIssuesUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
                         .addExtraFields(getCustomFields().getJiraCustomFields()).setIssuesTypes(issueTypes)
                         .addAndConstraint("fixVersion=" + versionId);
 
-        return retrieveIssues(versionIssuesUrlBuilder);
+        return retrieveIssues(versionIssuesUrlBuilder, true);
     }
 
     /**
@@ -1166,7 +1162,7 @@ public class JIRAService {
             spTimesheetUrlBuilder.setProjectKey(projectKey);
         }
 
-        List<JIRASubTaskableIssue> issues = retrieveIssues(spTimesheetUrlBuilder);
+        List<JIRASubTaskableIssue> issues = retrieveIssues(spTimesheetUrlBuilder, false);
 
         Date fromDate = dateFrom.toGregorianCalendar().getTime();
         Date toDate = dateTo.toGregorianCalendar().getTime();
@@ -1253,7 +1249,7 @@ public class JIRAService {
             worklogUrlBuilder.setProjectKey(projectKey);
         }
 
-        List<JIRASubTaskableIssue> issues = retrieveIssues(worklogUrlBuilder);
+        List<JIRASubTaskableIssue> issues = retrieveIssues(worklogUrlBuilder, false);
 
         JIRATimesheetData timesheetData = new JIRATimesheetData();
 
@@ -1462,9 +1458,9 @@ public class JIRAService {
 
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
-                        .addExtraFields(getCustomFields().getJiraCustomFields()).setIssuesTypes(issueTypes);
+                        .addExtraFields(getCustomFields().getJiraCustomFields()).setStandardIssueTypes(issueTypes);
 
-        List<JIRASubTaskableIssue> epics = retrieveIssues(searchUrlBuilder);
+        List<JIRASubTaskableIssue> epics = retrieveIssues(searchUrlBuilder, false);
         Collections.sort(epics, new Comparator<JIRASubTaskableIssue>() {
             @Override public int compare(JIRASubTaskableIssue o1, JIRASubTaskableIssue o2) {
                 try {
@@ -1515,6 +1511,10 @@ public class JIRAService {
         }
     }
 
+    /**
+     * We should not need sub-tasks types anymore ; just retrieve all sub-tasks from standard issues by key.
+     * @deprecated
+     */
     public Set<String> getSubTasksIssueTypes() {
         if (subTasksIssueTypes == null) {
             initIssueTypes();
