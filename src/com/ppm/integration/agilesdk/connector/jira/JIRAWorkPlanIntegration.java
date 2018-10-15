@@ -218,7 +218,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 });
 
         for (final String issueType : sortedIssueTypes) {
-            fields.add( new CheckBox(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX+issueType, issueType, "Epic".equalsIgnoreCase(issueType) || "Story".equalsIgnoreCase(issueType)) {
+            fields.add( new CheckBox(getParamNameFromIssueTypeName(issueType), issueType, "Epic".equalsIgnoreCase(issueType) || "Story".equalsIgnoreCase(issueType)) {
 
                 @Override public List<String> getStyleDependencies() {
                     return Arrays.asList(new String[] {JIRAConstants.KEY_JIRA_PROJECT, JIRAConstants.KEY_IMPORT_SELECTION});
@@ -319,6 +319,19 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         return fields;
     }
 
+    private String getParamNameFromIssueTypeName(String issueTypeName) {
+        if (issueTypeName == null) {
+            issueTypeName = "";
+        }
+        return JIRAConstants.JIRA_ISSUE_TYPE_PREFIX + issueTypeName.replace(" ", "__");
+    }
+
+    private String getIssueTypeNameFromParamName(String paramName) {
+        if (paramName == null) {
+            return null;
+        }
+        return paramName.substring(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX.length()).replace("__", " ");
+    }
 
 
     @Override
@@ -385,7 +398,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         for (String key: values.keySet()) {
             if (key.startsWith(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX)) {
                 if (values.getBoolean(key, false)) {
-                    issueTypes.add(key.substring(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX.length()));
+                    issueTypes.add(getIssueTypeNameFromParamName(key));
                 }
             }
         }
@@ -896,7 +909,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         if (configJson != null) {
             JSONObject json = (JSONObject)JSONSerializer.toJSON(configJson);
             for (String issueTypeToRemove: issueTypesToRemove) {
-                json.remove(JIRAConstants.JIRA_ISSUE_TYPE_PREFIX + issueTypeToRemove);
+                json.remove(getParamNameFromIssueTypeName(issueTypeToRemove));
             }
             workplanMapping.setConfigJson(json.toString());
         }
