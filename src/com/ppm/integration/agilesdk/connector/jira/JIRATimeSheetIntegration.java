@@ -391,8 +391,6 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
         final LocalizationProvider lp = Providers.getLocalizationProvider(JIRAIntegrationConnector.class);
 
-        final JIRAService s = JIRAServiceProvider.get(values).useAdminAccount();
-
         return Arrays.asList(new Field[] {new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true),
                 new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true),
                 new LineBreaker(),
@@ -408,7 +406,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
                         List<JIRAProject> list = new ArrayList<>();
                         try {
-                            list = s.getProjects();
+                            list = JIRAServiceProvider.get(values).useNonAdminAccount().getProjects();
                         } catch (ClientRuntimeException | RestRequestException e) {
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
                                     JIRATimeSheetIntegration.class);
