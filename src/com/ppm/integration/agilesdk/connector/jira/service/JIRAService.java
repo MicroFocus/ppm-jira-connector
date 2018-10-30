@@ -702,6 +702,30 @@ public class JIRAService {
         return issues;
     }
 
+    /**
+     * Gets a single issue, without retrieving the sub-tasks (unless it's a subtask).
+     */
+    public JIRAIssue getSingleIssue(String issueKey) {
+
+        if (StringUtils.isBlank(issueKey)) {
+            return null;
+        }
+
+        JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
+                new JiraIssuesRetrieverUrlBuilder(baseUri).setExpandLevel("schema")
+                        .addAndConstraint("key=" + issueKey)
+                        .addExtraFields(getCustomFields().getJiraCustomFields());
+
+        IssueRetrievalResult result =
+                runIssueRetrievalRequest(searchUrlBuilder.toUrlString());
+
+        for (JSONObject obj : result.getIssues()) {
+            return getIssueFromJSONObj(obj);
+        }
+
+        return null;
+    }
+
     public List<JIRABoard> getAllBoards(String projectKey) {
         ClientResponse response =
                 getWrapper().sendGet(baseUri + JIRAConstants.BOARD_SUFFIX + "?projectKeyOrId=" + projectKey);
@@ -891,6 +915,50 @@ public class JIRAService {
 
         return processedIssues;
     }
+
+
+    /**
+     * Retrieve the Timesheet workunit issues. These can include both tasks and sub-tasks, and we must only return SubTaskableTasks.
+     * That means we must retrieve parent tasks of sub-tasks that didn't get their parent.
+     *
+     */
+    private Collection<JIRASubTaskableIssue> retrieveTSIssues(JiraIssuesRetrieverUrlBuilder searchUrlBuilder, boolean retrieveSubTasks) {
+
+        List<JIRAIssue> allIssues = fetchResults(searchUrlBuilder);
+
+        Map<String, JIRASubTaskableIssue> indexedIssues = new HashMap<>();
+
+        Map<String, JIRASubTask> subTasks = new HashMap<>();
+
+        for (JIRAIssue issue : allIssues) {
+            if (issue instanceof JIRASubTaskableIssue) {
+                indexedIssues.put(issue.getKey(), (JIRASubTaskableIssue)issue);
+            } else {
+                // It's a SubTask.
+                JIRASubTask subTask = (JIRASubTask)issue;
+                subTasks.put(subTask.getKey(), subTask);
+            }
+        }
+
+        // We now add SubTasks to their parent or pull their parent info if not already retrieved
+        for (String subTaskKey : subTasks.keySet()) {
+            JIRASubTask subTask = subTasks.get(subTaskKey);
+            JIRASubTaskableIssue parent = indexedIssues.get(subTask.getParentKey());
+            if (parent == null) {
+                // We must retrieve the parent.
+                parent = (JIRASubTaskableIssue)getSingleIssue(subTask.getParentKey());
+                if (parent == null) {
+                    throw new RuntimeException("Cannot retrieve issue with Key "+subTask.getParentKey());
+                }
+                indexedIssues.put(parent.getKey(), parent);
+            }
+
+            parent.addSubTask(subTask);
+        }
+
+        return indexedIssues.values();
+    }
+
 
     private IssueRetrievalResult runIssueRetrievalRequest(String urlString) {
 
@@ -1249,7 +1317,7 @@ public class JIRAService {
             worklogUrlBuilder.setProjectKey(projectKey);
         }
 
-        List<JIRASubTaskableIssue> issues = retrieveIssues(worklogUrlBuilder, false);
+        Collection<JIRASubTaskableIssue> issues = retrieveTSIssues(worklogUrlBuilder, false);
 
         JIRATimesheetData timesheetData = new JIRATimesheetData();
 
