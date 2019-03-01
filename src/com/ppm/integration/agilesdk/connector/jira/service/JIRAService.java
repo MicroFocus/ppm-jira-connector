@@ -448,7 +448,13 @@ public class JIRAService {
                 JSONObject nameObj = new JSONObject();
                 nameObj.put("name", value);
                 fieldsObj.put(fieldEntry.getKey(), nameObj);
-            } else {
+            } else if (value.startsWith(JIRAConstants.JIRA_ID_PREFIX)) {
+                value = value.substring(JIRAConstants.JIRA_ID_PREFIX.length());
+                JSONObject idObj = new JSONObject();
+                idObj.put("id", value);
+                fieldsObj.put(fieldEntry.getKey(), idObj);
+            }
+            else {
                 if (isNumber) {
                     fieldsObj.put(fieldEntry.getKey(), Double.parseDouble(value));
                 } else {

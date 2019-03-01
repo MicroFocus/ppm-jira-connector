@@ -1,5 +1,6 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
+import com.hp.ppm.integration.model.AgileEntityFieldValue;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAAgileEntity;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAFieldInfo;
@@ -11,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
+import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_ID_PREFIX;
 import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_NAME_PREFIX;
 
 public class JIRARequestIntegration extends RequestIntegration {
@@ -50,10 +52,10 @@ public class JIRARequestIntegration extends RequestIntegration {
                     || "number".equals(field.getType())
                     || "user".equals(field.getType())
                     || "priority".equals(field.getType())
-                    || ("array".equals(field.getType()))) {
+                    || "array".equals(field.getType())) {
 
-                if (field.isList() && !"user".equals(field.getType()) && (field.getAllowedValues()== null || field.getAllowedValues().isEmpty())) {
-                    // We only allow to select lists that have some static value options or are users lists.
+                if ( (field.isList() || "array".equals(field.getType()))  && !"user".equals(field.getType()) && (field.getAllowedValues()== null || field.getAllowedValues().isEmpty())) {
+                    // We only allow to select lists/arrays that have some static value options or are users lists.
                     continue;
                 }
 
@@ -61,7 +63,7 @@ public class JIRARequestIntegration extends RequestIntegration {
                 fieldInfo.setId(field.getKey());
                 fieldInfo.setLabel(field.getName());
                 fieldInfo.setListType(field.isList());
-                fieldInfo.setFieldType(field.getType());
+                fieldInfo.setFieldType(field.getPpmFieldType());
                 fieldsInfo.add(fieldInfo);
             }
         }
@@ -69,22 +71,20 @@ public class JIRARequestIntegration extends RequestIntegration {
         return fieldsInfo;
     }
 
-    /*@Override public List<AgileEntityField> getAgileEntityFieldValueList(String agileProjectValue, String entityType, String listIdentifier,
-            ValueSet instanceConfigurationParameters)
+    @Override public List<AgileEntityFieldValue> getAgileEntityFieldsValueList(String agileProjectValue,
+            String entityType, ValueSet instanceConfigurationParameters, String fieldName, boolean isLogicalName)
     {
-        // Not used.
+        Map<String, JIRAFieldInfo> fields = JIRAServiceProvider.get(instanceConfigurationParameters).getFields(agileProjectValue, entityType);
 
-        List<JIRAFieldInfo> fields = service.get(instanceConfigurationParameters).getFields(agileProjectValue, entityType);
-
-        for (JIRAFieldInfo field : fields) {
-            if (listIdentifier.equals(field.getKey())) {
+        for (JIRAFieldInfo field : fields.values()) {
+            if (fieldName.equals(field.getKey())) {
                 return field.getAllowedValues();
             }
         }
 
         // Field not found.
-        return new ArrayList<AgileEntityField>();
-    }*/
+        return new ArrayList<AgileEntityFieldValue>();
+    }
 
     @Override public AgileEntity updateEntity(String agileProjectValue, String entityType, AgileEntity entity,
             ValueSet instanceConfigurationParameters)
@@ -133,7 +133,8 @@ public class JIRARequestIntegration extends RequestIntegration {
                     String jiraUsername = service.getJiraUsernameFromPpmUser(user);
                     fields.put(field.getKey(), jiraUsername == null ? null : JIRA_NAME_PREFIX + jiraUsername);
                 }
-
+            } else if (DataField.DATA_TYPE.ListNode.equals(dataField.getType())) {
+                fields.put(field.getKey(), dataField.get() == null ? null : JIRA_ID_PREFIX + ((ListNode)dataField.get()).getId());
             } else {
                 // we consider it a single String value.
                 fields.put(field.getKey(), dataField.get() == null ? null : dataField.get().toString());
