@@ -775,6 +775,10 @@ public class JIRAService {
      */
     public List<JIRASubTaskableIssue> getAllIssues(String projectKey, Set<String> issueTypes) {
 
+        if (issueTypes == null || issueTypes.isEmpty()){
+            return new ArrayList<JIRASubTaskableIssue>();
+        }
+        
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).setProjectKey(projectKey)
                         .addExtraFields(getCustomFields().getJiraCustomFields()).setIssuesTypes(issueTypes);
