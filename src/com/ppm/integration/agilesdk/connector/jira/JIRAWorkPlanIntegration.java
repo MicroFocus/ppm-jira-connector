@@ -626,7 +626,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                     	
                     	@Override public String getId() {
-                            return "WORKPLAN_NO_STATUS_DEFINED_TASK";
+                            return "WORKPLAN_NO_STATUS_DEFINED_TASK_KEY";
                         }
                     	
                         @Override public String getName() {
@@ -690,7 +690,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                     	
                         @Override public String getId() {
-                            return sprint == null ? "WORKPLAN_SPRINT_PREFIX_TASK_NAME" + " " + sprintId : sprintId;
+                            return sprint == null ? "WORKPLAN_SPRINT_PREFIX_TASK_KEY" + " " + sprintId : sprintId;
                         }
                     	
                         @Override public String getName() {
