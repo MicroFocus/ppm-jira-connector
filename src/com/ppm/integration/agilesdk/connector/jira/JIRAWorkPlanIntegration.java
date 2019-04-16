@@ -473,6 +473,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                             @Override public String getName() {
                                 return epic.getFullTaskName();
                             }
+                            
+                            @Override public String getId() {
+                                return epic.getKey();
+                            }
 
                             @Override public List<ExternalTask> getChildren() {
 
@@ -539,6 +543,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 if (includeIssuesWithNoGroup && !noEpicIssues.isEmpty()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+                    	
+                    	@Override public String getId() {
+                            return "WORKPLAN_NO_EPIC_DEFINED_TASK_KEY";
+                        }
+                    	
                         @Override public String getName() {
                             return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_EPIC_DEFINED_TASK_NAME");
                         }
@@ -590,6 +599,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 for (final String status : issuesByStatus.keySet()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+                    	
+                        @Override public String getId() {
+                            return status;
+                        }
+                        
                         @Override public String getName() {
                             return status;
                         }
@@ -610,6 +624,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 if (includeIssuesWithNoGroup && !noStatusIssues.isEmpty()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+                    	
+                    	@Override public String getId() {
+                            return "WORKPLAN_NO_STATUS_DEFINED_TASK";
+                        }
+                    	
                         @Override public String getName() {
                             return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_STATUS_DEFINED_TASK_NAME");
                         }
@@ -669,6 +688,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     final JIRASprint sprint = sprintsById.get(sprintId);
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+                    	
+                        @Override public String getId() {
+                            return sprint == null ? "WORKPLAN_SPRINT_PREFIX_TASK_NAME" + " " + sprintId : sprintId;
+                        }
+                    	
                         @Override public String getName() {
                             return sprint == null ? Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_SPRINT_PREFIX_TASK_NAME") + " " + sprintId : sprint.getName();
                         }
@@ -689,6 +713,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                 if (includeIssuesWithNoGroup && !backlogIssues.isEmpty()) {
                     rootTasks.add(WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+                    	
+                        @Override public String getId() {
+                            return "WORKPLAN_SPRINT_PREFIX_TASK_KEY";
+                        }
+                        
                         @Override public String getName() {
                             return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_BACKLOG_TASK_NAME");
                         }
@@ -778,6 +807,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                             children.add(WorkDrivenPercentCompleteExternalTask.forLeafTask(new ExternalTask() {
 
                                 private Date milestoneDate = epicMilestoneDate;
+                                
+                                @Override public String getId() {
+                                    return epic.getKey();
+                                }
 
                                 @Override
                                 public String getName() {
@@ -816,6 +849,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                             }, 0, 0));
                         }
                     }
+                    
+                    @Override
+                    public String getId() {
+                        return "EPIC_MILESTONE_TASK_KEY";
+                    }
 
                     @Override
                     public String getName() {
@@ -843,6 +881,15 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     ExternalTask rootTask = WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
                         @Override public List<ExternalTask> getChildren() {
                             return rootTasks;
+                        }
+                        
+                        @Override public String getId() {
+                            String rootTaskKey = values.get(JIRAConstants.OPTION_ROOT_TASK_NAME);
+                            if (StringUtils.isBlank(rootTaskKey)) {
+                            	rootTaskKey = "WORKPLAN_ROOT_TASK_TASK_KEY";
+                            }
+
+                            return rootTaskKey;
                         }
 
                         @Override public String getName() {
@@ -929,6 +976,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         final JIRASubTaskableIssue issue = node.getIssue();
 
         return WorkDrivenPercentCompleteExternalTask.forSummaryTask(new ExternalTask() {
+        	
+            @Override public String getId() {
+                return issue.getKey();
+            }
+            
             @Override public String getName() {
                 return issue.getFullTaskName();
             }
