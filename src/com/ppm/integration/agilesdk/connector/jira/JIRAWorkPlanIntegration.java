@@ -1461,4 +1461,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         public int hoursPerSp;
     }
+    
+    @Override
+    public boolean supportTimesheetingAgainstExternalWorkPlan() {
+        return true;
+    }
 }
