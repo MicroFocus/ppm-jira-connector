@@ -486,6 +486,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                     // Epics that will be stored as summary tasks will not have their work taken into account, so we need to create a dummy leaf task for it.
                                     final WorkDrivenPercentCompleteExternalTask epicWorkTask = convertJiraIssueToLeafExternalTask(epic, taskContext);
                                     epicWorkTask.setNameOverride("[Work]"+epicWorkTask.getName());
+                                    epicWorkTask.setIdOverride("[Work]"+epicWorkTask.getId());
                                     children.add(epicWorkTask);
                                 }
 
@@ -993,6 +994,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     // Epics that will be stored as summary tasks will not have their work taken into account, so we need to create a dummy leaf task for it.
                     final WorkDrivenPercentCompleteExternalTask workTask = convertJiraIssueToLeafExternalTask(issue, taskContext);
                     workTask.setNameOverride("[Work]"+workTask.getName());
+                    workTask.setIdOverride("[Work]"+workTask.getId());
                     children.add(workTask);
                 }
 
