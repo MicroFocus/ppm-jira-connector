@@ -442,7 +442,8 @@ public class JIRAService {
             boolean isNumber = fieldInfo != null && "number".equals(fieldInfo.getType());
 
             if (value == null || (isNumber && StringUtils.isBlank(value))) {
-                fieldsObj.put(fieldEntry.getKey(), (Object)null);
+                fieldsObj.put(fieldEntry.getKey(), "");
+                
             } else if (value.startsWith(JIRAConstants.JIRA_NAME_PREFIX)) {
                 value = value.substring(JIRAConstants.JIRA_NAME_PREFIX.length());
                 JSONObject nameObj = new JSONObject();
