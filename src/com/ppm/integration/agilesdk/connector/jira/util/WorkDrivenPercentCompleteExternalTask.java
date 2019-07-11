@@ -23,6 +23,8 @@ public class WorkDrivenPercentCompleteExternalTask extends ExternalTask {
     private ExternalTask wrappedTask;
 
     private String nameOverride = null;
+    
+    private String idOverride = null;
 
     private WorkDrivenPercentCompleteExternalTask(ExternalTask wrappedTask, Double workDone, Double workRemaining) {
         this.wrappedTask = wrappedTask;
@@ -100,7 +102,7 @@ public class WorkDrivenPercentCompleteExternalTask extends ExternalTask {
     ///// Delegating everything else to the wrapped task
 
     public String getId() {
-        return wrappedTask.getId();
+        return idOverride == null?wrappedTask.getId():idOverride;
     }
 
 
@@ -154,5 +156,9 @@ public class WorkDrivenPercentCompleteExternalTask extends ExternalTask {
 
     public void setNameOverride(String nameOverride) {
         this.nameOverride = nameOverride;
+    }
+    
+    public void setIdOverride(String idOverride) {
+        this.idOverride = idOverride;
     }
 }
