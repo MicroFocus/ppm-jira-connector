@@ -1,14 +1,14 @@
 
 package com.ppm.integration.agilesdk.connector.jira.model;
 
-import com.ppm.integration.agilesdk.dm.DataField;
-import com.ppm.integration.agilesdk.dm.StringField;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.hp.ppm.integration.model.AgileEntityFieldValue;
 
 public class JIRAFieldInfo {
 
@@ -24,7 +24,7 @@ public class JIRAFieldInfo {
 
     private String items;
 
-    private List<DataField> allowedValues = null;
+    private List<AgileEntityFieldValue> allowedValues = null;
 
 
     public static JIRAFieldInfo fromJSONObject(JSONObject obj, String key) {
@@ -36,10 +36,10 @@ public class JIRAFieldInfo {
             if (obj.has("allowedValues")) {
                 JSONArray allowedValues = obj.getJSONArray("allowedValues");
                 if (allowedValues != null) {
-                    fieldInfo.setAllowedValues(new ArrayList<DataField>(allowedValues.length()));
+                    fieldInfo.setAllowedValues(new ArrayList<AgileEntityFieldValue>(allowedValues.length()));
 
                     for (int i = 0 ; i < allowedValues.length() ; i++) {
-                        DataField listValue = new StringField();
+                        AgileEntityFieldValue listValue = new AgileEntityFieldValue();
                         JSONObject listValueObj = allowedValues.getJSONObject(i);
                         String value = "?";
                         if (listValueObj.has("name")) {
@@ -47,7 +47,8 @@ public class JIRAFieldInfo {
                         } else if (listValueObj.has("value")) {
                             value = listValueObj.getString("value");
                         }
-                        listValue.set(value);
+                        listValue.setId(listValueObj.getString("id"));
+                        listValue.setName(value);
                         fieldInfo.getAllowedValues().add(listValue);
                     }
                 }
@@ -67,7 +68,8 @@ public class JIRAFieldInfo {
                     }
                 }
 
-            if (fieldInfo.getAllowedValues() != null  || "array".equals(fieldInfo.getType())) {
+            if (fieldInfo.getAllowedValues() != null || "array".equals(fieldInfo.getType())
+                    || "option".equals(fieldInfo.getType())) {
                 fieldInfo.setList(true);
             }
 
@@ -125,11 +127,11 @@ public class JIRAFieldInfo {
         this.items = items;
     }
 
-    public List<DataField> getAllowedValues() {
+    public List<AgileEntityFieldValue> getAllowedValues() {
         return allowedValues;
     }
 
-    public void setAllowedValues(List<DataField> allowedValues) {
+    public void setAllowedValues(List<AgileEntityFieldValue> allowedValues) {
         this.allowedValues = allowedValues;
     }
 }
