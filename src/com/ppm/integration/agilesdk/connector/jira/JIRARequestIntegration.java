@@ -1,17 +1,29 @@
 package com.ppm.integration.agilesdk.connector.jira;
 
+import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_NAME_PREFIX;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.hp.ppm.integration.model.AgileEntityFieldValue;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAAgileEntity;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAFieldInfo;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssueType;
 import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
-import com.ppm.integration.agilesdk.dm.*;
-import com.ppm.integration.agilesdk.model.*;
-import org.apache.commons.lang.StringUtils;
-
-import java.util.*;
-
-import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_NAME_PREFIX;
+import com.ppm.integration.agilesdk.dm.DataField;
+import com.ppm.integration.agilesdk.dm.RequestIntegration;
+import com.ppm.integration.agilesdk.dm.User;
+import com.ppm.integration.agilesdk.model.AgileEntity;
+import com.ppm.integration.agilesdk.model.AgileEntityFieldInfo;
+import com.ppm.integration.agilesdk.model.AgileEntityInfo;
 
 public class JIRARequestIntegration extends RequestIntegration {
 
@@ -45,12 +57,14 @@ public class JIRARequestIntegration extends RequestIntegration {
             // - array type with non-empty allowedValues (i.e. drop down list)
             // - User or array of User
             // - priority (provided that allowedValues is non-empty)
+            // - option type with non-empty allowedValues (single select)
 
             if ("string".equals(field.getType())
                     || "number".equals(field.getType())
                     || "user".equals(field.getType())
                     || "priority".equals(field.getType())
-                    || ("array".equals(field.getType()))) {
+                    || "array".equals(field.getType()) 
+                    || "option".equals(field.getType())) {
 
                 if (field.isList() && !"user".equals(field.getType()) && (field.getAllowedValues()== null || field.getAllowedValues().isEmpty())) {
                     // We only allow to select lists that have some static value options or are users lists.
@@ -69,22 +83,25 @@ public class JIRARequestIntegration extends RequestIntegration {
         return fieldsInfo;
     }
 
-    /*@Override public List<AgileEntityField> getAgileEntityFieldValueList(String agileProjectValue, String entityType, String listIdentifier,
-            ValueSet instanceConfigurationParameters)
+    @Override
+    public List<AgileEntityFieldValue> getAgileEntityFieldsValueList(final String agileProjectValue,
+            final String entityType, final ValueSet instanceConfigurationParameters, final String fieldName,
+            final boolean isLogicalName)
     {
-        // Not used.
 
-        List<JIRAFieldInfo> fields = service.get(instanceConfigurationParameters).getFields(agileProjectValue, entityType);
+        List<JIRAFieldInfo> fields = new ArrayList(JIRAServiceProvider.get(instanceConfigurationParameters)
+                .getFields(agileProjectValue, entityType).values());
 
         for (JIRAFieldInfo field : fields) {
-            if (listIdentifier.equals(field.getKey())) {
+            if (fieldName.equals(field.getKey())) {
                 return field.getAllowedValues();
             }
         }
 
         // Field not found.
-        return new ArrayList<AgileEntityField>();
-    }*/
+        return new ArrayList<AgileEntityFieldValue>();
+    }
+
 
     @Override public AgileEntity updateEntity(String agileProjectValue, String entityType, AgileEntity entity,
             ValueSet instanceConfigurationParameters)
