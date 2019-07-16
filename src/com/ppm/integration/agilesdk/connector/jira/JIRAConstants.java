@@ -106,6 +106,16 @@ public class JIRAConstants {
     public static final String BOARD_SUFFIX = API_VERSION1_API_ROOT + "board";
 
     public static final String SPRINT_SUFFIX = API_VERSION1_API_ROOT + "sprint";
+    
+    public static final String KEY_FIELD_TYPE_ARRAY = "array";
+    
+    public static final String KEY_FIELD_TYPE_USER = "user";
+    
+    public static final String KEY_FIELD_TYPE_STRING = "string";
+    
+    public static final String KEY_FIELD_TYPE_NUMBER = "number";
+    
+    public static final String KEY_FIELD_TYPE_OPTION = "option";
 
     // Just add JQL string from JiraIssuesRetrieverUrlBuilder class
     public static final String SEARCH_URL =
@@ -188,6 +198,8 @@ public class JIRAConstants {
     public static final String TS_DAILY_HOURS = "ts_daily_hours";
 
     public static final String JIRA_FIELD_RESOLUTION_DATE = "resolutiondate";
+    
+    public static final String SPLIT_CHAR = "#@#";
 
 
 }
