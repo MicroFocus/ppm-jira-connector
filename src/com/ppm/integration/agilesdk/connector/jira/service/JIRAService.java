@@ -441,21 +441,33 @@ public class JIRAService {
 
             boolean isNumber = fieldInfo != null && "number".equals(fieldInfo.getType());
 
-            if (value == null || (isNumber && StringUtils.isBlank(value))) {
-                fieldsObj.put(fieldEntry.getKey(), "");
-                
-            } else if (value.startsWith(JIRAConstants.JIRA_NAME_PREFIX)) {
+            if (value != null && value.startsWith(JIRAConstants.JIRA_NAME_PREFIX)) {
                 value = value.substring(JIRAConstants.JIRA_NAME_PREFIX.length());
                 JSONObject nameObj = new JSONObject();
                 nameObj.put("name", value);
                 fieldsObj.put(fieldEntry.getKey(), nameObj);
-            } else {
-                if (isNumber) {
-                    fieldsObj.put(fieldEntry.getKey(), Double.parseDouble(value));
-                } else {
-                    fieldsObj.put(fieldEntry.getKey(), value);
-                }
-            }
+            } else if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_OPTION)){
+            	if(value != null){
+                	JSONObject ddlJson = new JSONObject(value);
+                	fieldsObj.put(fieldEntry.getKey(), ddlJson);
+            	}
+            	
+			} else if (fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_ARRAY)) {
+				if (value != null) {
+					JSONArray ddlJson = new JSONArray(value);
+					fieldsObj.put(fieldEntry.getKey(), ddlJson);
+				}
+			}
+			else {
+				if (value == null || (isNumber && StringUtils.isBlank(value))) {
+					fieldsObj.put(fieldEntry.getKey(), "");
+
+				} else if (isNumber) {
+					fieldsObj.put(fieldEntry.getKey(), Double.parseDouble(value));
+				} else {
+					fieldsObj.put(fieldEntry.getKey(), value);
+				}
+			}
         }
     }
 
@@ -643,11 +655,17 @@ public class JIRAService {
     /**
      * This call gets an issue through /issue/ REST API and not through search.
      */
-    public JIRAAgileEntity getSingleAgileEntityIssue(String projectKey, String issueKey) {
+    public JIRAAgileEntity getSingleAgileEntityIssue(String projectKey, String issueTypeId, String issueKey) {
 
         JIRAAgileEntity entity = new JIRAAgileEntity();
 
         entity.setId(issueKey);
+        
+        Map<String, JIRAFieldInfo> fieldsInfo = new HashMap<>();
+
+        if (!StringUtils.isBlank(issueTypeId)) {
+            fieldsInfo = getFields(projectKey, issueTypeId);
+        }
 
         ClientResponse response =
                 getWrapper().sendGet(baseUri + JIRAConstants.JIRA_REST_ISSUE_URL + issueKey);
@@ -656,14 +674,14 @@ public class JIRAService {
 
         try {
             JSONObject issueObj = new JSONObject(jsonStr);
-            return AgileEntityUtils.getAgileEntityFromIssueJSon(issueObj, getBaseUrl());
+            return AgileEntityUtils.getAgileEntityFromIssueJSon(fieldsInfo, issueObj, getBaseUrl());
 
         } catch (JSONException e) {
-            throw new RuntimeException("Ërror when retrieving issue information for issue "+issueKey, e);
+            throw new RuntimeException("Error when retrieving issue information for issue "+issueKey, e);
         }
     }
 
-    public List<JIRAAgileEntity> getAgileEntityIssuesModifiedSince(Set<String> entityIds, Date modifiedSinceDate) {
+    public List<JIRAAgileEntity> getAgileEntityIssuesModifiedSince( Map<String, JIRAFieldInfo> fieldsInfo, Set<String> entityIds, Date modifiedSinceDate) {
 
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveAllFields();
@@ -671,7 +689,7 @@ public class JIRAService {
         searchUrlBuilder.addAndConstraint("key in ("+StringUtils.join(entityIds, ",")+")");
         searchUrlBuilder.addAndConstraint("updated>='"+new SimpleDateFormat("yyyy-MM-dd HH:mm").format(modifiedSinceDate)+"'");
 
-        return retrieveAgileEntities(searchUrlBuilder);
+        return retrieveAgileEntities(fieldsInfo, searchUrlBuilder);
     }
 
     /**
@@ -804,7 +822,7 @@ public class JIRAService {
         return retrieveIssues(searchUrlBuilder, true);
     }
 
-    private List<JIRAAgileEntity> retrieveAgileEntities(JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
+    private List<JIRAAgileEntity> retrieveAgileEntities(Map<String, JIRAFieldInfo> fieldsInfo, JiraIssuesRetrieverUrlBuilder searchUrlBuilder) {
 
         IssueRetrievalResult result = null;
         int fetchedResults = 0;
@@ -815,7 +833,7 @@ public class JIRAService {
         do {
             result = runIssueRetrievalRequest(searchUrlBuilder.toUrlString());
             for (JSONObject obj : result.getIssues()) {
-                allIssues.add(AgileEntityUtils.getAgileEntityFromIssueJSon(obj, getBaseUrl()));
+                allIssues.add(AgileEntityUtils.getAgileEntityFromIssueJSon(fieldsInfo, obj, getBaseUrl()));
             }
 
             fetchedResults += result.getMaxResults();

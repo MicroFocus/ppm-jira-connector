@@ -1,8 +1,12 @@
 package com.ppm.integration.agilesdk.connector.jira.util.dm;
 
 import com.hp.ppm.user.model.User;
+import com.ppm.integration.agilesdk.connector.jira.JIRAConstants;
 import com.ppm.integration.agilesdk.connector.jira.JIRAIntegrationConnector;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAAgileEntity;
+import com.ppm.integration.agilesdk.connector.jira.model.JIRAFieldInfo;
+import com.ppm.integration.agilesdk.dm.ListNode;
+import com.ppm.integration.agilesdk.dm.ListNodeField;
 import com.ppm.integration.agilesdk.dm.MultiUserField;
 import com.ppm.integration.agilesdk.dm.StringField;
 import com.ppm.integration.agilesdk.provider.Providers;
@@ -14,13 +18,14 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This utility class should contain all dm request integration model class to avoid hard dependencies in JIRAServiceProvider class.
  */
 public class AgileEntityUtils {
 
-    public static JIRAAgileEntity getAgileEntityFromIssueJSon(JSONObject issueObj, String baseUrl) {
+    public static JIRAAgileEntity getAgileEntityFromIssueJSon(Map<String, JIRAFieldInfo> fieldsInfo, JSONObject issueObj, String baseUrl) {
 
         JIRAAgileEntity entity = new JIRAAgileEntity();
 
@@ -29,27 +34,72 @@ public class AgileEntityUtils {
 
             for (String fieldKey : JSONObject.getNames(fieldsObj)) {
 
-                if (fieldsObj.isNull(fieldKey)) {
-                    // Null fields in JIRA are considered empty fields in PPM.
-                    entity.addField(fieldKey, new StringField());
-                    continue;
-                }
-
                 Object fieldContents = fieldsObj.get(fieldKey);
+                
+                JIRAFieldInfo fieldInfo = fieldsInfo.get(fieldKey);
+                
+				if (fieldInfo != null && fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_OPTION)) {
+					if (fieldContents != JSONObject.NULL) {
+						JSONObject field = (JSONObject) fieldContents;
+						ListNode listNode = new ListNode();
+						listNode.setId(field.has("id") ? field.getString("id") : null);
+						listNode.setName(field.has("value") ? field.getString("value") : null);
+						ListNodeField listNodeField = new ListNodeField();
+						listNodeField.set(listNode);
+						entity.addField(fieldKey, listNodeField);
+					}
 
-                if (fieldContents instanceof JSONObject) {
-                    JSONObject field = (JSONObject)fieldContents;
-                    addJSONObjectFieldToEntity(fieldKey, field, entity);
+				} else if (fieldInfo != null
+						&& fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY)) {
+					if (fieldContents != JSONObject.NULL) {
+						JSONArray fieldList = (JSONArray) fieldContents;
+						String ids = "";
+						String names = "";
+						for (int i = 0; i < fieldList.length(); i++) {
+							JSONObject field = (JSONObject) fieldList.get(i);
+							String id = field.has("id") ? field.getString("id") : null;
+							String value = field.has("value") ? field.getString("value") : null;
+							if (id != null && value != null) {
+								if(ids == ""){
+									ids = id;
+									names = value;
+								} else {
+									ids = ids + JIRAConstants.SPLIT_CHAR + id;
+									names = names + JIRAConstants.SPLIT_CHAR + value;
+								}
+							}
+						}
+						if (ids != null && !ids.isEmpty()) {
+							ListNode listNode = new ListNode();
+							listNode.setId(ids);
+							listNode.setName(names);
 
-                } else if (fieldContents instanceof JSONArray) {
+							ListNodeField listNodeField = new ListNodeField();
+							listNodeField.set(listNode);
+
+							entity.addField(fieldKey, listNodeField);
+						}
+					}
+
+				} else if (fieldContents instanceof JSONObject) {					
+					if (fieldContents != JSONObject.NULL) {
+						JSONObject field = (JSONObject) fieldContents;
+						addJSONObjectFieldToEntity(fieldKey, field, entity);
+					}
+
+				} else if (fieldContents instanceof JSONArray) {
+					if (fieldContents != JSONObject.NULL) {
                     StringField sf = getStringFieldFromJsonArray((JSONArray)fieldContents);
                     entity.addField(fieldKey, sf);
+					}
 
                 } else {
+                	if (fieldContents != JSONObject.NULL) {
                     // If it's not an object nor an array, it's a string
                     StringField sf = new StringField();
                     sf.set(fieldContents.toString());
                     entity.addField(fieldKey, sf);
+                	}
                 }
             }
 
