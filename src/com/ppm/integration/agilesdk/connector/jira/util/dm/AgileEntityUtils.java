@@ -38,15 +38,18 @@ public class AgileEntityUtils {
                 
                 JIRAFieldInfo fieldInfo = fieldsInfo.get(fieldKey);
                 
-				if (fieldInfo != null && fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_OPTION)) {
+				if (fieldInfo != null && (fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_OPTION)|| fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_PRIORITY))) {
 					if (fieldContents != JSONObject.NULL) {
 						JSONObject field = (JSONObject) fieldContents;
 						ListNode listNode = new ListNode();
 						listNode.setId(field.has("id") ? field.getString("id") : null);
 						listNode.setName(field.has("value") ? field.getString("value") : null);
+						listNode.setName(field.has("name") ? field.getString("name") : null);
 						ListNodeField listNodeField = new ListNodeField();
 						listNodeField.set(listNode);
 						entity.addField(fieldKey, listNodeField);
+					} else {
+						entity.addField(fieldKey, null);
 					}
 
 				} else if (fieldInfo != null
@@ -79,18 +82,24 @@ public class AgileEntityUtils {
 
 							entity.addField(fieldKey, listNodeField);
 						}
+					} else {
+						entity.addField(fieldKey, null);
 					}
 
 				} else if (fieldContents instanceof JSONObject) {					
 					if (fieldContents != JSONObject.NULL) {
 						JSONObject field = (JSONObject) fieldContents;
 						addJSONObjectFieldToEntity(fieldKey, field, entity);
+					} else {
+						entity.addField(fieldKey, null);
 					}
 
 				} else if (fieldContents instanceof JSONArray) {
 					if (fieldContents != JSONObject.NULL) {
                     StringField sf = getStringFieldFromJsonArray((JSONArray)fieldContents);
                     entity.addField(fieldKey, sf);
+					} else {
+						entity.addField(fieldKey, null);
 					}
 
                 } else {
@@ -99,7 +108,9 @@ public class AgileEntityUtils {
                     StringField sf = new StringField();
                     sf.set(fieldContents.toString());
                     entity.addField(fieldKey, sf);
-                	}
+                	} else {
+						entity.addField(fieldKey, null);
+					}
                 }
             }
 
