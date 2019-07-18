@@ -446,16 +446,20 @@ public class JIRAService {
                 JSONObject nameObj = new JSONObject();
                 nameObj.put("name", value);
                 fieldsObj.put(fieldEntry.getKey(), nameObj);
-            } else if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_OPTION)){
+            } else if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_OPTION) || fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_PRIORITY)){
             	if(value != null){
-                	JSONObject ddlJson = new JSONObject(value);
-                	fieldsObj.put(fieldEntry.getKey(), ddlJson);
+            	JSONObject ddlJson = new JSONObject(value);
+				fieldsObj.put(fieldEntry.getKey(), ddlJson);
+            	} else {
+            		fieldsObj.put(fieldEntry.getKey(), JSONObject.NULL);
             	}
             	
 			} else if (fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_ARRAY)) {
 				if (value != null) {
 					JSONArray ddlJson = new JSONArray(value);
 					fieldsObj.put(fieldEntry.getKey(), ddlJson);
+				} else {
+					fieldsObj.put(fieldEntry.getKey(), JSONObject.NULL);
 				}
 			}
 			else {

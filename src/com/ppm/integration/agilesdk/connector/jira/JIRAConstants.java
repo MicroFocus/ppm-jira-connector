@@ -116,6 +116,8 @@ public class JIRAConstants {
     public static final String KEY_FIELD_TYPE_NUMBER = "number";
     
     public static final String KEY_FIELD_TYPE_OPTION = "option";
+    
+    public static final String KEY_FIELD_TYPE_PRIORITY = "priority";
 
     // Just add JQL string from JiraIssuesRetrieverUrlBuilder class
     public static final String SEARCH_URL =

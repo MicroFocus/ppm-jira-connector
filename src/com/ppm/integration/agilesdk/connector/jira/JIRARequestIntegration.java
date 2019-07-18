@@ -106,6 +106,7 @@ public class JIRARequestIntegration extends RequestIntegration {
                 return DATA_TYPE.USER.name();
             case JIRAConstants.KEY_FIELD_TYPE_OPTION:
             case JIRAConstants.KEY_FIELD_TYPE_ARRAY:
+            case JIRAConstants.KEY_FIELD_TYPE_PRIORITY:
                 return DATA_TYPE.ListNode.name();
             default :
                 return DATA_TYPE.STRING.name();                
@@ -187,7 +188,7 @@ public class JIRARequestIntegration extends RequestIntegration {
                     fields.put(field.getKey(), jiraUsername == null ? null : JIRA_NAME_PREFIX + jiraUsername);
                 }
             	
-            } else if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_OPTION)) {
+            } else if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_OPTION) || fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_PRIORITY)) {
             	if(DataField.DATA_TYPE.ListNode.equals(dataField.getType())){
             		ListNodeField listNodeField = (ListNodeField) dataField;
                 	JSONObject complexObj = new JSONObject();
@@ -199,6 +200,8 @@ public class JIRARequestIntegration extends RequestIntegration {
                 			}else {
                 				//JIRAFieldInfo  fieldInfo = fieldsInfo.get(field.getKey());
                 				List<AgileEntityFieldValue> allowdValues = fieldInfo.getAllowedValues();
+                				complexObj.put("id", -1);
+                				fields.put(field.getKey(), complexObj.toString());
                 				for(int i=0;i<allowdValues.size();i++){
                 					if(allowdValues.get(i).getName().equalsIgnoreCase(listNodeField.get().getName())){
                 						complexObj.put("id", allowdValues.get(i).getId());
@@ -210,6 +213,8 @@ public class JIRARequestIntegration extends RequestIntegration {
     					} catch (JSONException e) {
     						throw new RuntimeException("Error when generating create Issue JSON Payload", e);
     					}
+                	} else {
+                		fields.put(field.getKey(), null);
                 	}
             	} else if(DataField.DATA_TYPE.STRING.equals(dataField.getType())){
             		String ppmValue = dataField.get() == null ? null : dataField.get().toString();
@@ -228,10 +233,10 @@ public class JIRARequestIntegration extends RequestIntegration {
                         try {
 							if(listNodeField.get().getId().isEmpty()){
 								for (int i = 0; i < nameArr.length; i++) {
-							        JSONObject tempObj = new JSONObject(); 
 							        List<AgileEntityFieldValue> allowdValues = fieldInfo.getAllowedValues();
 									for(int j=0;j<allowdValues.size();j++){
-										if(allowdValues.get(j).getName().equalsIgnoreCase(listNodeField.get().getName())){
+										if(allowdValues.get(j).getName().equalsIgnoreCase(nameArr[i])){
+									        JSONObject tempObj = new JSONObject(); 
 											tempObj.put("id", allowdValues.get(j).getId());
 											tempArr.put(tempObj);
 										}
@@ -249,6 +254,8 @@ public class JIRARequestIntegration extends RequestIntegration {
 						} catch (JSONException e) {
 							throw new RuntimeException("Error when generating create Issue JSON Payload", e);
 						}
+            		} else {
+            			fields.put(field.getKey(), null);
             		}
             	}
             } else {

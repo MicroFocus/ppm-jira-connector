@@ -69,7 +69,7 @@ public class JIRAFieldInfo {
                 }
 
             if (fieldInfo.getAllowedValues() != null || "array".equals(fieldInfo.getType())
-                    || "option".equals(fieldInfo.getType())) {
+                    || "option".equals(fieldInfo.getType()) || "priority".equals(fieldInfo.getType())) {
                 fieldInfo.setList(true);
             }
 
