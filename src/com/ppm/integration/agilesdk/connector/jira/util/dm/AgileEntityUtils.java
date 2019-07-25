@@ -73,7 +73,7 @@ public class AgileEntityUtils {
 					                
 							} else {
 								com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
-				                user.setFullName(field.has("name") ? field.getString("name") : "");
+				                user.setFullName(field.has("displayName") ? field.getString("displayName") : "");
 				                users.add(user);
 							}						
 						}

@@ -26,6 +26,7 @@ import com.ppm.integration.agilesdk.dm.DataField.DATA_TYPE;
 import com.ppm.integration.agilesdk.dm.ListNode;
 import com.ppm.integration.agilesdk.dm.ListNodeField;
 import com.ppm.integration.agilesdk.dm.RequestIntegration;
+import com.ppm.integration.agilesdk.dm.StringField;
 import com.ppm.integration.agilesdk.dm.User;
 import com.ppm.integration.agilesdk.model.AgileEntity;
 import com.ppm.integration.agilesdk.model.AgileEntityFieldInfo;
@@ -72,7 +73,7 @@ public class JIRARequestIntegration extends RequestIntegration {
                     || "array".equals(field.getType()) 
                     || "option".equals(field.getType())) {
 
-                if (field.isList() && !"user".equals(field.getType()) && !("array".equals(field.getType()) && "user".equals(field.getItems()) && (field.getAllowedValues()== null || field.getAllowedValues().isEmpty()))) {
+                if (field.isList() && !"user".equals(field.getType()) && !("array".equals(field.getType()) && "user".equals(field.getItems())) && (field.getAllowedValues()== null || field.getAllowedValues().isEmpty())) {
                     // We only allow to select lists that have some static value options or are users lists.
                     continue;
                 }
@@ -172,7 +173,7 @@ public class JIRARequestIntegration extends RequestIntegration {
             
             if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_ARRAY) && fieldInfo.getItems().equals(JIRAConstants.KEY_FIELD_TYPE_USER)){
                 User user = null;
-                if (dataField.isList()) {
+                if (dataField.isList() && dataField.getType().equals(DATA_TYPE.USER)) {
                     // PPM Multi user field
                     List<User> users = (List<User>)dataField.get();
                 	JSONArray tempArr = new JSONArray();
@@ -194,7 +195,7 @@ public class JIRARequestIntegration extends RequestIntegration {
                     } else {
                     	fields.put(field.getKey(), null);
                     }
-                } else {
+                } else if(dataField.getType().equals(DATA_TYPE.USER)){
                     // Single user
                     user = (User)dataField.get();
                     if (user == null) {
@@ -204,11 +205,28 @@ public class JIRARequestIntegration extends RequestIntegration {
                         String jiraUsername = service.getJiraUsernameFromPpmUser(user);
                         fields.put(field.getKey(), jiraUsername == null ? null : jiraUsername);
                     }
+                } else if(dataField.getType().equals(DATA_TYPE.STRING) || dataField.getType().equals(DATA_TYPE.MEMO)){
+                	JSONArray ary = new JSONArray();
+                	JSONObject obj = new JSONObject();
+                	String jiraUsername = "";
+                	String str = dataField.get().toString();
+                	User tempUser= new User();
+                	tempUser.setEmail(str);
+                	jiraUsername = service.getJiraUsernameFromPpmUser(tempUser);
+                	if(jiraUsername != null){
+                		try {
+							obj.put("name", jiraUsername);
+							ary.put(obj);
+						} catch (JSONException e) {
+							throw new RuntimeException("Error when generating create multi-user JSONArray Payload", e);
+						}
+                	}
+                	fields.put(field.getKey(), ary.toString());
                 }
             	
             } else if(fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_USER)){
             	String jiraUsername = "";
-                if (dataField.isList()) {
+                if (dataField.isList() && dataField.getType().equals(DATA_TYPE.USER)) {
                     // PPM Multi user field
                     List<User> users = (List<User>)dataField.get();
                     if (users != null && !users.isEmpty()) {
@@ -220,13 +238,18 @@ public class JIRARequestIntegration extends RequestIntegration {
                     		}
                     	}
                     }
-                } else { // Single user
+                } else if(dataField.getType().equals(DATA_TYPE.USER)){ // Single user
                     User user = (User)dataField.get();
                     if (user == null) {
                         fields.put(field.getKey(), null);
                     } else {
                     	jiraUsername = service.getJiraUsernameFromPpmUser(user);
                     }
+                } else if(dataField.getType().equals(DATA_TYPE.STRING) || dataField.getType().equals(DATA_TYPE.MEMO)){
+                	String str = dataField.get().toString();
+                	User user = new User();
+                	user.setEmail(str);
+                	jiraUsername = service.getJiraUsernameFromPpmUser(user);
                 }
 
                 if (jiraUsername != null && jiraUsername.isEmpty()) {
@@ -309,7 +332,11 @@ public class JIRARequestIntegration extends RequestIntegration {
             	if(dataField.isList()){
             		List<User> users = (List<User>)dataField.get();
             		for(User user : users){
-            			value = value + user.getFullName() + ";";
+            			if(value.isEmpty()){
+            				value = user.getFullName();
+            			} else {
+                			value = value + ";" + user.getFullName();
+            			}
             		}
             	} else {
             		User user = (User)dataField.get();
