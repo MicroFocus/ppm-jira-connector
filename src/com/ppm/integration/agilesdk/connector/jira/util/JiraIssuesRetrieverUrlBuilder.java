@@ -158,14 +158,10 @@ public class JiraIssuesRetrieverUrlBuilder {
         if (standardIssueTypes == null || standardIssueTypes.isEmpty()) {
             return "";
         } else {
-            // Issue types names have to be put in quotes if they contain spaces.
+            // InovaPrime Bug Fix - always add ' to issuetype because some issue types maybe reserved words like Increment
             Set<String> sanitizedIssueTypesNames = new HashSet<>();
-            for (String issueType: standardIssueTypes) {
-                if (issueType.contains(" ")) {
-                    sanitizedIssueTypesNames.add("'"+issueType+"'");
-                } else {
-                    sanitizedIssueTypesNames.add(issueType);
-                }
+            for (String issueType: standardIssueTypes) {               
+                 sanitizedIssueTypesNames.add("'"+issueType+"'");
             }
             return " and issuetype in(" + StringUtils.join(sanitizedIssueTypesNames, ",") + ") ";
         }
