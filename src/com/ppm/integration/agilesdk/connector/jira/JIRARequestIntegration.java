@@ -15,7 +15,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.hp.ppm.integration.model.AgileEntityFieldValue;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAAgileEntity;
