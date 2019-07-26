@@ -9,6 +9,7 @@ import com.ppm.integration.agilesdk.dm.ListNode;
 import com.ppm.integration.agilesdk.dm.ListNodeField;
 import com.ppm.integration.agilesdk.dm.MultiUserField;
 import com.ppm.integration.agilesdk.dm.StringField;
+import com.ppm.integration.agilesdk.dm.UserField;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import org.apache.commons.lang.StringUtils;
@@ -209,19 +210,18 @@ public class AgileEntityUtils {
 
         if (isUserField(field)) {
         	User ppmUser = getPpmUserIdFromJiraUserField(field);
+        	com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
+        	UserField userField = new UserField();
             if (ppmUser == null) {
-                entity.addField(fieldKey, null);
-            } else {
-                // PPM Only supports Multi User fields for now
-                MultiUserField muf = new MultiUserField();
-                com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
+            	user.setFullName(field.has("displayName")?field.getString("displayName"):"");
+            	userField.set(user);
+                entity.addField(fieldKey, userField);
+            } else {                
                 user.setUserId(ppmUser.getUserId());
                 user.setUsername(ppmUser.getUserName());
                 user.setFullName(ppmUser.getFullName());
-                List<com.ppm.integration.agilesdk.dm.User> users = new ArrayList<>(1);
-                users.add(user);
-                muf.set(users);
-                entity.addField(fieldKey, muf);
+                userField.set(user);
+                entity.addField(fieldKey, userField);
             }
 
         } else {
