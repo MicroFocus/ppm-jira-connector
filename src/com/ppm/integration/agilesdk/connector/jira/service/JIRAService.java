@@ -461,6 +461,12 @@ public class JIRAService {
 				} else {
 					fieldsObj.put(fieldEntry.getKey(), JSONObject.NULL);
 				}
+			} else if (fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_USER)) {
+				if (value != null) {
+					fieldsObj.put(fieldEntry.getKey(), value);
+				} else {
+					fieldsObj.put(fieldEntry.getKey(), JSONObject.NULL);
+				}
 			}
 			else {
 				if (value == null || (isNumber && StringUtils.isBlank(value))) {
@@ -1039,13 +1045,13 @@ public class JIRAService {
 
             issue.setTypeId(fields.getJSONObject("issuetype").getString("id"));
 
-            if (fields.has("status") && fields.getJSONObject("status").has("name")) {
+            if (fields.has("status") && !fields.isNull("status") && fields.getJSONObject("status").has("name")) {
                 issue.setStatus(fields.getJSONObject("status").getString("name"));
             }
-            if (fields.has("creator") && fields.getJSONObject("creator").has("emailAddress")) {
+            if (fields.has("creator") && !fields.isNull("creator") && fields.getJSONObject("creator").has("emailAddress")) {
                 issue.setAuthorName(fields.getJSONObject("creator").getString("emailAddress"));
             }
-            if (fields.has("priority") && fields.getJSONObject("priority").has("name")) {
+            if (fields.has("priority") && !fields.isNull("priority") && fields.getJSONObject("priority").has("name")) {
                 issue.setPriorityName(fields.getJSONObject("priority").getString("name"));
             }
             if (fields.has(getCustomFields().sprintIdCustomField) && !fields.isNull(getCustomFields().sprintIdCustomField)) {

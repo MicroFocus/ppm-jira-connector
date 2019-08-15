@@ -9,6 +9,7 @@ import com.ppm.integration.agilesdk.dm.ListNode;
 import com.ppm.integration.agilesdk.dm.ListNodeField;
 import com.ppm.integration.agilesdk.dm.MultiUserField;
 import com.ppm.integration.agilesdk.dm.StringField;
+import com.ppm.integration.agilesdk.dm.UserField;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import org.apache.commons.lang.StringUtils;
@@ -38,13 +39,16 @@ public class AgileEntityUtils {
                 
                 JIRAFieldInfo fieldInfo = fieldsInfo.get(fieldKey);
                 
-				if (fieldInfo != null && (fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_OPTION)|| fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_PRIORITY))) {
+				if (fieldInfo != null && (fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_OPTION) || fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_PRIORITY))) {
 					if (fieldContents != JSONObject.NULL) {
 						JSONObject field = (JSONObject) fieldContents;
 						ListNode listNode = new ListNode();
 						listNode.setId(field.has("id") ? field.getString("id") : null);
-						listNode.setName(field.has("value") ? field.getString("value") : null);
-						listNode.setName(field.has("name") ? field.getString("name") : null);
+						if(fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_PRIORITY)){
+							listNode.setName(field.has("name") ? field.getString("name") : null);
+						} else {
+							listNode.setName(field.has("value") ? field.getString("value") : null);
+						}
 						ListNodeField listNodeField = new ListNodeField();
 						listNodeField.set(listNode);
 						entity.addField(fieldKey, listNodeField);
@@ -53,6 +57,40 @@ public class AgileEntityUtils {
 					}
 
 				} else if (fieldInfo != null
+						&& fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY) && fieldInfo.getItems().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_USER)) {
+					if (fieldContents != JSONObject.NULL) {
+						JSONArray fieldList = (JSONArray) fieldContents;
+						MultiUserField muf = new MultiUserField();
+		                List<com.ppm.integration.agilesdk.dm.User> users = new ArrayList<>();
+						for (int i = 0; i < fieldList.length(); i++) {
+							JSONObject field = (JSONObject) fieldList.get(i);
+							User ppmUser = getPpmUserIdFromJiraUserField(field);
+							if(ppmUser != null){
+								 com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
+					                user.setUserId(ppmUser.getUserId());
+					                user.setUsername(ppmUser.getUserName());
+					                user.setFullName(ppmUser.getFullName());
+					                users.add(user);
+					                
+							} else {
+								com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
+				                user.setFullName(field.has("displayName") ? field.getString("displayName") : "");
+				                users.add(user);
+							}						
+						}
+						if(users.size() > 0 ){
+							muf.set(users);
+			                entity.addField(fieldKey, muf);
+						} else {
+							entity.addField(fieldKey, null);
+						}
+					} 
+					else {
+						entity.addField(fieldKey, null);
+					}
+					
+					
+				}else if (fieldInfo != null
 						&& fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY)) {
 					if (fieldContents != JSONObject.NULL) {
 						JSONArray fieldList = (JSONArray) fieldContents;
@@ -171,18 +209,19 @@ public class AgileEntityUtils {
     private static void addJSONObjectFieldToEntity(String fieldKey, JSONObject field, JIRAAgileEntity entity) throws JSONException {
 
         if (isUserField(field)) {
-            Long ppmUserId = getPpmUserIdFromJiraUserField(field);
-            if (ppmUserId == null) {
-                entity.addField(fieldKey, null);
-            } else {
-                // PPM Only supports Multi User fields for now
-                MultiUserField muf = new MultiUserField();
-                com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
-                user.setUserId(ppmUserId);
-                List<com.ppm.integration.agilesdk.dm.User> users = new ArrayList<>(1);
-                users.add(user);
-                muf.set(users);
-                entity.addField(fieldKey, muf);
+        	User ppmUser = getPpmUserIdFromJiraUserField(field);
+        	com.ppm.integration.agilesdk.dm.User user = new com.ppm.integration.agilesdk.dm.User();
+        	UserField userField = new UserField();
+            if (ppmUser == null) {
+            	user.setFullName(field.has("displayName")?field.getString("displayName"):"");
+            	userField.set(user);
+                entity.addField(fieldKey, userField);
+            } else {                
+                user.setUserId(ppmUser.getUserId());
+                user.setUsername(ppmUser.getUserName());
+                user.setFullName(ppmUser.getFullName());
+                userField.set(user);
+                entity.addField(fieldKey, userField);
             }
 
         } else {
@@ -199,14 +238,14 @@ public class AgileEntityUtils {
         return field != null && field.has("self") && field.has("emailAddress") && field.getString("self").contains("/user?");
     }
 
-    private static Long getPpmUserIdFromJiraUserField(JSONObject field) throws JSONException {
+    private static User getPpmUserIdFromJiraUserField(JSONObject field) throws JSONException {
         String email = field.getString("emailAddress");
 
         UserProvider provider = Providers.getUserProvider(JIRAIntegrationConnector.class);
         User user = provider.getByEmail(email);
 
         if (user != null) {
-            return user.getUserId();
+            return user;
         }
 
         return null;
