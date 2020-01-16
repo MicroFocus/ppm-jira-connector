@@ -26,7 +26,12 @@ public class JiraRestWrapper {
         return restClient;
     }
 
-    private Resource getJIRAResource(String urlAdd) {
+    /**
+
+     * @param includeContentTypeHeader if true, we'll include the JSon "Content-Type" header. If false, we'll not include any Content-type header (to use when using GET or DELETE).
+     * @return
+     */
+    private Resource getJIRAResource(String urlAdd, boolean includeContentTypeHeader) {
         Resource resource;
         try {
             URL url = new URL(urlAdd);
@@ -41,8 +46,12 @@ public class JiraRestWrapper {
                 // This will never happen.
                 throw new RuntimeException("Impossible encoding error occurred", e);
             }
-            resource = restClient.resource(uri).contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizationToken());
+            resource = restClient.resource(uri).accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizationToken());
+
+            if (includeContentTypeHeader) {
+                resource.contentType(MediaType.APPLICATION_JSON);
+            }
+
         } catch (MalformedURLException e) {
             throw new RestRequestException( // is a malformed URL
                     400, String.format("%s is a malformed URL", urlAdd));
@@ -53,7 +62,7 @@ public class JiraRestWrapper {
     }
 
     public ClientResponse sendGet(String uri) {
-        Resource resource = this.getJIRAResource(uri);
+        Resource resource = this.getJIRAResource(uri, false);
         ClientResponse response = resource.get();
 
         checkResponseStatus(200, response, uri, "GET", null);
@@ -84,7 +93,7 @@ public class JiraRestWrapper {
     }
 
     public ClientResponse sendPost(String uri, String jsonPayload, int expectedHttpStatusCode) {
-        Resource resource = this.getJIRAResource(uri);
+        Resource resource = this.getJIRAResource(uri, true);
         ClientResponse response = resource.post(jsonPayload);
 
         checkResponseStatus(expectedHttpStatusCode, response, uri, "POST", jsonPayload);
@@ -93,7 +102,7 @@ public class JiraRestWrapper {
     }
 
     public ClientResponse sendPut(String uri, String jsonPayload, int expectedHttpStatusCode) {
-        Resource resource = this.getJIRAResource(uri);
+        Resource resource = this.getJIRAResource(uri,true);
         ClientResponse response = resource.put(jsonPayload);
 
         checkResponseStatus(expectedHttpStatusCode, response, uri, "PUT", jsonPayload);
