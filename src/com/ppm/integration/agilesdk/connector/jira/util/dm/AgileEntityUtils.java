@@ -97,6 +97,10 @@ public class AgileEntityUtils {
 						String ids = "";
 						String names = "";
 						for (int i = 0; i < fieldList.length(); i++) {
+						    //Fix QCCR1L68982,if an element in the fieldlist which is NOT a JSONObject,it will be ignored 
+							if(!(fieldList.get(i) instanceof JSONObject)) {				    					    	
+				    			continue;
+				    		}
 							JSONObject field = (JSONObject) fieldList.get(i);
 							String id = field.has("id") ? field.getString("id") : null;
 							String value = field.has("value") ? field.getString("value") : null;
