@@ -10,6 +10,7 @@ import org.apache.wink.client.RestClient;
 import javax.ws.rs.core.MediaType;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
+import java.util.UUID;
 
 public class JiraRestWrapper {
 
@@ -47,6 +48,9 @@ public class JiraRestWrapper {
                 throw new RuntimeException("Impossible encoding error occurred", e);
             }
             resource = restClient.resource(uri).accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizationToken());
+
+            // Following header is required for easy HTTP request tracing in systems such as DataPower.
+            resource.header("X-B3-TraceId", UUID.randomUUID().toString());
 
             if (includeContentTypeHeader) {
                 resource.contentType(MediaType.APPLICATION_JSON);
