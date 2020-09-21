@@ -32,7 +32,7 @@ public class JiraRestWrapper {
      * @param includeContentTypeHeader if true, we'll include the JSon "Content-Type" header. If false, we'll not include any Content-type header (to use when using GET or DELETE).
      * @return
      */
-    private Resource getJIRAResource(String urlAdd, boolean includeContentTypeHeader) {
+    private Resource getJIRAResource(String urlAdd, boolean includeContentTypeHeader, String uuid) {
         Resource resource;
         try {
             URL url = new URL(urlAdd);
@@ -50,7 +50,9 @@ public class JiraRestWrapper {
             resource = restClient.resource(uri).accept(MediaType.APPLICATION_JSON).header("Authorization", config.getBasicAuthorizationToken());
 
             // Following header is required for easy HTTP request tracing in systems such as DataPower.
-            resource.header("X-B3-TraceId", UUID.randomUUID().toString());
+            if (uuid != null) {
+                resource.header("X-B3-TraceId", uuid);
+            }
 
             if (includeContentTypeHeader) {
                 resource.contentType(MediaType.APPLICATION_JSON);
@@ -66,18 +68,22 @@ public class JiraRestWrapper {
     }
 
     public ClientResponse sendGet(String uri) {
-        Resource resource = this.getJIRAResource(uri, false);
+        String uuid = UUID.randomUUID().toString();
+        Resource resource = this.getJIRAResource(uri, false, uuid);
         ClientResponse response = resource.get();
 
-        checkResponseStatus(200, response, uri, "GET", null);
+        checkResponseStatus(200, response, uri, "GET", null, uuid);
 
         return response;
     }
 
-    private void checkResponseStatus(int expectedHttpStatusCode, ClientResponse response, String uri, String verb, String payload) {
+    private void checkResponseStatus(int expectedHttpStatusCode, ClientResponse response, String uri, String verb, String payload, String uuid) {
 
         if (response.getStatusCode() != expectedHttpStatusCode) {
             StringBuilder errorMessage = new StringBuilder(String.format("## Unexpected HTTP response status code %s for %s uri %s, expected %s", response.getStatusCode(), verb,  uri, expectedHttpStatusCode));
+            if (uuid != null) {
+                errorMessage.append(System.lineSeparator()).append("Value of HTTP tracking header X-B3-TraceId:").append(uuid);
+            }
             if (payload != null) {
                 errorMessage.append(System.lineSeparator()).append(System.lineSeparator()).append("# Sent Payload:").append(System.lineSeparator()).append(payload);
             }
@@ -97,19 +103,20 @@ public class JiraRestWrapper {
     }
 
     public ClientResponse sendPost(String uri, String jsonPayload, int expectedHttpStatusCode) {
-        Resource resource = this.getJIRAResource(uri, true);
+        String uuid = UUID.randomUUID().toString();
+        Resource resource = this.getJIRAResource(uri, true, uuid);
         ClientResponse response = resource.post(jsonPayload);
-
-        checkResponseStatus(expectedHttpStatusCode, response, uri, "POST", jsonPayload);
+        checkResponseStatus(expectedHttpStatusCode, response, uri, "POST", jsonPayload, uuid);
 
         return response;
     }
 
     public ClientResponse sendPut(String uri, String jsonPayload, int expectedHttpStatusCode) {
-        Resource resource = this.getJIRAResource(uri,true);
+        String uuid = UUID.randomUUID().toString();
+        Resource resource = this.getJIRAResource(uri,true, uuid);
         ClientResponse response = resource.put(jsonPayload);
 
-        checkResponseStatus(expectedHttpStatusCode, response, uri, "PUT", jsonPayload);
+        checkResponseStatus(expectedHttpStatusCode, response, uri, "PUT", jsonPayload, uuid);
 
         return response;
     }
