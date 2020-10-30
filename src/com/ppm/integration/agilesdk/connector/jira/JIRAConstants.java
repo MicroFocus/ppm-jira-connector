@@ -23,6 +23,8 @@ public class JIRAConstants {
 
     public static final String KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS = "useAdminPasswordToMapTasks";
 
+    public static final String KEY_IMPORT_ASSIGNED_USERS_TO_TASKS = "importAssignedUsersToTasks";
+
     public static final String KEY_USERNAME = "username";
 
     public static final String KEY_PASSWORD = "password";
