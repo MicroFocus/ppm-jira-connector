@@ -1163,7 +1163,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
 
             @Override public long getOwnerId() {
-                return issue.getAssigneePpmUserId();
+                if (context.configValues.getBoolean(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, true)) {
+                    return issue.getAssigneePpmUserId();
+                } else {
+                    return -1;
+                }
             }
 
             @Override public List<ExternalTask> getChildren() {
@@ -1196,6 +1200,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
     private List<ExternalTaskActuals> generateActuals(final JIRAIssue issue, TasksCreationContext context,
                                                       final Date scheduledStart) {
+
+        if (!context.configValues.getBoolean(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, true)) {
+            issue.setAssigneePpmUserId(null);
+        }
 
         List<ExternalTaskActuals> actuals = new ArrayList<ExternalTaskActuals>();
 
@@ -1362,7 +1370,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
 
             @Override public long getResourceId() {
-                return issue.getAssigneePpmUserId();
+                if (context.configValues.getBoolean(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, true)) {
+                    return issue.getAssigneePpmUserId();
+                } else {
+                    return -1;
+                }
             }
 
             @Override public Date getEstimatedFinishDate() {
@@ -1403,8 +1415,12 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
 
             @Override public long getResourceId() {
-                User user = context.userProvider.getByEmail(worklog.getAuthorEmail());
-                return user == null ? -1 : user.getUserId();
+                if (context.configValues.getBoolean(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, true)) {
+                    User user = context.userProvider.getByEmail(worklog.getAuthorEmail());
+                    return user == null ? -1 : user.getUserId();
+                } else {
+                    return -1;
+                }
             }
 
             @Override public Date getEstimatedFinishDate() {
