@@ -1,6 +1,7 @@
 
 package com.ppm.integration.agilesdk.connector.jira.model;
 
+import com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration;
 import com.ppm.integration.agilesdk.pm.ExternalTask;
 import org.apache.commons.lang.StringUtils;
 
@@ -100,17 +101,24 @@ public abstract class JIRAIssue extends JIRAEntity {
         return "[" + this.type + "] " + getName();
     }
 
-    public ExternalTask.TaskStatus getExternalTaskStatus() {
-        switch (status) {
-            case "To Do":
-                return ExternalTask.TaskStatus.IN_PLANNING;
-            case "In Progress":
-                return ExternalTask.TaskStatus.IN_PROGRESS;
-            case "Done":
-                return ExternalTask.TaskStatus.COMPLETED;
-            default:
-                return ExternalTask.TaskStatus.UNKNOWN;
+    public ExternalTask.TaskStatus getExternalTaskStatus(JIRAWorkPlanIntegration.TasksCreationContext context) {
+        ExternalTask.TaskStatus ppmStatus = context.getPPMStatusForJiraStatus(this.status);
+
+        if (ppmStatus == null) {
+            // Status is not overridden by connector settintgs, so we use old logic which defaults to UNKNOWN
+            switch (status) {
+                case "To Do":
+                    return ExternalTask.TaskStatus.IN_PLANNING;
+                case "In Progress":
+                    return ExternalTask.TaskStatus.IN_PROGRESS;
+                case "Done":
+                    return ExternalTask.TaskStatus.COMPLETED;
+                default:
+                    return ExternalTask.TaskStatus.UNKNOWN;
+            }
         }
+
+        return ppmStatus;
     }
 
     /**
@@ -222,10 +230,10 @@ public abstract class JIRAIssue extends JIRAEntity {
         return work;
     }
 
-    public Date getScheduledStart(Map<String, JIRASprint> sprints) {
+    public Date getScheduledStart(Map<String, JIRASprint> sprints, JIRAWorkPlanIntegration.TasksCreationContext context) {
         Date start = getDefaultStartDate();
 
-        if (ExternalTask.TaskStatus.COMPLETED.equals(this.getExternalTaskStatus())) {
+        if (ExternalTask.TaskStatus.COMPLETED.equals(this.getExternalTaskStatus(context))) {
             start = adjustStartDateTime(this.getLastUpdateDateAsDate());
         }
 
@@ -237,10 +245,10 @@ public abstract class JIRAIssue extends JIRAEntity {
         return start;
     }
 
-    public Date getScheduledFinish(Map<String, JIRASprint> sprints) {
+    public Date getScheduledFinish(Map<String, JIRASprint> sprints, JIRAWorkPlanIntegration.TasksCreationContext context) {
         Date finish = getDefaultFinishDate();
 
-        if (ExternalTask.TaskStatus.COMPLETED.equals(this.getExternalTaskStatus())) {
+        if (ExternalTask.TaskStatus.COMPLETED.equals(this.getExternalTaskStatus(context))) {
             finish = adjustFinishDateTime(this.getLastUpdateDateAsDate());
         }
 
