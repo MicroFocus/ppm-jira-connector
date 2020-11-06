@@ -29,6 +29,16 @@ public class JIRAConstants {
 
     public static final String KEY_PASSWORD = "password";
 
+    public static final String KEY_TASK_STATUS_IN_PLANNING = "statusInPlanning";
+    public static final String KEY_TASK_STATUS_READY = "statusReady";
+    public static final String KEY_TASK_STATUS_ACTIVE = "statusActive";
+    public static final String KEY_TASK_STATUS_IN_PROGRESS = "statusInProgress";
+    public static final String KEY_TASK_STATUS_COMPLETED = "statusCompleted";
+    public static final String KEY_TASK_STATUS_PENDING_PREDECESSOR = "statusPendingPredecessor";
+    public static final String KEY_TASK_STATUS_CANCELLED = "statusCancelled";
+    public static final String KEY_TASK_STATUS_ON_HOLD = "statusOnHold";
+    public static final String KEY_TASK_STATUS_UNKNOWN = "statusUnknown";
+
     public static final String OPTION_INCLUDE_ISSUES_NO_GROUP = "option_include_issues_in_no_group";
 
     public static final String OPTION_ADD_ROOT_TASK = "option_add_root_task";
