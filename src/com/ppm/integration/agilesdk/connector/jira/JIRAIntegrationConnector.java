@@ -60,15 +60,14 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new LineBreaker(),
                 new LabelText("", "STATUS_MAPPING_LABEL", "block", false),
                 new LineBreaker(),
-                // TODO Add more default status value mapping
-                new PlainText(JIRAConstants.KEY_TASK_STATUS_IN_PLANNING, "STATUS_IN_PLANNING_LABEL", "To Do", false),
-                new PlainText(JIRAConstants.KEY_TASK_STATUS_READY, "STATUS_READY_LABEL", "Open;Reopened", false),
-                new PlainText(JIRAConstants.KEY_TASK_STATUS_ACTIVE, "STATUS_ACTIVE_LABEL", "", false),
+                //new PlainText(JIRAConstants.KEY_TASK_STATUS_IN_PLANNING, "STATUS_IN_PLANNING_LABEL", "", false),
+                new PlainText(JIRAConstants.KEY_TASK_STATUS_READY, "STATUS_READY_LABEL", "To Do;Open;Reopened", false),
+                //new PlainText(JIRAConstants.KEY_TASK_STATUS_ACTIVE, "STATUS_ACTIVE_LABEL", "", false),
                 new PlainText(JIRAConstants.KEY_TASK_STATUS_IN_PROGRESS, "STATUS_IN_PROGRESS_LABEL", "In Progress", false),
                 new PlainText(JIRAConstants.KEY_TASK_STATUS_COMPLETED, "STATUS_COMPLETED_LABEL", "Done;Closed;Resolved", false),
-                new PlainText(JIRAConstants.KEY_TASK_STATUS_PENDING_PREDECESSOR, "STATUS_PENDING_PREDECESSOR_LABEL", "", false),
+                //new PlainText(JIRAConstants.KEY_TASK_STATUS_PENDING_PREDECESSOR, "STATUS_PENDING_PREDECESSOR_LABEL", "", false),
                 new PlainText(JIRAConstants.KEY_TASK_STATUS_CANCELLED, "STATUS_CANCELLED_LABEL", "", false),
-                new PlainText(JIRAConstants.KEY_TASK_STATUS_ON_HOLD, "STATUS_ON_HOLD_LABEL", "", false),
+                //new PlainText(JIRAConstants.KEY_TASK_STATUS_ON_HOLD, "STATUS_ON_HOLD_LABEL", "", false),
                 new PlainText(JIRAConstants.KEY_TASK_STATUS_UNKNOWN, "STATUS_UNKNOWN_LABEL", "", false)
         });
     }
