@@ -1430,7 +1430,7 @@ public class JIRAService {
             }
 
             if (author.equalsIgnoreCase(worklog.getAuthorEmail()) || author
-                    .equalsIgnoreCase(worklog.getAuthorKey())) {
+                    .equalsIgnoreCase(worklog.getAuthorKey()) || author.equalsIgnoreCase(worklog.getAuthorName())) {
                 Date logDate = worklog.getDateStartedAsDate();
                 if ((fromDate.before(logDate) && toDate.after(logDate)) || fromDate.equals(logDate) || toDate
                         .equals(logDate)) {
