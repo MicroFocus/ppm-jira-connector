@@ -54,6 +54,8 @@ public class JIRAIssueWork extends JIRABase {
 
         private String authorKey;
 
+        private String authorName;
+
         public double getTimeSpentHours() {
             return timeSpentHours;
         }
@@ -94,6 +96,14 @@ public class JIRAIssueWork extends JIRABase {
         public void setAuthorKey(String authorKey) {
             this.authorKey = authorKey;
         }
+
+        public String getAuthorName() {
+            return authorName;
+        }
+
+        public void setAuthorName(String authorName) {
+            this.authorName = authorName;
+        }
     }
 
     public static JIRAWorklogEntry getWorklogEntryFromWorklogJSONObject(JSONObject obj) {
@@ -111,6 +121,10 @@ public class JIRAIssueWork extends JIRABase {
 
             if (obj.has("author") && obj.getJSONObject("author").has("key")) {
                 worklog.setAuthorKey(obj.getJSONObject("author").getString("key"));
+            }
+
+            if (obj.has("author") && obj.getJSONObject("author").has("name")) {
+                worklog.setAuthorName(obj.getJSONObject("author").getString("name"));
             }
 
             worklog.setDateStarted(obj.getString("started"));
