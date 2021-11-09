@@ -23,7 +23,11 @@ public class JIRAConstants {
 
     public static final String KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS = "useAdminPasswordToMapTasks";
 
+    public static final String KEY_ALLOW_WILDCARD_PROJECT_MAPPING = "ällowWildcardProjectMapping";
+
     public static final String KEY_IMPORT_ASSIGNED_USERS_TO_TASKS = "importAssignedUsersToTasks";
+
+    public static final String KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST = "workplanAllowedIssueTypes";
 
     public static final String KEY_USERNAME = "username";
 
@@ -58,6 +62,7 @@ public class JIRAConstants {
     public static final String KEY_IMPORT_SELECTION = "import_selection";
 
     public static final String LABEL_WORK_PLAN_OPTIONS = "jira_work_plan_options";
+    public static final String LABEL_REQUEST_AGILE_OPTIONS = "jira_request_agile_options";
 
     public static final String SELECT_USER_DATA_STORY_POINTS = "jira_user_data_story_points";
 

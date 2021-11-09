@@ -203,11 +203,28 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         "Select issue types to import:", true)}));
 
         // List of issue types checkboxes.
-        Set<String> allIssueTypes = new HashSet<String>();
-        for (Set<String> issueTypes : issueTypesPerProjectKey.values()) {
-            allIssueTypes.addAll(issueTypes);
+        Set<String> allowedIssueTypes = null;
+
+        String allowedIssueTypesStr = values.get(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST);
+        if (!StringUtils.isBlank(allowedIssueTypesStr)) {
+            allowedIssueTypes = new HashSet<>();
+            for (String issueType : StringUtils.split(allowedIssueTypesStr, ';') ) {
+                allowedIssueTypes.add(issueType.trim().toLowerCase());
+            }
         }
 
+        Set<String> allIssueTypes = new HashSet<String>();
+        for (Set<String> issueTypes : issueTypesPerProjectKey.values()) {
+            if (allowedIssueTypes == null) {
+                allIssueTypes.addAll(issueTypes);
+            } else {
+                for (String issueType: issueTypes) {
+                    if (allowedIssueTypes.contains(issueType.trim().toLowerCase())) {
+                        allIssueTypes.add(issueType);
+                    }
+                }
+            }
+        }
 
         List<String> sortedIssueTypes = new ArrayList<String>(allIssueTypes);
 

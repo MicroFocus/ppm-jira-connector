@@ -257,7 +257,15 @@ public class JIRAService {
      * @return
      */
     public List<JIRAIssueType> getProjectIssueTypes(String projectKey) {
-        ClientResponse response = getWrapper().sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey);
+
+        String url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey;
+
+        if ("*".equals(projectKey)) {
+            // List of issues types for all projects.
+            url = baseUri + JIRAConstants.CREATEMETA_SUFFIX;
+        }
+
+        ClientResponse response = getWrapper().sendGet(url);
 
         String jsonStr = response.getEntity(String.class);
 
@@ -1443,7 +1451,14 @@ public class JIRAService {
     }
 
     public Map<String, JIRAFieldInfo> getFields(String projectKey, String issuetypeId) {
-        ClientResponse response = getWrapper().sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey+"&issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields");
+
+        String url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey+"&issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields";
+
+        if ("*".equals(projectKey)) {
+            url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields";
+        }
+
+        ClientResponse response = getWrapper().sendGet(url);
 
         String jsonStr = response.getEntity(String.class);
 
