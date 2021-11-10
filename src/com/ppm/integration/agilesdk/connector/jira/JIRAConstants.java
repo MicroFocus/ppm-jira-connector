@@ -29,6 +29,8 @@ public class JIRAConstants {
 
     public static final String KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST = "workplanAllowedIssueTypes";
 
+    public static final String KEY_WORK_PLAN_ISSUE_TYPES_CHECKED_LIST = "workplanCheckedIssueTypes";
+
     public static final String KEY_USERNAME = "username";
 
     public static final String KEY_PASSWORD = "password";

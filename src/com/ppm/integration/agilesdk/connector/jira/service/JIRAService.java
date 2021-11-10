@@ -270,19 +270,38 @@ public class JIRAService {
         String jsonStr = response.getEntity(String.class);
 
         List<JIRAIssueType> jiraIssueTypes = new ArrayList<>();
+
+        Set<String> includedIssueTypeIds = new HashSet<>();
+
         try {
             JSONObject result = new JSONObject(jsonStr);
-            JSONObject projectInfo = result.getJSONArray("projects").getJSONObject(0);
-            JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
-            for (int i = 0; i < issueTypes.length(); i++) {
-                JSONObject issueType = issueTypes.getJSONObject(i);
-                JIRAIssueType jiraIssueType = JIRAIssueType.fromJSONObject(issueType);
-
-                jiraIssueTypes.add(jiraIssueType);
+            JSONArray projects = result.getJSONArray("projects");
+            for (int i = 0 ; i < projects.length() ; i++) {
+                JSONObject projectInfo = projects.getJSONObject(i);
+                JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
+                for (int j = 0; j < issueTypes.length(); j++) {
+                    JSONObject issueType = issueTypes.getJSONObject(j);
+                    if (!issueType.getBoolean("subtask")) {
+                        JIRAIssueType jiraIssueType = JIRAIssueType.fromJSONObject(issueType);
+                        if (!includedIssueTypeIds.contains(jiraIssueType.getId())) {
+                            jiraIssueTypes.add(jiraIssueType);
+                            includedIssueTypeIds.add(jiraIssueType.getId());
+                        }
+                    }
+                }
             }
         } catch (JSONException e) {
             logger.error("Error when retrieving Issues Types list for project "+projectKey, e);
         }
+
+        // Let's sort issue types by name.
+        Collections.sort(jiraIssueTypes, new Comparator<JIRAIssueType>() {
+            @Override
+            public int compare(JIRAIssueType o1, JIRAIssueType o2) {
+                return o1.getName().compareToIgnoreCase(o2.getName());
+            }
+        });
+
         return jiraIssueTypes;
     }
 

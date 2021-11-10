@@ -62,6 +62,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new CheckBox(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, "KEY_IMPORT_ASSIGNED_USERS_TO_TASKS", true),
                 new LineBreaker(),
                 new PlainText(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST, "WORK_PLAN_ISSUE_TYPES_ALLOW_LIST", "", false),
+                new PlainText(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_CHECKED_LIST, "WORK_PLAN_ISSUE_TYPES_CHECKED_LIST", "", false),
                 new LineBreaker(),
                 new LabelText("", "STATUS_MAPPING_LABEL", "block", false),
                 new LineBreaker(),

@@ -204,12 +204,20 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         // List of issue types checkboxes.
         Set<String> allowedIssueTypes = null;
+        final Set<String> checkedIssueTypes = new HashSet<>();
 
         String allowedIssueTypesStr = values.get(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST);
         if (!StringUtils.isBlank(allowedIssueTypesStr)) {
             allowedIssueTypes = new HashSet<>();
             for (String issueType : StringUtils.split(allowedIssueTypesStr, ';') ) {
                 allowedIssueTypes.add(issueType.trim().toLowerCase());
+            }
+        }
+
+        String checkedIssueTypesStr = values.get(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_CHECKED_LIST);
+        if (!StringUtils.isBlank(checkedIssueTypesStr)) {
+            for (String issueType : StringUtils.split(checkedIssueTypesStr, ';') ) {
+                checkedIssueTypes.add(issueType.trim().toLowerCase());
             }
         }
 
@@ -235,7 +243,10 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 });
 
         for (final String issueType : sortedIssueTypes) {
-            fields.add( new CheckBox(getParamNameFromIssueTypeName(issueType), issueType, "Epic".equalsIgnoreCase(issueType) || "Story".equalsIgnoreCase(issueType)) {
+
+            boolean isChecked = checkedIssueTypes.isEmpty() ? "Epic".equalsIgnoreCase(issueType) || "Story".equalsIgnoreCase(issueType) : checkedIssueTypes.contains(issueType.trim().toLowerCase());
+
+            fields.add( new CheckBox(getParamNameFromIssueTypeName(issueType), issueType, isChecked) {
 
                 @Override public List<String> getStyleDependencies() {
                     return Arrays.asList(new String[] {JIRAConstants.KEY_JIRA_PROJECT, JIRAConstants.KEY_IMPORT_SELECTION});
