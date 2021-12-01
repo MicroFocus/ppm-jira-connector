@@ -1,11 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="build-sample-connector" basedir="." default="all">
 
+	<taskdef name="hotswap" classname="dak.ant.taskdefs.Hotswap" onerror="ignore" />
+
     <target name="all">
         <ant dir="." antfile="build-connector.xml" target="all" inheritall="true" />
     </target>
+	
+	<target name="compile">
+        <ant dir="." antfile="build-connector.xml" target="compile" inheritall="true" />
+    </target>
+
 
     <target name="quick-deploy">
         <ant dir="." antfile="build-connector.xml" target="quick-deploy" inheritall="true" />
     </target>
+	
+	
+	<!-- In order to use ant hotswap, you need to copy HotswapAndTest.jar from PPM java/lib/itg_additions into ANT_HOME/lib -->
+	<target name="hotswap">
+	
+		<echo message="Usage: ant hotswap(swap latest compiled classes since last compilation)" />
+			
+		
+		<tstamp><format property="class.tstamp" pattern="MM/dd/yyyy kk:mm:ss" /></tstamp>
+		
+		<echo message="Compiling all modified classes"/>
+		<antcall target="compile"/>
+		
+
+		<echo message="Hotswapping all modified classes"/>
+
+		<hotswap verbose="true" port="1234">
+			<fileset dir="./bin/classes" includes="**/*.class">
+				<date datetime="${class.tstamp}" pattern="MM/dd/yyyy kk:mm:ss" when="after" granularity="0"/>
+			</fileset>
+		</hotswap>
+		
+		<echo message="Ran hotswap"/>  
+	</target>
+
+
+	
 </project>

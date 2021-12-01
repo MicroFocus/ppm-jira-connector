@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientRuntimeException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
     private final Logger logger = Logger.getLogger(this.getClass());
@@ -38,8 +39,6 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         List<Field> fields = new ArrayList<Field>();
 
         final JIRAService service = JIRAServiceProvider.get(values).useAdminAccount();
-
-        final Map<String, Set<String>> issueTypesPerProjectKey = service.getIssueTypesPerProject();
 
         if (!useAdminPassword) {
             fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true));
@@ -214,6 +213,8 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         }
 
+        final Set<String> finalAllowedIssueTypes = allowedIssueTypes;
+
         String checkedIssueTypesStr = values.get(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_CHECKED_LIST);
         if (!StringUtils.isBlank(checkedIssueTypesStr)) {
             for (String issueType : StringUtils.split(checkedIssueTypesStr, ';') ) {
@@ -221,18 +222,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
             }
         }
 
-        Set<String> allIssueTypes = new HashSet<String>();
-        for (Set<String> issueTypes : issueTypesPerProjectKey.values()) {
-            if (allowedIssueTypes == null) {
-                allIssueTypes.addAll(issueTypes);
-            } else {
-                for (String issueType: issueTypes) {
-                    if (allowedIssueTypes.contains(issueType.trim().toLowerCase())) {
-                        allIssueTypes.add(issueType);
-                    }
-                }
-            }
-        }
+        Set<String> allIssueTypes = service.getAllNonSubTaskIssueTypes().stream().map(it -> it.getName()).filter(name -> finalAllowedIssueTypes == null || finalAllowedIssueTypes.contains(name.trim().toLowerCase())).collect(Collectors.toSet());
 
         List<String> sortedIssueTypes = new ArrayList<String>(allIssueTypes);
 
@@ -255,8 +245,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 @Override public FieldAppearance getFieldAppearance(ValueSet values) {
                     String projectKey = values.get(JIRAConstants.KEY_JIRA_PROJECT);
                     String importSelection = values.get(JIRAConstants.KEY_IMPORT_SELECTION);
+                    Set<String> projectIssueTypes = service.getIssueTypesNamesPerProject(projectKey);
 
-                    if ((importSelection != null && importSelection.startsWith(JIRAConstants.IMPORT_PORTFOLIO_PREFIX)) || (issueTypesPerProjectKey.get(projectKey) != null && issueTypesPerProjectKey.get(projectKey).contains(issueType))) {
+                    if ((importSelection != null && importSelection.startsWith(JIRAConstants.IMPORT_PORTFOLIO_PREFIX)) || (projectIssueTypes != null && projectIssueTypes.contains(issueType))) {
                         // This issue type is enabled for this project or if picking a Jira Portfolio entity as their contents are cross projects.
                         return new FieldAppearance("", "disabled");
                     } else {

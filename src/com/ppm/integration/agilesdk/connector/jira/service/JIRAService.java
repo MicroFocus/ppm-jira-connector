@@ -12,7 +12,6 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestReque
 import com.ppm.integration.agilesdk.connector.jira.util.JiraIssuesRetrieverUrlBuilder;
 import com.ppm.integration.agilesdk.connector.jira.util.dm.AgileEntityUtils;
 import com.ppm.integration.agilesdk.provider.UserProvider;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientResponse;
@@ -25,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * This class is in charge of making all the REST calls to JIRA.
@@ -151,8 +151,9 @@ public class JIRAService {
 
     private CustomFields customFields = null;
 
-    private Map<String, Set<String>> issueTypesPerProject = null;
-    private Set<String> subTasksIssueTypes = null;
+    private Map<String, Set<String>> issueTypesPerProject = new HashMap<>();
+    private Set<String> subTasksIssueTypeNames = null;
+    private List<JIRAIssueType> allIssueTypes = null;
 
     private JiraRestWrapper userWrapper;
     private JiraRestWrapper adminWrapper;
@@ -232,6 +233,18 @@ public class JIRAService {
         return isJiraPortfolioEnabled.booleanValue();
     }
 
+    public List<JIRAIssueType> getAllNonSubTaskIssueTypes() {
+        return getAllIssueTypes().stream().filter(it -> !it.isSubTask()).collect(Collectors.toList());
+    }
+
+    public List<JIRAIssueType> getAllIssueTypes() {
+        if (allIssueTypes == null) {
+            initIssueTypes();
+        }
+
+        return allIssueTypes;
+    }
+
     public List<JIRAProject> getProjects() {
         ClientResponse response = getWrapper().sendGet(baseUri + JIRAConstants.PROJECT_SUFFIX);
 
@@ -262,7 +275,8 @@ public class JIRAService {
 
         if ("*".equals(projectKey)) {
             // List of issues types for all projects.
-            url = baseUri + JIRAConstants.CREATEMETA_SUFFIX;
+            List<JIRAIssueType> allIssueTypes = getAllNonSubTaskIssueTypes();
+            return allIssueTypes;
         }
 
         ClientResponse response = getWrapper().sendGet(url);
@@ -1057,7 +1071,7 @@ public class JIRAService {
 
             if (issueType.equalsIgnoreCase(JIRAConstants.JIRA_ISSUE_EPIC)) {
                 issue = new JIRAEpic();
-            } else if (getSubTasksIssueTypes().contains(issueType)) { // This is the only place where calling getSubTasksIssueTypes() is appropriate.
+            } else if (getSubTasksIssueTypeNames().contains(issueType)) { // This is the only place where calling getSubTasksIssueTypes() is appropriate.
                 issue = new JIRASubTask();
 
                 if (fields.has("parent")) {
@@ -1484,17 +1498,31 @@ public class JIRAService {
         Map<String, JIRAFieldInfo> jiraFieldsInfo = new HashMap<>();
         try {
             JSONObject result = new JSONObject(jsonStr);
-            JSONObject projectInfo = result.getJSONArray("projects").getJSONObject(0);
-            JSONObject fields = projectInfo.getJSONArray("issuetypes").getJSONObject(0).getJSONObject("fields");
+            JSONArray projects = result.getJSONArray("projects");
 
-            for (String fieldKey : JSONObject.getNames(fields)) {
-                JSONObject field = fields.getJSONObject(fieldKey);
-                try {
-                    JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
-                    jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
-                } catch (Exception e) {
-                    logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:"+field.toString());
-                    continue;
+            for (int i = 0 ; i < projects.length() ; i++) {
+
+                JSONObject projectInfo = projects.getJSONObject(i);
+
+                JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
+
+                if (issueTypes != null && issueTypes.length() > 0) {
+
+                    // The issue type is always uniquely filtered so there should be only one record at most
+                    JSONObject fields = issueTypes.getJSONObject(0).getJSONObject("fields");
+
+                    for (String fieldKey : JSONObject.getNames(fields)) {
+                        if (!jiraFieldsInfo.containsKey(fieldKey)) {
+                            JSONObject field = fields.getJSONObject(fieldKey);
+                            try {
+                                JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
+                                jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
+                            } catch (Exception e) {
+                                logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
+                                continue;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1611,12 +1639,20 @@ public class JIRAService {
     }
 
     // Returns the non-sub-tasks issue types keys for each project key.
-    public Map<String, Set<String>> getIssueTypesPerProject() {
-        if (issueTypesPerProject == null) {
-            initIssueTypes();
+    public Set<String> getIssueTypesNamesPerProject(String projectKey) {
+
+        if (projectKey == null) {
+            return new HashSet<>();
         }
 
-        return issueTypesPerProject;
+        if (!issueTypesPerProject.containsKey(projectKey)) {
+            List<JIRAIssueType> issueTypes = getProjectIssueTypes(projectKey);
+            Set<String> issueTypeNames = new HashSet<>();
+            issueTypes.stream().forEach(it ->  {issueTypeNames.add(it.getName());});
+            issueTypesPerProject.put(projectKey, issueTypeNames);
+        }
+
+        return issueTypesPerProject.get(projectKey);
     }
 
     public Collection<HierarchyLevelInfo> getJiraPortfolioLevelsInfo() {
@@ -1650,48 +1686,33 @@ public class JIRAService {
      * We should not need sub-tasks types anymore ; just retrieve all sub-tasks from standard issues by key.
      * @deprecated
      */
-    public Set<String> getSubTasksIssueTypes() {
-        if (subTasksIssueTypes == null) {
+    public Set<String> getSubTasksIssueTypeNames() {
+        if (subTasksIssueTypeNames == null) {
             initIssueTypes();
         }
 
-        return subTasksIssueTypes;
+        return subTasksIssueTypeNames;
     }
 
     private void initIssueTypes() {
 
-        issueTypesPerProject = new HashMap<>();
-        subTasksIssueTypes = new HashSet<>();
+        subTasksIssueTypeNames = new HashSet<>();
+        allIssueTypes = new ArrayList<>();
 
-        ClientResponse response = adminWrapper.sendGet(baseUri + JIRAConstants.CREATEMETA_SUFFIX);
+        ClientResponse response = adminWrapper.sendGet(baseUri + JIRAConstants.ISSUE_TYPES);
         String jsonStr = response.getEntity(String.class);
 
         try {
-            JSONObject results = new JSONObject(jsonStr);
+            JSONArray results = new JSONArray(jsonStr);
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject issueType = results.getJSONObject(i);
 
-            JSONArray projects = results.getJSONArray("projects");
-
-            for (int i = 0 ; i < projects.length() ; i++) {
-                JSONObject projectInfo = projects.getJSONObject(i);
-
-                String projectKey = projectInfo.getString("key");
-
-                Set<String> issueTypesSet = new HashSet<String>();
-
-                JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
-
-                for (int j = 0 ; j < issueTypes.length() ; j++) {
-                    JSONObject issueType = issueTypes.getJSONObject(j);
+                if (issueType.getBoolean("subtask")) {
                     String issueTypeName = issueType.getString("name");
-
-                    if (!issueType.getBoolean("subtask")) {
-                        issueTypesSet.add(issueTypeName);
-                    } else {
-                        subTasksIssueTypes.add(issueTypeName);
-                    }
+                    subTasksIssueTypeNames.add(issueTypeName);
                 }
 
-                issueTypesPerProject.put(projectKey, issueTypesSet);
+                allIssueTypes.add(JIRAIssueType.fromJSONObject(issueType));
             }
         } catch (JSONException e) {
             logger.error("Error when retrieving issue types per project", e);

@@ -183,6 +183,8 @@ public class JIRAConstants {
 
     public static final String JIRA_REST_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
 
+    public static final String ISSUE_TYPES = API_VERSION2_API_ROOT + "issuetype";
+
     public static final String JIRA_GET_ISSUE_WORKLOG = API_VERSION2_API_ROOT + "issue/%issue%/worklog";
 
     public static final String JIRA_FIELDS_URL = API_VERSION2_API_ROOT + "field/";
