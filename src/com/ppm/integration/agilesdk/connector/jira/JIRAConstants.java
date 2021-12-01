@@ -23,7 +23,7 @@ public class JIRAConstants {
 
     public static final String KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS = "useAdminPasswordToMapTasks";
 
-    public static final String KEY_ALLOW_WILDCARD_PROJECT_MAPPING = "ällowWildcardProjectMapping";
+    public static final String KEY_ALLOW_WILDCARD_PROJECT_MAPPING = "allowWildcardProjectMapping";
 
     public static final String KEY_IMPORT_ASSIGNED_USERS_TO_TASKS = "importAssignedUsersToTasks";
 
