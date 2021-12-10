@@ -27,7 +27,7 @@
         <delete dir="${CONNECTOR_DIR}/bin" />
     </target>
 
-    <target name="compile" depends="clean">
+    <target name="compile">
         <mkdir dir="${CONNECTOR_DIR}/bin/classes" />
         <echo>${CONNECTOR_DIR} - Compile Java Classes</echo>
         <javac bootclasspath="${env.JDK_LIB}" source="${env.SOURCE}" target="${env.TARGET}" destdir="${CONNECTOR_DIR}/bin/classes" debug="${debug}">
@@ -53,7 +53,7 @@
         </copy>
     </target>
 
-    <target name="jar-cls" depends="compile">
+    <target name="jar-cls" depends="clean, compile">
         <jar jarfile="${CONNECTOR_DIR}/bin/connector-${BUNDLE_NAME}.jar" compress="true">
             <fileset dir="${CONNECTOR_DIR}/bin/classes" />
         </jar>

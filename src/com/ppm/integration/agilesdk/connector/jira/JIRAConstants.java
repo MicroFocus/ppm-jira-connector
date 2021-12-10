@@ -23,7 +23,13 @@ public class JIRAConstants {
 
     public static final String KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS = "useAdminPasswordToMapTasks";
 
+    public static final String KEY_ALLOW_WILDCARD_PROJECT_MAPPING = "allowWildcardProjectMapping";
+
     public static final String KEY_IMPORT_ASSIGNED_USERS_TO_TASKS = "importAssignedUsersToTasks";
+
+    public static final String KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST = "workplanAllowedIssueTypes";
+
+    public static final String KEY_WORK_PLAN_ISSUE_TYPES_CHECKED_LIST = "workplanCheckedIssueTypes";
 
     public static final String KEY_USERNAME = "username";
 
@@ -58,6 +64,7 @@ public class JIRAConstants {
     public static final String KEY_IMPORT_SELECTION = "import_selection";
 
     public static final String LABEL_WORK_PLAN_OPTIONS = "jira_work_plan_options";
+    public static final String LABEL_REQUEST_AGILE_OPTIONS = "jira_request_agile_options";
 
     public static final String SELECT_USER_DATA_STORY_POINTS = "jira_user_data_story_points";
 
@@ -175,6 +182,8 @@ public class JIRAConstants {
     public static final String JIRA_PORTFOLIO_PARENT_CUSTOM =  "com.atlassian.jpo:jpo-custom-field-parent";
 
     public static final String JIRA_REST_ISSUE_URL = API_VERSION2_API_ROOT + "issue/";
+
+    public static final String ISSUE_TYPES = API_VERSION2_API_ROOT + "issuetype";
 
     public static final String JIRA_GET_ISSUE_WORKLOG = API_VERSION2_API_ROOT + "issue/%issue%/worklog";
 

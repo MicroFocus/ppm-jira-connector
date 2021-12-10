@@ -2,13 +2,7 @@ package com.ppm.integration.agilesdk.connector.jira;
 
 import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_NAME_PREFIX;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
@@ -23,10 +17,8 @@ import com.ppm.integration.agilesdk.connector.jira.model.JIRAIssueType;
 import com.ppm.integration.agilesdk.connector.jira.service.JIRAService;
 import com.ppm.integration.agilesdk.dm.DataField;
 import com.ppm.integration.agilesdk.dm.DataField.DATA_TYPE;
-import com.ppm.integration.agilesdk.dm.ListNode;
 import com.ppm.integration.agilesdk.dm.ListNodeField;
 import com.ppm.integration.agilesdk.dm.RequestIntegration;
-import com.ppm.integration.agilesdk.dm.StringField;
 import com.ppm.integration.agilesdk.dm.User;
 import com.ppm.integration.agilesdk.model.AgileEntity;
 import com.ppm.integration.agilesdk.model.AgileEntityFieldInfo;
@@ -45,6 +37,13 @@ public class JIRARequestIntegration extends RequestIntegration {
             feature.setType(issueType.getId());
             entityList.add(feature);
         }
+
+        Collections.sort(entityList, new Comparator<AgileEntityInfo>() {
+            @Override
+            public int compare(AgileEntityInfo o1, AgileEntityInfo o2) {
+                return o1.getName().compareToIgnoreCase(o2.getName());
+            }
+        });
 
         return entityList;
     }
@@ -93,6 +92,14 @@ public class JIRARequestIntegration extends RequestIntegration {
                 fieldsInfo.add(fieldInfo);
             }
         }
+
+        // We sort fields alphabetically.
+        Collections.sort(fieldsInfo, new Comparator<AgileEntityFieldInfo>() {
+            @Override
+            public int compare(AgileEntityFieldInfo o1, AgileEntityFieldInfo o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+        });
 
         return fieldsInfo;
     }

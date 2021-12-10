@@ -32,7 +32,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 
     @Override
     public String getConnectorVersion() {
-        return "2.0";
+        return "2.1";
     }
 
     @Override
@@ -50,6 +50,9 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new PlainText(JIRAConstants.KEY_ADMIN_USERNAME, "ADMIN_USERNAME", "", true),
                 new PasswordText(JIRAConstants.KEY_ADMIN_PASSWORD, "ADMIN_PASSWORD", "", true),
                 new LineBreaker(),
+                new LabelText(JIRAConstants.LABEL_REQUEST_AGILE_OPTIONS, "REQUEST_AGILE_OPTIONS","Request Mapping (Request-Agile):", false),
+                new CheckBox(JIRAConstants.KEY_ALLOW_WILDCARD_PROJECT_MAPPING, "KEY_ALLOW_WILDCARD_PROJECT_MAPPING", false),
+                new LineBreaker(),
                 new LabelText(JIRAConstants.LABEL_WORK_PLAN_OPTIONS, "WORK_PLAN_OPTIONS",
                         "User Data Options:", true),
                 getUserDataDDL(JIRAConstants.SELECT_USER_DATA_STORY_POINTS, "USER_DATA_STORY_POINTS"),
@@ -57,6 +60,9 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new LineBreaker(),
                 new CheckBox(JIRAConstants.KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS, "KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS", false),
                 new CheckBox(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, "KEY_IMPORT_ASSIGNED_USERS_TO_TASKS", true),
+                new LineBreaker(),
+                new PlainText(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_ALLOW_LIST, "WORK_PLAN_ISSUE_TYPES_ALLOW_LIST", "", false),
+                new PlainText(JIRAConstants.KEY_WORK_PLAN_ISSUE_TYPES_CHECKED_LIST, "WORK_PLAN_ISSUE_TYPES_CHECKED_LIST", "", false),
                 new LineBreaker(),
                 new LabelText("", "STATUS_MAPPING_LABEL", "block", false),
                 new LineBreaker(),
@@ -76,6 +82,14 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
     public List<AgileProject> getAgileProjects(ValueSet instanceConfigurationParameters) {
         List<JIRAProject> jiraProjects = JIRAServiceProvider.get(instanceConfigurationParameters).useAdminAccount().getProjects();
         List<AgileProject> agileProjects = new ArrayList<AgileProject>(jiraProjects.size());
+
+        // Adding * project for project-independent fields mapping at the begging of the list
+        if ("true".equals(instanceConfigurationParameters.get(JIRAConstants.KEY_ALLOW_WILDCARD_PROJECT_MAPPING))) {
+            AgileProject agileProject = new AgileProject();
+            agileProject.setDisplayName("*");
+            agileProject.setValue("*");
+            agileProjects.add(agileProject);
+        }
 
         for (JIRAProject jiraProject : jiraProjects) {
             AgileProject agileProject = new AgileProject();
