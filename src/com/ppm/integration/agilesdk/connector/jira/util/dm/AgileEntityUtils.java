@@ -36,7 +36,7 @@ public class AgileEntityUtils {
             for (String fieldKey : JSONObject.getNames(fieldsObj)) {
 
                 Object fieldContents = fieldsObj.get(fieldKey);
-                
+
                 JIRAFieldInfo fieldInfo = fieldsInfo.get(fieldKey);
                 
 				if (fieldInfo != null && (fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_OPTION) || fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_PRIORITY))) {
@@ -91,7 +91,8 @@ public class AgileEntityUtils {
 					
 					
 				}else if (fieldInfo != null
-						&& fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY)) {
+                        && fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY)
+                        && fieldContents instanceof JSONArray) {
 					if (fieldContents != JSONObject.NULL) {
 						JSONArray fieldList = (JSONArray) fieldContents;
 						String ids = "";
