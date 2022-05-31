@@ -91,7 +91,7 @@ public class JiraRestWrapper {
             String responseStr = null;
             // when response code is 401.it's response data is html text. it to long to show
             if(response.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            	responseStr = "Authentication Failure";
+            	responseStr = "Authentication failed";
             } else {
                 try {
                     responseStr = response.getEntity(String.class);
