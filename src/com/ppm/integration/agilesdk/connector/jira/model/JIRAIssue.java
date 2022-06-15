@@ -166,6 +166,11 @@ public abstract class JIRAIssue extends JIRAEntity {
         return convertToDate(resolutionDate);
     }
 
+    public Date getCreationDateAsDate() {
+        return convertToDate(creationDate);
+    }
+
+
     public void setLastUpdateDate(String lastUpdateDate) {
         this.lastUpdateDate = lastUpdateDate;
     }

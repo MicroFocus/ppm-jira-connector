@@ -1,5 +1,6 @@
 package com.ppm.integration.agilesdk.connector.jira.service;
 
+import com.hp.ppm.common.model.IdProjectDate;
 import com.hp.ppm.user.model.User;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.JIRAConstants;
@@ -243,6 +244,11 @@ public class JIRAService {
         }
 
         return allIssueTypes;
+    }
+
+    public String getMyselfInfo() {
+        ClientResponse response = getWrapper().sendGet(baseUri + JIRAConstants.MYSELF_SUFFIX);
+        return response.getEntity(String.class);
     }
 
     public List<JIRAProject> getProjects() {
@@ -743,6 +749,37 @@ public class JIRAService {
         return retrieveAgileEntities(fieldsInfo, searchUrlBuilder);
     }
 
+    public List<IdProjectDate> getAgileEntityIdsCreatedSince(String agileProjectValue, String entityType, Date createdSinceDate) {
+
+        JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
+                new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveOnlyFields("key", "issuetype", "created", "summary");
+
+        if (!StringUtils.isBlank(agileProjectValue)) {
+            searchUrlBuilder.setProjectKey(agileProjectValue);
+        }
+
+        if (!StringUtils.isBlank(entityType)) {
+            searchUrlBuilder.setStandardIssueTypes(entityType);
+        }
+
+        if (createdSinceDate != null) {
+            searchUrlBuilder.addAndConstraint("created>='" + new SimpleDateFormat("yyyy-MM-dd HH:mm").format(createdSinceDate) + "'");
+        }
+
+        IssueRetrievalResult result =
+                runIssueRetrievalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
+
+        List<IdProjectDate> results = new ArrayList<>(result.getIssues().size());
+
+        for (JSONObject obj : result.getIssues()) {
+            JIRAIssue issue = getIssueFromJSONObj(obj);
+            IdProjectDate idProjectDate = new IdProjectDate(issue.getKey(), issue.getProjectKey(), issue.getCreationDateAsDate());
+            results.add(idProjectDate);
+        }
+
+        return results;
+    }
+
     /**
      * We use the search issue API instead of the /rest/issue/{key} because we already have all
      * the logic to get the right columns and build the right JIRAIssue in the search API.
@@ -1113,7 +1150,9 @@ public class JIRAService {
             issue.setCreationDate(fields.has("created") ? fields.getString("created") : "");
             issue.setLastUpdateDate(fields.has("updated") ? fields.getString("updated") : "");
             issue.setResolutionDate(fields.has(JIRAConstants.JIRA_FIELD_RESOLUTION_DATE) ? fields.getString(JIRAConstants.JIRA_FIELD_RESOLUTION_DATE) : "");
-            issue.setEpicKey(fields.getString(getCustomFields().epicLinkCustomField));
+            if (fields.has(getCustomFields().epicLinkCustomField)) {
+                issue.setEpicKey(fields.getString(getCustomFields().epicLinkCustomField));
+            }
 
             if (getCustomFields().portfolioParentCustomField != null) {
                 issue.setPortfolioParentKey(fields.getString(getCustomFields().portfolioParentCustomField));

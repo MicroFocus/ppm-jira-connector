@@ -4,6 +4,7 @@ import static com.ppm.integration.agilesdk.connector.jira.JIRAConstants.JIRA_NAM
 
 import java.util.*;
 
+import com.hp.ppm.common.model.IdProjectDate;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -406,6 +407,30 @@ public class JIRARequestIntegration extends RequestIntegration {
         }
 
         return JIRAServiceProvider.get(instanceConfigurationParameters).getSingleAgileEntityIssue(agileProjectValue, entityType, entityId);
+    }
+
+    @Override
+    /** @since 10.0.3 */
+    public boolean supportsAgileEntityToNewPPMRequestSync() {
+        return true;
+    }
+
+    @Override
+    /** @since 10.0.3 */
+    public List<IdProjectDate> getAgileEntityIDsToCreateInPPM(final String agileProjectValue, final String entityType,
+                                                              final ValueSet instanceConfigurationParameters, Date createdSinceDate) {
+
+        // We have no way to know if some of the issues in Jira are already mapped in PPM, so we'll return all of them.
+        if (agileProjectValue == null || entityType.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+
+
+        List<IdProjectDate> entities = JIRAServiceProvider.get(instanceConfigurationParameters).useAdminAccount().getAgileEntityIdsCreatedSince( ("*".equals(agileProjectValue) ? null : agileProjectValue), entityType, createdSinceDate);
+
+        return entities;
+
     }
 
 }
