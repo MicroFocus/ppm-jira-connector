@@ -159,7 +159,7 @@ public abstract class JIRAIssue extends JIRAEntity {
     }
 
     public Date getLastUpdateDateAsDate() {
-        return convertToDate(lastUpdateDate);
+        return convertToDateTime(lastUpdateDate);
     }
 
     public Date getResolutionDateAsDate() {
@@ -167,7 +167,7 @@ public abstract class JIRAIssue extends JIRAEntity {
     }
 
     public Date getCreationDateAsDate() {
-        return convertToDate(creationDate);
+        return convertToDateTime(creationDate);
     }
 
 
