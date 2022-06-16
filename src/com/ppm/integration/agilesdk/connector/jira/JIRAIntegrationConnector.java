@@ -35,7 +35,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 
     @Override
     public String getConnectorVersion() {
-        return "2.1";
+        return "3.0";
     }
 
     @Override
