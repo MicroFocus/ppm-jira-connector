@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.wink.client.ClientResponse;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
+import org.apache.http.HttpStatus;
 
 import javax.ws.rs.core.MediaType;
 import java.io.UnsupportedEncodingException;
@@ -88,10 +89,15 @@ public class JiraRestWrapper {
                 errorMessage.append(System.lineSeparator()).append(System.lineSeparator()).append("# Sent Payload:").append(System.lineSeparator()).append(payload);
             }
             String responseStr = null;
-            try {
-                responseStr = response.getEntity(String.class);
-            } catch (Exception e) {
-                // we don't do anything if we cannot get the response.
+            // when response code is 401.it's response data is html text. it to long to show
+            if(response.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+            	responseStr = "Authentication failed";
+            } else {
+                try {
+                    responseStr = response.getEntity(String.class);
+                } catch (Exception e) {
+                    // we don't do anything if we cannot get the response.
+                }
             }
             if (!StringUtils.isBlank(responseStr)) {
                 errorMessage.append(System.lineSeparator()).append(System.lineSeparator()).append("# Received Response:").append(System.lineSeparator()).append(responseStr);
