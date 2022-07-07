@@ -1,6 +1,7 @@
 package com.ppm.integration.agilesdk.connector.jira.service;
 
-import com.hp.ppm.common.model.IdProjectDate;
+import com.hp.ppm.common.model.AgileEntityIdName;
+import com.hp.ppm.common.model.AgileEntityIdProjectDate;
 import com.hp.ppm.user.model.User;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.JIRAConstants;
@@ -125,6 +126,32 @@ public class JIRAService {
         return descendants;
     }
 
+    public List<AgileEntityIdName> getAgileEntityIdsAndNames(String agileProjectValue, String entityType) {
+        JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
+                new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveOnlyFields("key", "issuetype", "summary");
+
+        if (!StringUtils.isBlank(agileProjectValue)) {
+            searchUrlBuilder.setProjectKey(agileProjectValue);
+        }
+
+        if (!StringUtils.isBlank(entityType)) {
+            searchUrlBuilder.setStandardIssueTypes(entityType);
+        }
+
+        IssueRetrievalResult result =
+                runIssueRetrievalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
+
+        List<AgileEntityIdName> results = new ArrayList<>(result.getIssues().size());
+
+        for (JSONObject obj : result.getIssues()) {
+            JIRAIssue issue = getIssueFromJSONObj(obj);
+            AgileEntityIdName idAndName = new AgileEntityIdName(issue.getKey(), "[" + issue.getKey() + "] " + issue.getName());
+            results.add(idAndName);
+        }
+
+        return results;
+    }
+
     private class CustomFields {
         public String epicNameCustomField = null;
 
@@ -140,6 +167,7 @@ public class JIRAService {
          * @return All Jira custom fields needed all of the time: epic name & link, story points, sprint, and (if using Jira Portfolio) Portfolio Parent.
          */
         public String[] getJiraCustomFields() {
+
             if (portfolioParentCustomField == null) {
                 return new String[] {epicNameCustomField, epicLinkCustomField, storyPointsCustomField,
                         sprintIdCustomField};
@@ -749,7 +777,7 @@ public class JIRAService {
         return retrieveAgileEntities(fieldsInfo, searchUrlBuilder);
     }
 
-    public List<IdProjectDate> getAgileEntityIdsCreatedSince(String agileProjectValue, String entityType, Date createdSinceDate) {
+    public List<AgileEntityIdProjectDate> getAgileEntityIdsCreatedSince(String agileProjectValue, String entityType, Date createdSinceDate) {
 
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveOnlyFields("key", "issuetype", "created", "summary");
@@ -769,11 +797,11 @@ public class JIRAService {
         IssueRetrievalResult result =
                 runIssueRetrievalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
 
-        List<IdProjectDate> results = new ArrayList<>(result.getIssues().size());
+        List<AgileEntityIdProjectDate> results = new ArrayList<>(result.getIssues().size());
 
         for (JSONObject obj : result.getIssues()) {
             JIRAIssue issue = getIssueFromJSONObj(obj);
-            IdProjectDate idProjectDate = new IdProjectDate(issue.getKey(), issue.getProjectKey(), issue.getCreationDateAsDate());
+            AgileEntityIdProjectDate idProjectDate = new AgileEntityIdProjectDate(issue.getKey(), issue.getProjectKey(), issue.getCreationDateAsDate());
             results.add(idProjectDate);
         }
 
