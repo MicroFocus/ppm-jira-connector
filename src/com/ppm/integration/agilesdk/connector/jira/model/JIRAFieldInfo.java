@@ -79,6 +79,58 @@ public class JIRAFieldInfo {
         }
     }
 
+    public static JIRAFieldInfo fromJSONFieldObject(JSONObject field) {
+        try {
+            JIRAFieldInfo fieldInfo = new JIRAFieldInfo();
+            fieldInfo.setKey(field.getString("id"));
+            fieldInfo.setName(field.getString("name"));
+
+            if (field.has("allowedValues")) { // This should not be there when reading from /field REST API...
+                JSONArray allowedValues = field.getJSONArray("allowedValues");
+                if (allowedValues != null) {
+                    fieldInfo.setAllowedValues(new ArrayList<AgileEntityFieldValue>(allowedValues.length()));
+
+                    for (int i = 0 ; i < allowedValues.length() ; i++) {
+                        AgileEntityFieldValue listValue = new AgileEntityFieldValue();
+                        JSONObject listValueObj = allowedValues.getJSONObject(i);
+                        String value = "?";
+                        if (listValueObj.has("name")) {
+                            value = listValueObj.getString("name");
+                        } else if (listValueObj.has("value")) {
+                            value = listValueObj.getString("value");
+                        }
+                        listValue.setId(listValueObj.getString("id"));
+                        listValue.setName(value);
+                        fieldInfo.getAllowedValues().add(listValue);
+                    }
+                }
+            }
+
+            JSONObject schema = field.getJSONObject("schema");
+
+            if (schema != null) {
+                if (schema.has("type")) {
+                    fieldInfo.setType(schema.getString("type"));
+                }
+                if (schema.has("system")) {
+                    fieldInfo.setSystem(schema.getString("system"));
+                }
+                if (schema.has("items")) {
+                    fieldInfo.setItems(schema.getString("items"));
+                }
+            }
+
+            if (fieldInfo.getAllowedValues() != null || "array".equals(fieldInfo.getType())
+                    || "option".equals(fieldInfo.getType()) || "priority".equals(fieldInfo.getType())) {
+                fieldInfo.setList(true);
+            }
+
+            return fieldInfo;
+        } catch (JSONException e) {
+            throw new RuntimeException("Error while reading JSon definition of Field", e);
+        }
+    }
+
     public String getKey() {
         return key;
     }

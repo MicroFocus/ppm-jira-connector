@@ -11,6 +11,7 @@ import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
 import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.ui.*;
+import org.apache.log4j.Logger;
 
 /**
  * @author baijuy The connector provides the integration for ppm with Jira. The
@@ -19,6 +20,8 @@ import com.ppm.integration.agilesdk.ui.*;
  *         with workplan or timesheet.
  */
 public class JIRAIntegrationConnector extends IntegrationConnector {
+
+    private final Logger logger = Logger.getLogger(this.getClass());
 
     @Override
     public String getExternalApplicationName() {
@@ -109,6 +112,22 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
     @Override
     public List<String> getIntegrationClasses() {
         return Arrays.asList(new String[] {"com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration","com.ppm.integration.agilesdk.connector.jira.JIRATimeSheetIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAPortfolioEpicIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAAgileDataIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRARequestIntegration"});
+    }
+
+    @Override
+    /** @since 10.0.3 */
+    public String testConnection(ValueSet instanceConfigurationParameters) {
+        // Overriding this method as making a call to /rest/api/2/myself is faster then retrieving the whole list of projects.
+        try {
+            String myselfInfo = JIRAServiceProvider.get(instanceConfigurationParameters).useAdminAccount().getMyselfInfo();
+            logger.debug("Test Connection successful. Returned myself info:");
+            logger.debug(myselfInfo);
+        } catch (Exception e) {
+            logger.error("Error when testing connectivity", e);
+            return e.getMessage();
+        }
+
+        return null;
     }
 
     private DynamicDropdown getUserDataDDL(String elementName,
