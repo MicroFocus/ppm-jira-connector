@@ -124,6 +124,13 @@ public class JIRAService {
         return descendants;
     }
 
+
+    public String getMyselfInfo() {
+        ClientResponse response = getWrapper().sendGet(baseUri + JIRAConstants.MYSELF_SUFFIX);
+        return response.getEntity(String.class);
+    }
+
+
     private class CustomFields {
         public String epicNameCustomField = null;
 
@@ -154,6 +161,42 @@ public class JIRAService {
     private Map<String, Set<String>> issueTypesPerProject = new HashMap<>();
     private Set<String> subTasksIssueTypeNames = null;
     private List<JIRAIssueType> allIssueTypes = null;
+
+
+    private boolean canUseNewCreateMetaAPI() {
+        if (canUseNewCreateMetaAPI != null) {
+            return canUseNewCreateMetaAPI;
+        }
+
+        // We initialize canUseNewCreateMetaAPI based on Jira version
+
+        try {
+            String url = baseUri + JIRAConstants.SERVERINFO_SUFFIX;
+
+            ClientResponse response = getWrapper().sendGet(url);
+
+            String jsonStr = response.getEntity(String.class);
+
+
+            JSONObject serverInfo = new JSONObject(jsonStr);
+
+            JSONArray versionNumbers = serverInfo.getJSONArray("versionNumbers");
+
+            if (versionNumbers != null && (versionNumbers.length() >= 1)) {
+                int majorVersion = versionNumbers.getInt(0);
+                canUseNewCreateMetaAPI = majorVersion >= 9;
+            }
+
+        } catch (Exception e) {
+            // If any error occurs, we consider that Jira is too old
+            canUseNewCreateMetaAPI = false;
+        }
+
+        return canUseNewCreateMetaAPI;
+    }
+
+        private Boolean canUseNewCreateMetaAPI = null;
+
 
     private JiraRestWrapper userWrapper;
     private JiraRestWrapper adminWrapper;
@@ -271,9 +314,16 @@ public class JIRAService {
      */
     public List<JIRAIssueType> getProjectIssueTypes(String projectKey) {
 
-        String url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey;
+        boolean useNewCreateMetaAPI = canUseNewCreateMetaAPI();
 
-        if ("*".equals(projectKey)) {
+        String url = null;
+        if (useNewCreateMetaAPI) {
+             url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "/"+projectKey+"/issuetypes?maxResults=999";
+        } else {
+            url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys=" + projectKey;
+        }
+
+        if ("*".equals(projectKey) || "".equals(projectKey)) {
             // List of issues types for all projects.
             List<JIRAIssueType> allIssueTypes = getAllNonSubTaskIssueTypes();
             return allIssueTypes;
@@ -289,17 +339,32 @@ public class JIRAService {
 
         try {
             JSONObject result = new JSONObject(jsonStr);
-            JSONArray projects = result.getJSONArray("projects");
-            for (int i = 0 ; i < projects.length() ; i++) {
-                JSONObject projectInfo = projects.getJSONObject(i);
-                JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
-                for (int j = 0; j < issueTypes.length(); j++) {
-                    JSONObject issueType = issueTypes.getJSONObject(j);
+
+            if (useNewCreateMetaAPI) {
+                JSONArray issueTypes = result.getJSONArray("values");
+                for (int i = 0; i < issueTypes.length(); i++) {
+                    JSONObject issueType = issueTypes.getJSONObject(i);
                     if (!issueType.getBoolean("subtask")) {
                         JIRAIssueType jiraIssueType = JIRAIssueType.fromJSONObject(issueType);
                         if (!includedIssueTypeIds.contains(jiraIssueType.getId())) {
                             jiraIssueTypes.add(jiraIssueType);
                             includedIssueTypeIds.add(jiraIssueType.getId());
+                        }
+                    }
+                }
+            } else {
+                JSONArray projects = result.getJSONArray("projects");
+                for (int i = 0; i < projects.length(); i++) {
+                    JSONObject projectInfo = projects.getJSONObject(i);
+                    JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
+                    for (int j = 0; j < issueTypes.length(); j++) {
+                        JSONObject issueType = issueTypes.getJSONObject(j);
+                        if (!issueType.getBoolean("subtask")) {
+                            JIRAIssueType jiraIssueType = JIRAIssueType.fromJSONObject(issueType);
+                            if (!includedIssueTypeIds.contains(jiraIssueType.getId())) {
+                                jiraIssueTypes.add(jiraIssueType);
+                                includedIssueTypeIds.add(jiraIssueType.getId());
+                            }
                         }
                     }
                 }
@@ -1485,10 +1550,24 @@ public class JIRAService {
 
     public Map<String, JIRAFieldInfo> getFields(String projectKey, String issuetypeId) {
 
-        String url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys="+projectKey+"&issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields";
-
+        boolean useNewRESTAPI = canUseNewCreateMetaAPI();
+        boolean useFieldRESTAPI = false;
+        String url = null;
         if ("*".equals(projectKey)) {
-            url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?issuetypeIds="+issuetypeId+"&expand=projects.issuetypes.fields";
+            if (useNewRESTAPI) {
+                // This URL will not list allowedValues for array types,
+                // but using CREATEMETA on new REST APIs requires to pass a project key which we don't have here.
+                url = baseUri + JIRAConstants.JIRA_FIELDS_URL;
+                useFieldRESTAPI = true;
+            } else {
+                url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?issuetypeIds=" + issuetypeId + "&expand=projects.issuetypes.fields";
+            }
+        } else {
+            if (canUseNewCreateMetaAPI()) {
+                url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "/" + projectKey + "/issuetypes/" + issuetypeId + "?expand=projects.issuetypes.fields&maxResults=999";
+            } else {
+                url = baseUri + JIRAConstants.CREATEMETA_SUFFIX + "?projectKeys=" + projectKey + "&issuetypeIds=" + issuetypeId + "&expand=projects.issuetypes.fields";
+            }
         }
 
         ClientResponse response = getWrapper().sendGet(url);
@@ -1497,29 +1576,61 @@ public class JIRAService {
 
         Map<String, JIRAFieldInfo> jiraFieldsInfo = new HashMap<>();
         try {
-            JSONObject result = new JSONObject(jsonStr);
-            JSONArray projects = result.getJSONArray("projects");
+            if (useFieldRESTAPI) {
+                // When using Jira Server 9+, if we don't have a project Key we need to get fields from /field REST API.
+                // This means we won't get the list of allowed values.
+                JSONArray fields = new JSONArray(jsonStr);
+                for (int i = 0; i < fields.length(); i++) {
 
-            for (int i = 0 ; i < projects.length() ; i++) {
+                    JSONObject field = fields.getJSONObject(i);
+                    try {
+                        JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONFieldObject(field);
+                        jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
+                    } catch (Exception e) {
+                        logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
+                        continue;
+                    }
+                }
+            } else if (useNewRESTAPI) {
+                JSONObject result = new JSONObject(jsonStr);
+                JSONArray values = result.getJSONArray("values");
+                for (int i = 0; i < values.length(); i++) {
 
-                JSONObject projectInfo = projects.getJSONObject(i);
+                    JSONObject field = values.getJSONObject(i);
+                    try {
+                        String fieldKey = field.getString("fieldId");
+                        JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
+                        jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
+                    } catch (Exception e) {
+                        logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
+                        continue;
+                    }
+                }
+            } else {
+                JSONObject result = new JSONObject(jsonStr);
+                JSONArray projects = result.getJSONArray("projects");
 
-                JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
+                for (int i = 0; i < projects.length(); i++) {
 
-                if (issueTypes != null && issueTypes.length() > 0) {
+                    JSONObject projectInfo = projects.getJSONObject(i);
 
-                    // The issue type is always uniquely filtered so there should be only one record at most
-                    JSONObject fields = issueTypes.getJSONObject(0).getJSONObject("fields");
+                    JSONArray issueTypes = projectInfo.getJSONArray("issuetypes");
 
-                    for (String fieldKey : JSONObject.getNames(fields)) {
-                        if (!jiraFieldsInfo.containsKey(fieldKey)) {
-                            JSONObject field = fields.getJSONObject(fieldKey);
-                            try {
-                                JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
-                                jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
-                            } catch (Exception e) {
-                                logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
-                                continue;
+                    if (issueTypes != null && issueTypes.length() > 0) {
+
+                        // The issue type is always uniquely filtered so there should be only one record at most
+                        JSONObject fields = issueTypes.getJSONObject(0).getJSONObject("fields");
+
+                        for (String fieldKey : JSONObject.getNames(fields)) {
+                            if (!jiraFieldsInfo.containsKey(fieldKey)) {
+                                JSONObject field = fields.getJSONObject(fieldKey);
+                                try {
+                                    JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
+                                    jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
+                                } catch (Exception e) {
+                                    logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
+                                    continue;
+                                }
                             }
                         }
                     }

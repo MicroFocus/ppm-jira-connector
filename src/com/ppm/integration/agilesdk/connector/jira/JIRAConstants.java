@@ -122,6 +122,8 @@ public class JIRAConstants {
 
     public static final String CREATEMETA_SUFFIX = API_VERSION2_API_ROOT + "issue/createmeta";
 
+    public static final String SERVERINFO_SUFFIX = API_VERSION2_API_ROOT + "serverInfo";
+
     public static final String BOARD_SUFFIX = API_VERSION1_API_ROOT + "board";
 
     public static final String SPRINT_SUFFIX = API_VERSION1_API_ROOT + "sprint";
@@ -224,5 +226,5 @@ public class JIRAConstants {
     
     public static final String SPLIT_CHAR = "#@#";
 
-
+    public static final String MYSELF_SUFFIX = API_VERSION2_API_ROOT + "myself";
 }
