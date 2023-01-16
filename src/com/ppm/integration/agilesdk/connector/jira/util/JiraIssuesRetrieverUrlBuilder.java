@@ -62,6 +62,11 @@ public class JiraIssuesRetrieverUrlBuilder {
         return this;
     }
 
+    public JiraIssuesRetrieverUrlBuilder retrieveOnlyFields(String... fieldNames) {
+        this.fields = fieldNames;
+        return this;
+    }
+
     public JiraIssuesRetrieverUrlBuilder setBoardType(String boardId) {
         this.boardId = boardId;
         this.retrievalType = IssueRetrievalType.BOARD;
