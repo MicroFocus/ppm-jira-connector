@@ -153,5 +153,4 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 
         return udDDL;
     }
-
 }
