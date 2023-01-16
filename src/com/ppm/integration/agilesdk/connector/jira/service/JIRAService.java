@@ -1241,7 +1241,7 @@ public class JIRAService {
                 issue.setEpicKey(fields.getString(getCustomFields().epicLinkCustomField));
             }
 
-            if (getCustomFields().portfolioParentCustomField != null) {
+            if (getCustomFields().portfolioParentCustomField != null && fields.has(getCustomFields().portfolioParentCustomField)) {
                 issue.setPortfolioParentKey(fields.getString(getCustomFields().portfolioParentCustomField));
             }
 
