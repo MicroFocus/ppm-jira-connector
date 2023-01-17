@@ -57,7 +57,10 @@ public class AgileEntityUtils {
 					}
 
 				} else if (fieldInfo != null
-						&& fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY) && fieldInfo.getItems().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_USER)) {
+						&& fieldInfo.getType() != null 
+						&& fieldInfo.getType().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_ARRAY)
+						&& fieldInfo.getItems() != null
+						&& fieldInfo.getItems().equalsIgnoreCase(JIRAConstants.KEY_FIELD_TYPE_USER)) {
 					if (fieldContents != JSONObject.NULL) {
 						JSONArray fieldList = (JSONArray) fieldContents;
 						MultiUserField muf = new MultiUserField();
