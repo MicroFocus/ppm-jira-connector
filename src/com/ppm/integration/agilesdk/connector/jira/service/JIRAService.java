@@ -1219,14 +1219,14 @@ public class JIRAService {
             if (fields.has("priority") && !fields.isNull("priority") && fields.getJSONObject("priority").has("name")) {
                 issue.setPriorityName(fields.getJSONObject("priority").getString("name"));
             }
-            if (fields.has(getCustomFields().sprintIdCustomField) && !fields.isNull(getCustomFields().sprintIdCustomField)) {
+            if (getCustomFields().sprintIdCustomField != null && fields.has(getCustomFields().sprintIdCustomField) && !fields.isNull(getCustomFields().sprintIdCustomField)) {
                 String sprintId = getSprintIdFromSprintCustomfield(fields.getJSONArray(getCustomFields().sprintIdCustomField));
                 issue.setSprintId(sprintId);
             }
 
             issue.setKey(obj.getString("key"));
             issue.setName(fields.getString("summary"));
-            if (issue instanceof JIRAEpic) {
+            if (issue instanceof JIRAEpic && getCustomFields().epicNameCustomField != null && fields.has(getCustomFields().epicNameCustomField)) {
                 // JIRA stores Epic name in a custom field.
                 issue.setName(fields.getString(getCustomFields().epicNameCustomField));
             }
@@ -1245,7 +1245,7 @@ public class JIRAService {
                 issue.setPortfolioParentKey(fields.getString(getCustomFields().portfolioParentCustomField));
             }
 
-            issue.setStoryPoints((fields.has(getCustomFields().storyPointsCustomField) && !fields.isNull(getCustomFields().storyPointsCustomField)) ?
+            issue.setStoryPoints(getCustomFields().storyPointsCustomField != null && (fields.has(getCustomFields().storyPointsCustomField) && !fields.isNull(getCustomFields().storyPointsCustomField)) ?
                     new Double(fields.getDouble(getCustomFields().storyPointsCustomField)).longValue() : null);
 
             issue.setFixVersionIds(extractFixVersionIds(fields));
