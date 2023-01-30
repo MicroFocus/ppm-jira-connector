@@ -825,7 +825,7 @@ public class JIRAService {
         }
     }
 
-    public List<JIRAAgileEntity> getAgileEntityIssuesModifiedSince( Map<String, JIRAFieldInfo> fieldsInfo, Set<String> entityIds, Date modifiedSinceDate) {
+    public List<JIRAAgileEntity> getAgileEntityIssuesModifiedSince( Map<String, JIRAFieldInfo> fieldsInfo, Collection<String> entityIds, Date modifiedSinceDate) {
 
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveAllFields();
