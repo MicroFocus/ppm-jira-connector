@@ -107,12 +107,8 @@ public class AgileEntityUtils {
 				    		}
 							JSONObject field = (JSONObject) fieldList.get(i);
 							String id = field.has("id") ? field.getString("id") : null;
-							String value = null;
-							if (field.has("value")) {
-								value = field.getString("value");
-							} else {
-								value = field.has("name") ? field.getString("name") : null;
-							}
+							String value = field.has("value") ? field.getString("value")
+									: field.has("name") ? field.getString("name") : null;
 
 							if (id != null && value != null) {
 								if(ids == ""){
