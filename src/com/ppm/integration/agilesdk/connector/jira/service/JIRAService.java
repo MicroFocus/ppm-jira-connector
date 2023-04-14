@@ -139,16 +139,26 @@ public class JIRAService {
             searchUrlBuilder.setStandardIssueTypes(entityType);
         }
 
-        IssueRetrievalResult result =
-                runIssueRetrievalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
+        List<AgileEntityIdName> results = new ArrayList<>();
 
-        List<AgileEntityIdName> results = new ArrayList<>(result.getIssues().size());
+        IssueRetrievalResult result = null;
+        int fetchedResults = 0;
+        searchUrlBuilder.setStartAt(0);
 
-        for (JSONObject obj : result.getIssues()) {
-            JIRAIssue issue = getIssueFromJSONObj(obj);
-            AgileEntityIdName idAndName = new AgileEntityIdName(issue.getKey(), "[" + issue.getKey() + "] " + issue.getName());
-            results.add(idAndName);
-        }
+        searchUrlBuilder = decorateOrderBySprintCreatedUrl(searchUrlBuilder);
+
+        do {
+            result = runIssueRetrievalRequest(searchUrlBuilder.toUrlString());
+            for (JSONObject obj : result.getIssues()) {
+                JIRAIssue issue = getIssueFromJSONObj(obj);
+                AgileEntityIdName idAndName =
+                        new AgileEntityIdName(issue.getKey(), "[" + issue.getKey() + "] " + issue.getName());
+                results.add(idAndName);
+            }
+            fetchedResults += result.getMaxResults();
+            searchUrlBuilder.setStartAt(fetchedResults);
+
+        } while (fetchedResults < result.getTotal());
 
         return results;
     }
