@@ -128,7 +128,6 @@ public class JIRAService {
 
 
     public List<AgileEntityIdName> getAgileEntityIdsAndNames(String agileProjectValue, String entityType) {
-        // System.out.println("OCT566004 debug v1");
         JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
                 new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveOnlyFields("key", "issuetype", "summary");
 
