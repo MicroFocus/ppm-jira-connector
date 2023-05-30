@@ -21,6 +21,8 @@ public class JIRAConstants {
 
     public static final String KEY_ADMIN_PASSWORD = "adminPassword";
 
+    public static final String KEY_ADMIN_PAT = "adminPAT";
+
     public static final String KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS = "useAdminPasswordToMapTasks";
 
     public static final String KEY_ALLOW_WILDCARD_PROJECT_MAPPING = "allowWildcardProjectMapping";
@@ -34,6 +36,8 @@ public class JIRAConstants {
     public static final String KEY_USERNAME = "username";
 
     public static final String KEY_PASSWORD = "password";
+
+    public static final String KEY_PAT = "pat";
 
     public static final String KEY_TASK_STATUS_IN_PLANNING = "statusInPlanning";
     public static final String KEY_TASK_STATUS_READY = "statusReady";
@@ -66,6 +70,8 @@ public class JIRAConstants {
     public static final String LABEL_WORK_PLAN_OPTIONS = "jira_work_plan_options";
     public static final String LABEL_REQUEST_AGILE_OPTIONS = "jira_request_agile_options";
 
+
+    public static final String KEY_FORCE_USER_PAT_FOR_WP_AND_TS = "jira_force_user_pat_wp_ts";
     public static final String SELECT_USER_DATA_STORY_POINTS = "jira_user_data_story_points";
 
     public static final String SELECT_USER_DATA_AGGREGATED_STORY_POINTS = "jira_user_data_aggregated_story_points";

@@ -7,7 +7,7 @@ public interface IRestConfig {
 
     ClientConfig setProxy(String proxyHost, String proxyPort);
 
-    void setBasicAuthorizationCredentials(String username, String password);
+    void setBasicAuthorizationCredentials(String username, String password, String pat);
 
     String getBasicAuthorizationToken();
 

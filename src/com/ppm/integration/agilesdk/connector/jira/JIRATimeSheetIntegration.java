@@ -391,14 +391,24 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
         final LocalizationProvider lp = Providers.getLocalizationProvider(JIRAIntegrationConnector.class);
 
-        return Arrays.asList(new Field[] {new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true),
-                new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true),
+        List<Field> fields = new ArrayList<>();
+
+        final boolean usePat = values.getBoolean(JIRAConstants.KEY_FORCE_USER_PAT_FOR_WP_AND_TS, false);
+
+        if (!usePat) {
+            fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", false));
+            fields.add(new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", false));
+        } else {
+            fields.add(new PasswordText(JIRAConstants.KEY_PAT, "PAT", "", false));
+        }
+
+        fields.addAll(Arrays.asList(new Field[] {
                 new LineBreaker(),
                 new DynamicDropdown(JIRAConstants.KEY_JIRA_PROJECT, "JIRA_PROJECT", JIRAConstants.TS_ALL_PROJECTS, "", false) {
 
                     @Override
                     public List<String> getDependencies() {
-                        return Arrays.asList(new String[] {JIRAConstants.KEY_USERNAME, JIRAConstants.KEY_PASSWORD});
+                        return Arrays.asList(new String[] {JIRAConstants.KEY_USERNAME, JIRAConstants.KEY_PASSWORD,  JIRAConstants.KEY_PAT});
                     }
 
                     @Override
@@ -541,7 +551,9 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
                         }
                     }
                 }
-        });
+        }));
+
+        return fields;
     }
 
 

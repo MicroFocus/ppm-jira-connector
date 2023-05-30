@@ -35,7 +35,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 
     @Override
     public String getConnectorVersion() {
-        return "3.1";
+        return "3.2";
     }
 
     @Override
@@ -50,14 +50,18 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new PlainText(JIRAConstants.KEY_PROXY_PORT, "PROXY_PORT", "", false),
                 new LineBreaker(),
                 new LabelText("", "ADMIN_INFO_FOR_EPIC_AND_AGILE_DATA", "block", false),
-                new PlainText(JIRAConstants.KEY_ADMIN_USERNAME, "ADMIN_USERNAME", "", true),
-                new PasswordText(JIRAConstants.KEY_ADMIN_PASSWORD, "ADMIN_PASSWORD", "", true),
+                new PlainText(JIRAConstants.KEY_ADMIN_USERNAME, "ADMIN_USERNAME", "", false),
+                new PasswordText(JIRAConstants.KEY_ADMIN_PASSWORD, "ADMIN_PASSWORD", "", false),
+                new LineBreaker(),
+                new PasswordText(JIRAConstants.KEY_ADMIN_PAT, "ADMIN_PAT", "", false),
                 new LineBreaker(),
                 new LabelText(JIRAConstants.LABEL_REQUEST_AGILE_OPTIONS, "REQUEST_AGILE_OPTIONS","Request Mapping (Request-Agile):", false),
                 new CheckBox(JIRAConstants.KEY_ALLOW_WILDCARD_PROJECT_MAPPING, "KEY_ALLOW_WILDCARD_PROJECT_MAPPING", false),
                 new LineBreaker(),
                 new LabelText(JIRAConstants.LABEL_WORK_PLAN_OPTIONS, "WORK_PLAN_OPTIONS",
                         "User Data Options:", true),
+                new CheckBox(JIRAConstants.KEY_FORCE_USER_PAT_FOR_WP_AND_TS, "KEY_FORCE_USER_PAT_FOR_WP_AND_TS", false),
+                new LineBreaker(),
                 getUserDataDDL(JIRAConstants.SELECT_USER_DATA_STORY_POINTS, "USER_DATA_STORY_POINTS"),
                 getUserDataDDL(JIRAConstants.SELECT_USER_DATA_AGGREGATED_STORY_POINTS, "USER_DATA_AGGREGATED_STORY_POINTS"),
                 new LineBreaker(),

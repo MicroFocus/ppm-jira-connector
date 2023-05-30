@@ -51,7 +51,7 @@ public class JIRAService {
         IRestConfig userRestConfig = new JIRARestConfig();
         userRestConfig.setProxy(config.get(JIRAConstants.KEY_PROXY_HOST), config.get(JIRAConstants.KEY_PROXY_PORT));
         userRestConfig.setBasicAuthorizationCredentials(config.get(JIRAConstants.KEY_USERNAME),
-                config.get(JIRAConstants.KEY_PASSWORD));
+                config.get(JIRAConstants.KEY_PASSWORD), config.get(JIRAConstants.KEY_PAT));
         userWrapper = new JiraRestWrapper(userRestConfig);
         return this;
     }
