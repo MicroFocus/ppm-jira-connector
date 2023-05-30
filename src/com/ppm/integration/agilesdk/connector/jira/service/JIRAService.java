@@ -1,7 +1,5 @@
 package com.ppm.integration.agilesdk.connector.jira.service;
 
-import com.hp.ppm.common.model.AgileEntityIdName;
-import com.hp.ppm.common.model.AgileEntityIdProjectDate;
 import com.hp.ppm.user.model.User;
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.JIRAConstants;
@@ -126,42 +124,6 @@ public class JIRAService {
         return descendants;
     }
 
-
-    public List<AgileEntityIdName> getAgileEntityIdsAndNames(String agileProjectValue, String entityType) {
-        JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
-                new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveOnlyFields("key", "issuetype", "summary");
-
-        if (!StringUtils.isBlank(agileProjectValue)) {
-            searchUrlBuilder.setProjectKey(agileProjectValue);
-        }
-
-        if (!StringUtils.isBlank(entityType)) {
-            searchUrlBuilder.setStandardIssueTypes(entityType);
-        }
-
-        List<AgileEntityIdName> results = new ArrayList<>();
-
-        IssueRetrievalResult result = null;
-        int fetchedResults = 0;
-        searchUrlBuilder.setStartAt(0);
-
-        searchUrlBuilder = decorateOrderBySprintCreatedUrl(searchUrlBuilder);
-
-        do {
-            result = runIssueRetrievalRequest(searchUrlBuilder.toUrlString());
-            for (JSONObject obj : result.getIssues()) {
-                JIRAIssue issue = getIssueFromJSONObj(obj);
-                AgileEntityIdName idAndName =
-                        new AgileEntityIdName(issue.getKey(), "[" + issue.getKey() + "] " + issue.getName());
-                results.add(idAndName);
-            }
-            fetchedResults += result.getMaxResults();
-            searchUrlBuilder.setStartAt(fetchedResults);
-
-        } while (fetchedResults < result.getTotal());
-
-        return results;
-    }
 
     private class CustomFields {
         public String epicNameCustomField = null;
@@ -844,37 +806,6 @@ public class JIRAService {
         searchUrlBuilder.addAndConstraint("updated>='"+new SimpleDateFormat("yyyy-MM-dd HH:mm").format(modifiedSinceDate)+"'");
 
         return retrieveAgileEntities(fieldsInfo, searchUrlBuilder);
-    }
-
-    public List<AgileEntityIdProjectDate> getAgileEntityIdsCreatedSince(String agileProjectValue, String entityType, Date createdSinceDate) {
-
-        JiraIssuesRetrieverUrlBuilder searchUrlBuilder =
-                new JiraIssuesRetrieverUrlBuilder(baseUri).retrieveOnlyFields("key", "issuetype", "created", "summary");
-
-        if (!StringUtils.isBlank(agileProjectValue)) {
-            searchUrlBuilder.setProjectKey(agileProjectValue);
-        }
-
-        if (!StringUtils.isBlank(entityType)) {
-            searchUrlBuilder.setStandardIssueTypes(entityType);
-        }
-
-        if (createdSinceDate != null) {
-            searchUrlBuilder.addAndConstraint("created>='" + new SimpleDateFormat("yyyy-MM-dd HH:mm").format(createdSinceDate) + "'");
-        }
-
-        IssueRetrievalResult result =
-                runIssueRetrievalRequest(decorateOrderBySprintCreatedUrl(searchUrlBuilder).toUrlString());
-
-        List<AgileEntityIdProjectDate> results = new ArrayList<>(result.getIssues().size());
-
-        for (JSONObject obj : result.getIssues()) {
-            JIRAIssue issue = getIssueFromJSONObj(obj);
-            AgileEntityIdProjectDate idProjectDate = new AgileEntityIdProjectDate(issue.getKey(), issue.getProjectKey(), issue.getCreationDateAsDate());
-            results.add(idProjectDate);
-        }
-
-        return results;
     }
 
     /**

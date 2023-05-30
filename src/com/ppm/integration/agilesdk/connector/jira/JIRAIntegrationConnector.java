@@ -35,7 +35,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
 
     @Override
     public String getConnectorVersion() {
-        return "3.2";
+        return "3.2 (for PPM 10.0.2-)";
     }
 
     @Override
@@ -116,22 +116,6 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
     @Override
     public List<String> getIntegrationClasses() {
         return Arrays.asList(new String[] {"com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration","com.ppm.integration.agilesdk.connector.jira.JIRATimeSheetIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAPortfolioEpicIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRAAgileDataIntegration", "com.ppm.integration.agilesdk.connector.jira.JIRARequestIntegration"});
-    }
-
-    @Override
-    /** @since 10.0.3 */
-    public String testConnection(ValueSet instanceConfigurationParameters) {
-        // Overriding this method as making a call to /rest/api/2/myself is faster then retrieving the whole list of projects.
-        try {
-            String myselfInfo = JIRAServiceProvider.get(instanceConfigurationParameters).useAdminAccount().getMyselfInfo();
-            logger.debug("Test Connection successful. Returned myself info:");
-            logger.debug(myselfInfo);
-        } catch (Exception e) {
-            logger.error("Error when testing connectivity", e);
-            return e.getMessage();
-        }
-
-        return null;
     }
 
     private DynamicDropdown getUserDataDDL(String elementName,
