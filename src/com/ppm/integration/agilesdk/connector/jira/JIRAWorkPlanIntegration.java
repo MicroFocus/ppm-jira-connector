@@ -36,13 +36,19 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         final boolean useAdminPassword = values.getBoolean(JIRAConstants.KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS, false);
 
+        final boolean usePat = values.getBoolean(JIRAConstants.KEY_FORCE_USER_PAT_FOR_WP_AND_TS, false);
+
         List<Field> fields = new ArrayList<Field>();
 
         final JIRAService service = JIRAServiceProvider.get(values).useAdminAccount();
 
         if (!useAdminPassword) {
-            fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", true));
-            fields.add(new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", true));
+            if (!usePat) {
+                fields.add(new PlainText(JIRAConstants.KEY_USERNAME, "USERNAME", "", false));
+                fields.add(new PasswordText(JIRAConstants.KEY_PASSWORD, "PASSWORD", "", false));
+            } else {
+                fields.add(new PasswordText(JIRAConstants.KEY_PAT, "PAT", "", false));
+            }
             fields.add(new LineBreaker());
         }
 
@@ -84,7 +90,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<String> getDependencies() {
-                        return Arrays.asList(new String[] {JIRAConstants.KEY_USERNAME, JIRAConstants.KEY_PASSWORD});
+                        return Arrays.asList(new String[] {JIRAConstants.KEY_USERNAME, JIRAConstants.KEY_PASSWORD, JIRAConstants.KEY_PAT});
                     }
 
                     @Override

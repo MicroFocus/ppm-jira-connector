@@ -2,6 +2,7 @@
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.wink.client.ClientConfig;
 
 public class JIRARestConfig implements IRestConfig {
@@ -36,10 +37,13 @@ public class JIRARestConfig implements IRestConfig {
     }
 
     @Override
-    public void setBasicAuthorizationCredentials(String username, String password) {
-
-        String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
-        basicAuthenticationToken = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
+    public void setBasicAuthorizationCredentials(String username, String password, String pat) {
+        if (!StringUtils.isBlank(pat)) {
+            basicAuthenticationToken = RestConstants.BEARER_AUTHENTICATION_PREFIX + pat;
+        } else {
+            String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
+            basicAuthenticationToken = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
+        }
     }
 
 }
