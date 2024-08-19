@@ -1700,7 +1700,7 @@ public class JIRAService {
                                         JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
                                         jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
                                     } catch (Exception e) {
-                                    logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
+                                        logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
                                         continue;
                                     }
                                 }
