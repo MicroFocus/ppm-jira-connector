@@ -1692,15 +1692,17 @@ public class JIRAService {
                         // The issue type is always uniquely filtered so there should be only one record at most
                         JSONObject fields = issueTypes.getJSONObject(0).getJSONObject("fields");
 
-                        for (String fieldKey : JSONObject.getNames(fields)) {
-                            if (!jiraFieldsInfo.containsKey(fieldKey)) {
-                                JSONObject field = fields.getJSONObject(fieldKey);
-                                try {
-                                    JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
-                                    jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
-                                } catch (Exception e) {
-                                    logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
-                                    continue;
+                        if (fields != null && !fields.isEmpty()) {
+                            for (String fieldKey : JSONObject.getNames(fields)) {
+                                if (!jiraFieldsInfo.containsKey(fieldKey)) {
+                                    JSONObject field = fields.getJSONObject(fieldKey);
+                                    try {
+                                        JIRAFieldInfo fieldInfo = JIRAFieldInfo.fromJSONObject(field, fieldKey);
+                                        jiraFieldsInfo.put(fieldInfo.getKey(), fieldInfo);
+                                    } catch (Exception e) {
+                                        logger.error("Couldn't read fieldInfo information for the following Field JSON, Skipping field:" + field.toString());
+                                        continue;
+                                    }
                                 }
                             }
                         }
