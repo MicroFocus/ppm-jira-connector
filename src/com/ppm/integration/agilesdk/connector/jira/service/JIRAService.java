@@ -47,6 +47,12 @@ public class JIRAService {
 
     private  List<HierarchyLevelInfo> portfolioHierarchyLevelsInfo = null;
 
+    private String epicIssueType = JIRAConstants.JIRA_ISSUE_EPIC;
+
+    public void setEpicIssueType(String epicIssueType) {
+        this.epicIssueType = epicIssueType;
+    }
+
     public JIRAService resetUserCredentials(ValueSet config) {
         IRestConfig userRestConfig = new JIRARestConfig();
         userRestConfig.setProxy(config.get(JIRAConstants.KEY_PROXY_HOST), config.get(JIRAConstants.KEY_PROXY_PORT));
@@ -1086,7 +1092,7 @@ public class JIRAService {
         // Read all Epics
         Map<String, JIRAEpic> epics = new HashMap<String, JIRAEpic>();
         for (JIRAIssue issue : allIssues) {
-            if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+            if (epicIssueType.equalsIgnoreCase(issue.getType())) {
                 processedIssues.add((JIRASubTaskableIssue)issue);
                 epics.put(issue.getKey(), (JIRAEpic)issue);
                 subTaskableIssues.put(issue.getKey(), (JIRAEpic)issue);
@@ -1095,7 +1101,7 @@ public class JIRAService {
 
         // Read all non-Epic standard issue types, add them to Epic
         for (JIRAIssue issue : allIssues) {
-            if (!JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())
+            if (!epicIssueType.equalsIgnoreCase(issue.getType())
                     && issue instanceof JIRASubTaskableIssue) {
 
                 processedIssues.add((JIRASubTaskableIssue)issue);
@@ -1203,7 +1209,7 @@ public class JIRAService {
 
             JIRAIssue issue = null;
 
-            if (issueType.equalsIgnoreCase(JIRAConstants.JIRA_ISSUE_EPIC)) {
+            if (issueType.equalsIgnoreCase(epicIssueType)) {
                 issue = new JIRAEpic();
             } else if (getSubTasksIssueTypeNames().contains(issueType)) { // This is the only place where calling getSubTasksIssueTypes() is appropriate.
                 issue = new JIRASubTask();

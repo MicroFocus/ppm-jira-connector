@@ -64,6 +64,7 @@ public class JIRAIntegrationConnector extends IntegrationConnector {
                 new LineBreaker(),
                 getUserDataDDL(JIRAConstants.SELECT_USER_DATA_STORY_POINTS, "USER_DATA_STORY_POINTS"),
                 getUserDataDDL(JIRAConstants.SELECT_USER_DATA_AGGREGATED_STORY_POINTS, "USER_DATA_AGGREGATED_STORY_POINTS"),
+                new PlainText(JIRAConstants.KEY_JIRA_EPIC_TYPE_NAME, "JIRA_EPIC_TYPE_NAME", JIRAConstants.DEFAULT_JIRA_EPIC_TYPE_NAME, false),
                 new LineBreaker(),
                 new CheckBox(JIRAConstants.KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS, "KEY_USE_ADMIN_PASSWORD_TO_MAP_TASKS", false),
                 new CheckBox(JIRAConstants.KEY_IMPORT_ASSIGNED_USERS_TO_TASKS, "KEY_IMPORT_ASSIGNED_USERS_TO_TASKS", true),

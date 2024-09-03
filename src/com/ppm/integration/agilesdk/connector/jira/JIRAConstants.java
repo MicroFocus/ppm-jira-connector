@@ -76,6 +76,8 @@ public class JIRAConstants {
 
     public static final String SELECT_USER_DATA_AGGREGATED_STORY_POINTS = "jira_user_data_aggregated_story_points";
 
+    public static final String KEY_JIRA_EPIC_TYPE_NAME = "jira_epic_type_name";
+
     public static final String KEY_IMPORT_SELECTION_DETAILS = "import_selection_details";
 
     public static final String KEY_JIRA_PROJECT = "jira_project_name";
@@ -233,4 +235,6 @@ public class JIRAConstants {
     public static final String JIRA_FIELD_RESOLUTION_DATE = "resolutiondate";
     
     public static final String SPLIT_CHAR = "#@#";
+
+    public static final String DEFAULT_JIRA_EPIC_TYPE_NAME = "Epic";
 }
