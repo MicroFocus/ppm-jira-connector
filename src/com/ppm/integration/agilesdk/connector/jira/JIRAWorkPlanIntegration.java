@@ -41,6 +41,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         List<Field> fields = new ArrayList<Field>();
 
         final JIRAService service = JIRAServiceProvider.get(values).useAdminAccount();
+        final String epicIssueType = JIRAServiceProvider.getEpicIssueType(values);
 
         if (!useAdminPassword) {
             if (!usePat) {
@@ -71,9 +72,13 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         }
 
 
+        String groupEpicIssueType = epicIssueType;
+        if (epicIssueType.equalsIgnoreCase(JIRAConstants.DEFAULT_JIRA_EPIC_TYPE_NAME)) {
+            groupEpicIssueType = "GROUP_EPIC";
+        }
         SelectList importGroupSelectList = new SelectList(JIRAConstants.KEY_IMPORT_GROUPS,"IMPORT_GROUPS",JIRAConstants.GROUP_EPIC,true)
                 .addLevel(JIRAConstants.KEY_IMPORT_GROUPS, "IMPORT_GROUPS")
-                .addOption(new SelectList.Option(JIRAConstants.GROUP_EPIC,"GROUP_EPIC"))
+                .addOption(new SelectList.Option(JIRAConstants.GROUP_EPIC,groupEpicIssueType))
                 .addOption(new SelectList.Option(JIRAConstants.GROUP_SPRINT,"GROUP_SPRINT"))
                 .addOption(new SelectList.Option(JIRAConstants.GROUP_STATUS,"GROUP_STATUS"));
 
@@ -151,7 +156,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                 options.add(new Option("0", lp.getConnectorText("IMPORT_ALL_PROJECT_ISSUES")));
                                 break;
                             case JIRAConstants.IMPORT_ONE_EPIC:
-                                List<JIRASubTaskableIssue> epics = service.getProjectIssuesList(projectKey, JIRAConstants.JIRA_ISSUE_EPIC);
+                                List<JIRASubTaskableIssue> epics = service.getProjectIssuesList(projectKey, epicIssueType);
                                 for (JIRAIssue epic : epics) {
                                     Option option = new Option(epic.getKey(), epic.getName());
                                     options.add(option);
@@ -323,11 +328,11 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         new LineBreaker(),
                         new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES", "", true) {
                             @Override public List<String> getStyleDependencies() {
-                                return Arrays.asList(new String[] {JIRAConstants.JIRA_ISSUE_EPIC});
+                                return Arrays.asList(new String[] {epicIssueType});
                             }
 
                             @Override public FieldAppearance getFieldAppearance(ValueSet values) {
-                                boolean importEpics = values.getBoolean(JIRAConstants.JIRA_ISSUE_EPIC, true);
+                                boolean importEpics = values.getBoolean(epicIssueType, true);
                                 if (importEpics) {
                                     return new FieldAppearance("", "disabled");
                                 } else {
@@ -447,8 +452,9 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         // End of backward compatibility code
 
         // We always want to retrieve epics if grouping tasks by Epics
+        final String epicIssueType = JIRAServiceProvider.getEpicIssueType(values);
         if (JIRAConstants.GROUP_EPIC.equalsIgnoreCase(grouping)) {
-            issueTypes.add(JIRAConstants.JIRA_ISSUE_EPIC);
+            issueTypes.add(epicIssueType);
         }
 
         List<JIRASubTaskableIssue> issues = new ArrayList<JIRASubTaskableIssue>();
@@ -488,7 +494,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                 final List<JIRASubTaskableIssue> noEpicIssues = new ArrayList<JIRASubTaskableIssue>();
 
                 for (JIRASubTaskableIssue issue : issues) {
-                    if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                    if (epicIssueType.equalsIgnoreCase(issue.getType())) {
                         // Epic, add it to the root tasks
                         final JIRAEpic epic = (JIRAEpic)issue;
 
@@ -604,14 +610,14 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     if (isBlank(issue.getStatus())) {
                         noStatusIssues.add(issue);
 
-                        if (includeIssuesWithNoGroup && JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                        if (includeIssuesWithNoGroup && epicIssueType.equalsIgnoreCase(issue.getType())) {
                             selectedEpics.add((JIRAEpic) issue);
                         }
 
                         continue;
                     }
 
-                    if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                    if (epicIssueType.equalsIgnoreCase(issue.getType())) {
                         selectedEpics.add((JIRAEpic) issue);
                     }
 
@@ -691,14 +697,14 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                     if (isBlank(issue.getSprintId())) {
                         backlogIssues.add(issue);
 
-                        if (includeIssuesWithNoGroup && JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                        if (includeIssuesWithNoGroup && epicIssueType.equalsIgnoreCase(issue.getType())) {
                             selectedEpics.add((JIRAEpic) issue);
                         }
 
                         continue;
                     }
 
-                    if (JIRAConstants.JIRA_ISSUE_EPIC.equalsIgnoreCase(issue.getType())) {
+                    if (epicIssueType.equalsIgnoreCase(issue.getType())) {
                         selectedEpics.add((JIRAEpic) issue);
                     }
 
