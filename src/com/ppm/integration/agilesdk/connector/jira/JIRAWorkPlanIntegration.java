@@ -581,7 +581,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
                     	
                         @Override public String getName() {
-                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_EPIC_DEFINED_TASK_NAME");
+                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_EPIC_DEFINED_TASK_NAME").replace("{0}", epicIssueType);
                         }
 
                         @Override public List<ExternalTask> getChildren() {
