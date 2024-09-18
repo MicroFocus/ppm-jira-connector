@@ -42,6 +42,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         final JIRAService service = JIRAServiceProvider.get(values).useAdminAccount();
         final String epicIssueType = JIRAServiceProvider.getEpicIssueType(values);
+        final String epicIssueTypeName = epicIssueType.equalsIgnoreCase(JIRAConstants.DEFAULT_JIRA_EPIC_TYPE_NAME) ? JIRAConstants.DEFAULT_JIRA_EPIC_TYPE_NAME : epicIssueType;
 
         if (!useAdminPassword) {
             if (!usePat) {
@@ -326,7 +327,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         },
 
                         new LineBreaker(),
-                        new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES", "", true) {
+                        new SelectList(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, lp.getConnectorText("OPTION_ADD_EPIC_MILESTONES", epicIssueTypeName), "", true) {
                             @Override public List<String> getStyleDependencies() {
                                 return Arrays.asList(new String[] {epicIssueType});
                             }
@@ -339,7 +340,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                                     return new FieldAppearance("disabled", "");
                                 }
                             }
-                        }.addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, "OPTION_ADD_EPIC_MILESTONES")
+                        }.addLevel(JIRAConstants.OPTION_ADD_EPIC_MILESTONES, lp.getConnectorText("OPTION_ADD_EPIC_MILESTONES", epicIssueTypeName))
                                 .addOption(new SelectList.Option("", "OPTION_ADD_EPIC_MILESTONES_NO_MILESTONE"))
                                 .addOption(new SelectList.Option("MINOR", "OPTION_ADD_EPIC_MILESTONES_MINOR")).addOption(
                                 new SelectList.Option("MAJOR", "OPTION_ADD_EPIC_MILESTONES_MAJOR"))
@@ -453,6 +454,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
         // We always want to retrieve epics if grouping tasks by Epics
         final String epicIssueType = JIRAServiceProvider.getEpicIssueType(values);
+        final String epicIssueTypeName = epicIssueType.equalsIgnoreCase(JIRAConstants.DEFAULT_JIRA_EPIC_TYPE_NAME) ? JIRAConstants.DEFAULT_JIRA_EPIC_TYPE_NAME : epicIssueType;
         if (JIRAConstants.GROUP_EPIC.equalsIgnoreCase(grouping)) {
             issueTypes.add(epicIssueType);
         }
@@ -581,7 +583,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         }
                     	
                         @Override public String getName() {
-                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_EPIC_DEFINED_TASK_NAME").replace("{0}", epicIssueType);
+                            return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("WORKPLAN_NO_EPIC_DEFINED_TASK_NAME", epicIssueTypeName);
                         }
 
                         @Override public List<ExternalTask> getChildren() {
@@ -889,7 +891,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public String getName() {
-                        return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("EPIC_MILESTONE_TASK_NAME");
+                        return Providers.getLocalizationProvider(JIRAIntegrationConnector.class).getConnectorText("EPIC_MILESTONE_TASK_NAME", epicIssueTypeName);
                     }
 
                     @Override
