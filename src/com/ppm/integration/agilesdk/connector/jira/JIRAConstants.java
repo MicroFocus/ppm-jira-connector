@@ -150,6 +150,11 @@ public class JIRAConstants {
     
     public static final String KEY_FIELD_TYPE_PRIORITY = "priority";
 
+    public static final String KEY_FIELD_TYPE_DATE_TIME = "datetime";
+
+    public static final String KEY_FIELD_TYPE_DATE = "date";
+
+
     // Just add JQL string from JiraIssuesRetrieverUrlBuilder class
     public static final String SEARCH_URL =
             API_VERSION2_API_ROOT + "search?expand=schema&jql=";
