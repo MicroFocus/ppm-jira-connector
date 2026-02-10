@@ -617,8 +617,10 @@ public class JIRAService {
 				} else {
 					fieldsObj.put(fieldEntry.getKey(), JSONObject.NULL);
 				}
-			}
-			else {
+			}else if ((fieldInfo != null && fieldInfo.getType() != null) &&
+                    (fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_DATE) ||fieldInfo.getType().equals(JIRAConstants.KEY_FIELD_TYPE_DATE_TIME))) {
+                fieldsObj.put(fieldEntry.getKey(), value == null ? JSONObject.NULL : value);
+            }else {
 				if (value == null || (isNumber && StringUtils.isBlank(value))) {
 					fieldsObj.put(fieldEntry.getKey(), "");
 
