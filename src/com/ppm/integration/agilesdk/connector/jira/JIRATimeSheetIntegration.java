@@ -14,9 +14,10 @@ import com.ppm.integration.agilesdk.provider.LocalizationProvider;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.tm.*;
 import com.ppm.integration.agilesdk.ui.*;
+import com.kintana.core.logging.LogManager;
+import com.kintana.core.logging.Logger;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientRuntimeException;
 
 import com.ppm.integration.agilesdk.ValueSet;
@@ -26,7 +27,7 @@ import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestReque
 
 public class JIRATimeSheetIntegration extends TimeSheetIntegration {
 
-    private final Logger logger = Logger.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(JIRATimeSheetIntegration.class);
 
     @Override
     public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext timesheetContext, ValueSet values) {

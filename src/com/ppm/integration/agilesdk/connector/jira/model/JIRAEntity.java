@@ -2,7 +2,6 @@
 package com.ppm.integration.agilesdk.connector.jira.model;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 

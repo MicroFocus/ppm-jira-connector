@@ -11,7 +11,8 @@ import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
 import com.ppm.integration.agilesdk.model.AgileProject;
 import com.ppm.integration.agilesdk.ui.*;
-import org.apache.log4j.Logger;
+import com.kintana.core.logging.LogManager;
+import com.kintana.core.logging.Logger;
 
 /**
  * @author baijuy The connector provides the integration for ppm with Jira. The
@@ -21,7 +22,7 @@ import org.apache.log4j.Logger;
  */
 public class JIRAIntegrationConnector extends IntegrationConnector {
 
-    private final Logger logger = Logger.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(JIRAIntegrationConnector.class);
 
     @Override
     public String getExternalApplicationName() {
