@@ -46,16 +46,12 @@ public class JIRARestConfig implements IRestConfig {
 
     @Override
     public void setBasicAuthorizationCredentials(String username, String password, String pat) {
-        {
-            String basicToken = Base64.getEncoder().encodeToString((username + ":" + pat).getBytes(StandardCharsets.UTF_8));
-            basicAuthenticationToken = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
-        }
-       /* if (!StringUtils.isBlank(pat)) {
+        if (!StringUtils.isBlank(pat)) {
             basicAuthenticationToken = RestConstants.BEARER_AUTHENTICATION_PREFIX + pat;
         } else {
             String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
             basicAuthenticationToken = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
-        }*/
+        }
     }
 
 }
