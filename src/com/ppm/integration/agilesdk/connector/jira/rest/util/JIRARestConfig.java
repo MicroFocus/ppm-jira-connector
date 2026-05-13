@@ -1,7 +1,8 @@
 
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
-import java.nio.charset.StandardCharsets;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Base64;
 
 public class JIRARestConfig implements IRestConfig {
@@ -49,7 +50,7 @@ public class JIRARestConfig implements IRestConfig {
         if (!StringUtils.isBlank(pat)) {
             basicAuthenticationToken = RestConstants.BEARER_AUTHENTICATION_PREFIX + pat;
         } else {
-            String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
+            String basicToken = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
             basicAuthenticationToken = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
         }
     }
