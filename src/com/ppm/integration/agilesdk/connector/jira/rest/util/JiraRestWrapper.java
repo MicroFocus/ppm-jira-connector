@@ -2,7 +2,7 @@
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
 import com.ppm.integration.agilesdk.connector.jira.rest.util.exception.RestRequestException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;

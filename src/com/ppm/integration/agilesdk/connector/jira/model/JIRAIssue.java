@@ -3,7 +3,7 @@ package com.ppm.integration.agilesdk.connector.jira.model;
 
 import com.ppm.integration.agilesdk.connector.jira.JIRAWorkPlanIntegration;
 import com.ppm.integration.agilesdk.pm.ExternalTask;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.List;
