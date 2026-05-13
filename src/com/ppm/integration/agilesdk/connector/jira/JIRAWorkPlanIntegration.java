@@ -14,18 +14,19 @@ import com.ppm.integration.agilesdk.provider.LocalizationProvider;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 import com.ppm.integration.agilesdk.ui.*;
+import com.kintana.core.logging.LogManager;
+import com.kintana.core.logging.Logger;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.wink.client.ClientRuntimeException;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
-    private final Logger logger = Logger.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(JIRAWorkPlanIntegration.class);
 
     public JIRAWorkPlanIntegration() {}
 
