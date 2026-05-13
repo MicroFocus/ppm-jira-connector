@@ -20,7 +20,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.StringUtils;
-import org.apache.wink.client.ClientRuntimeException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -110,7 +109,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         List<JIRAProject> list = new ArrayList<>();
                         try {
                             list = service.getProjects();
-                        } catch (ClientRuntimeException | RestRequestException e) {
+                        } catch (RestRequestException e) {
                             logger.error("", e);
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
                                     JIRAWorkPlanIntegration.class);
