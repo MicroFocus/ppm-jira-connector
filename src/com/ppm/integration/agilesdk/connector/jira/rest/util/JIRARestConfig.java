@@ -1,31 +1,40 @@
 
 package com.ppm.integration.agilesdk.connector.jira.rest.util;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
-import org.apache.wink.client.ClientConfig;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Base64;
 
 public class JIRARestConfig implements IRestConfig {
-    private ClientConfig clientConfig;
+    private String proxyHost;
+    private Integer proxyPort;
 
     private String basicAuthenticationToken;
 
-    public ClientConfig getClientConfig() {
-        return clientConfig;
-    }
-
     public JIRARestConfig() {
-        clientConfig = new ClientConfig();
+        // no-op
     }
 
     @Override
-    public ClientConfig setProxy(String proxyHost, String proxyPort) {
+    public void setProxy(String proxyHost, String proxyPort) {
 
         if (proxyHost != null && !proxyHost.isEmpty() && proxyPort != null && !proxyPort.isEmpty()) {
-            clientConfig.proxyHost(proxyHost);
-            clientConfig.proxyPort(Integer.parseInt(proxyPort));
+            this.proxyHost = proxyHost;
+            this.proxyPort = Integer.parseInt(proxyPort);
+        } else {
+            this.proxyHost = null;
+            this.proxyPort = null;
         }
-        return clientConfig;
+    }
+
+    @Override
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    @Override
+    public Integer getProxyPort() {
+        return proxyPort;
     }
 
 
@@ -41,7 +50,7 @@ public class JIRARestConfig implements IRestConfig {
         if (!StringUtils.isBlank(pat)) {
             basicAuthenticationToken = RestConstants.BEARER_AUTHENTICATION_PREFIX + pat;
         } else {
-            String basicToken = new String(Base64.encodeBase64((username + ":" + password).getBytes()));
+            String basicToken = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
             basicAuthenticationToken = RestConstants.BASIC_AUTHENTICATION_PREFIX + basicToken;
         }
     }

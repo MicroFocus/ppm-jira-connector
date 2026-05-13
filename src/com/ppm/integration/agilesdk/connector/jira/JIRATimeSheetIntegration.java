@@ -18,7 +18,6 @@ import com.kintana.core.logging.LogManager;
 import com.kintana.core.logging.Logger;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.wink.client.ClientRuntimeException;
 
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.jira.model.JIRAProject;
@@ -418,7 +417,7 @@ public class JIRATimeSheetIntegration extends TimeSheetIntegration {
                         List<JIRAProject> list = new ArrayList<>();
                         try {
                             list = JIRAServiceProvider.get(values).useNonAdminAccount().getProjects();
-                        } catch (ClientRuntimeException | RestRequestException e) {
+                        } catch (RestRequestException e) {
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
                                     JIRATimeSheetIntegration.class);
                         } catch (RuntimeException e) {

@@ -12,7 +12,7 @@ import com.ppm.integration.agilesdk.dm.StringField;
 import com.ppm.integration.agilesdk.dm.UserField;
 import com.ppm.integration.agilesdk.provider.Providers;
 import com.ppm.integration.agilesdk.provider.UserProvider;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

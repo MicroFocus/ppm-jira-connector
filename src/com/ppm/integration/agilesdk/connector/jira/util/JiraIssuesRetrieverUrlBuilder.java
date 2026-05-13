@@ -1,7 +1,7 @@
 package com.ppm.integration.agilesdk.connector.jira.util;
 
 import com.ppm.integration.agilesdk.connector.jira.JIRAConstants;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 

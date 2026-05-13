@@ -16,11 +16,10 @@ import com.ppm.integration.agilesdk.provider.UserProvider;
 import com.ppm.integration.agilesdk.ui.*;
 import com.kintana.core.logging.LogManager;
 import com.kintana.core.logging.Logger;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import org.apache.commons.lang.StringUtils;
-import org.apache.wink.client.ClientRuntimeException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -110,7 +109,7 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
                         List<JIRAProject> list = new ArrayList<>();
                         try {
                             list = service.getProjects();
-                        } catch (ClientRuntimeException | RestRequestException e) {
+                        } catch (RestRequestException e) {
                             logger.error("", e);
                             new JIRAConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e,
                                     JIRAWorkPlanIntegration.class);
@@ -973,42 +972,48 @@ public class JIRAWorkPlanIntegration extends WorkPlanIntegration {
         return removeUncheckedIssuesTypesFromConfig(workplanMapping);
     }
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private WorkplanMapping removeUncheckedIssuesTypesFromConfig(WorkplanMapping workplanMapping) {
 
         Set<String> issueTypesToRemove = new HashSet<>();
 
-        // Update the display config JSon
-        String displayConfigJson = workplanMapping.getConfigDisplayJson();
-        if (displayConfigJson != null) {
-            JSONObject json = (JSONObject)JSONSerializer.toJSON(displayConfigJson);
-            JSONArray oldConfig = json.getJSONArray("config");
-            JSONArray newConfig = new JSONArray();
-            for (int i = 0; i < oldConfig.size(); i++) {
-                JSONObject entry = oldConfig.getJSONObject(i);
-                String label = entry.getString("label");
-                String text =  entry.getString("text");
+        try {
+            // Update the display config JSon
+            String displayConfigJson = workplanMapping.getConfigDisplayJson();
+            if (displayConfigJson != null) {
+                ObjectNode json = (ObjectNode) OBJECT_MAPPER.readTree(displayConfigJson);
+                ArrayNode oldConfig = (ArrayNode) json.get("config");
+                ArrayNode newConfig = OBJECT_MAPPER.createArrayNode();
+                for (int i = 0; i < oldConfig.size(); i++) {
+                    ObjectNode entry = (ObjectNode) oldConfig.get(i);
+                    String label = entry.get("label").asText();
+                    String text  = entry.get("text").asText();
 
-                if ("NO.TXT".equals(text) && !JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP.equals(label)
-                        && !JIRAConstants.OPTION_ADD_ROOT_TASK.equals(label)){
-                    // Skip that issue type
-                    issueTypesToRemove.add(label);
-                } else {
-                    newConfig.add(entry);
+                    if ("NO.TXT".equals(text) && !JIRAConstants.OPTION_INCLUDE_ISSUES_NO_GROUP.equals(label)
+                            && !JIRAConstants.OPTION_ADD_ROOT_TASK.equals(label)){
+                        // Skip that issue type
+                        issueTypesToRemove.add(label);
+                    } else {
+                        newConfig.add(entry);
+                    }
                 }
+
+                json.set("config", newConfig);
+                workplanMapping.setConfigDisplayJson(json.toString());
             }
 
-            json.put("config", newConfig);
-            workplanMapping.setConfigDisplayJson(json.toString());
-        }
-
-        // Update the real config JSon
-        String configJson = workplanMapping.getConfigJson();
-        if (configJson != null) {
-            JSONObject json = (JSONObject)JSONSerializer.toJSON(configJson);
-            for (String issueTypeToRemove: issueTypesToRemove) {
-                json.remove(getParamNameFromIssueTypeName(issueTypeToRemove));
+            // Update the real config JSon
+            String configJson = workplanMapping.getConfigJson();
+            if (configJson != null) {
+                ObjectNode json = (ObjectNode) OBJECT_MAPPER.readTree(configJson);
+                for (String issueTypeToRemove: issueTypesToRemove) {
+                    json.remove(getParamNameFromIssueTypeName(issueTypeToRemove));
+                }
+                workplanMapping.setConfigJson(json.toString());
             }
-            workplanMapping.setConfigJson(json.toString());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process workplan mapping config JSON", e);
         }
 
         return workplanMapping;

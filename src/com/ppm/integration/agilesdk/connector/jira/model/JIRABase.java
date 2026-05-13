@@ -2,7 +2,7 @@ package com.ppm.integration.agilesdk.connector.jira.model;
 
 import com.kintana.core.logging.LogManager;
 import com.kintana.core.logging.Logger;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

@@ -7,7 +7,7 @@ import com.ppm.integration.agilesdk.epic.PortfolioEpicCreationInfo;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicIntegration;
 import com.ppm.integration.agilesdk.epic.PortfolioEpicSyncInfo;
 import com.ppm.integration.agilesdk.provider.Providers;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
